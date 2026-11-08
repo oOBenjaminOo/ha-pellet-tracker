@@ -1,5 +1,6 @@
 /* Authored interface messages only. Never translate journal or entity data. */
 export const ENGLISH = {
+  " sacs utilisés": " bags used",
   "Langue du suivi": "Tracker language",
   "La langue s’applique après enregistrement. Les cartes déjà ajoutées restent dans leur langue d’origine ; remplacez-les pour changer leur langue.":
     "The language applies after saving. Existing dashboard cards keep their original language; replace them to change their language.",

@@ -1262,7 +1262,7 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
     const cfg = this.data.settings,
       rules = [];
     if (cfg.cleaning_bags)
-      rules.push(`${cfg.cleaning_bags}${this.t(" sacs")} utilisés`);
+      rules.push(`${cfg.cleaning_bags}${this.t(" sacs utilisés")}`);
     if (cfg.cleaning_days)
       rules.push(
         `${cfg.cleaning_days}${this.t(" jours avec consommation depuis le dernier nettoyage")}`,

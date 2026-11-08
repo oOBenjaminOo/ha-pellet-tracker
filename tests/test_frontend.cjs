@@ -285,6 +285,8 @@ test("journal language is isolated, formats values and keeps user text unchanged
   assert.match(p.seasonReport(), /Heating report and budget/);
   assert.match(p.dashboardsView(), /Copy Mushroom card/);
   assert.match(p.cleaningRule(), /reminder disabled/);
+  p.data.settings.cleaning_bags=5;
+  assert.equal(p.cleaningRule(), "alert after 5 bags used");
   assert.equal(p.number(null), "Not provided");
   p.data.settings.language = "fr";
   assert.match(p.overviewView(), /Votre réserve/);
