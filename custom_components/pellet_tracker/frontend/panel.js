@@ -329,7 +329,9 @@ class PelletTrackerPanel extends HTMLElement {
         if (!form.reportValidity()) return;
         const payload = Object.fromEntries(new FormData(form));
         payload.quantity = payload.quantity || 0;
-        payload.cleaned = form.elements.cleaned?.checked || false;
+        payload.cleaned =
+          !form.elements.cleaned?.disabled &&
+          (form.elements.cleaned?.checked || false);
         if (this.editing) {
           payload.id = this.editing.id;
           if (this.editing.season && payload.date === this.editing.date)
@@ -341,8 +343,8 @@ class PelletTrackerPanel extends HTMLElement {
       });
       root.querySelector("#cancel")?.addEventListener("click", () => {
         this.editing = null;
-        this.entryDraft = null;
         this.navigate("journal");
+        this.entryDraft = null;
       });
     }
     if (this.view === "stats") this.bindStatisticsView();
