@@ -212,7 +212,12 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
     const settings = this.shadowRoot.querySelector("#settingsForm");
     if (settings) {
       this.settingsDraft = Object.fromEntries(new FormData(settings));
-      for (const key of ["notify_enabled", "notify_recovery", "notify_actions"])
+      for (const key of [
+        "notify_enabled",
+        "notify_recovery",
+        "notify_actions",
+        "stove_control_enabled",
+      ])
         this.settingsDraft[key] = settings.elements[key].checked;
     }
     this.view = view;
@@ -1444,6 +1449,15 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
     };
     if (cfg.stove_entity && !sources[cfg.stove_entity])
       sources[cfg.stove_entity] = cfg.stove_entity + this.t(" · indisponible");
+    const switches = {
+      "": this.t("Choisir un switch"),
+      ...Object.fromEntries(
+        Object.entries(sources).filter(([key]) => key.startsWith("switch.")),
+      ),
+    };
+    if (cfg.stove_control_entity && !(cfg.stove_control_entity in switches))
+      switches[cfg.stove_control_entity] =
+        cfg.stove_control_entity + this.t(" · indisponible");
     const numbers = [
       ["low_stock", this.t("Stock faible (sacs)"), 0, 10000],
       [
@@ -1492,7 +1506,16 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
       )
       .join(
         "",
-      )}</select></label><label>${this.t("Attribut à lire (facultatif)")}<input name="stove_attribute" maxlength="80" placeholder="${this.t("Ex. hvac_action ; vide = état de l’entité")}" value="${escapeHTML(cfg.stove_attribute || "")}"></label><label>${this.t("États correspondant à allumé")}<input name="stove_on_states" value="${escapeHTML(cfg.stove_on_states || "on,heating")}" required></label><label>${this.t("États correspondant à éteint")}<input name="stove_off_states" value="${escapeHTML(cfg.stove_off_states || "off,idle")}" required></label><p class="wide muted">${this.t("Plusieurs valeurs possibles, séparées par des virgules. Les valeurs sont exactes et sensibles à la casse. La carte suit ensuite les changements automatiquement.")}</p><p class="wide muted" id="stoveObserved" role="status"></p><label class="wide">${this.t("Destination supplémentaire")}<select name="notification_action">${Object.entries(
+      )}</select></label><label>${this.t("Attribut à lire (facultatif)")}<input name="stove_attribute" maxlength="80" placeholder="${this.t("Ex. hvac_action ; vide = état de l’entité")}" value="${escapeHTML(cfg.stove_attribute || "")}"></label><label>${this.t("États correspondant à allumé")}<input name="stove_on_states" value="${escapeHTML(cfg.stove_on_states || "on,heating")}" required></label><label>${this.t("États correspondant à éteint")}<input name="stove_off_states" value="${escapeHTML(cfg.stove_off_states || "off,idle")}" required></label><p class="wide muted">${this.t("Plusieurs valeurs possibles, séparées par des virgules. Les valeurs sont exactes et sensibles à la casse. La carte suit ensuite les changements automatiquement.")}</p><p class="wide muted" id="stoveObserved" role="status"></p><h2 class="wide">${this.t("Commande du poêle · facultatif")}</h2><label class="check wide"><input type="checkbox" name="stove_control_enabled" ${cfg.stove_control_enabled ? "checked" : ""}>${this.t("Autoriser la commande depuis l’image du poêle")}</label><label class="wide">${this.t("Switch de commande du poêle")}<select name="stove_control_entity">${Object.entries(
+      switches,
+    )
+      .map(
+        ([key, name]) =>
+          `<option value="${escapeHTML(key)}" ${key === (cfg.stove_control_entity || "") ? "selected" : ""}>${escapeHTML(name)}</option>`,
+      )
+      .join(
+        "",
+      )}</select></label><p class="wide muted">${this.t("Un clic sur le poêle propose d’allumer ou d’éteindre le switch, avec confirmation. Désactivé par défaut. Associez aussi l’entité d’état pour que la flamme suive la chauffe. Après activation ou changement de switch, remplacez la carte générée. La désactivation bloque aussi les anciennes cartes.")}</p><label class="wide">${this.t("Destination supplémentaire")}<select name="notification_action">${Object.entries(
       choices,
     )
       .map(
@@ -1537,7 +1560,12 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
       e.preventDefault();
       if (this.busy || !form.reportValidity()) return;
       const settings = Object.fromEntries(new FormData(form));
-      for (const key of ["notify_enabled", "notify_recovery", "notify_actions"])
+      for (const key of [
+        "notify_enabled",
+        "notify_recovery",
+        "notify_actions",
+        "stove_control_enabled",
+      ])
         settings[key] = form.elements[key].checked;
       await this.settingsRequest("pellet_tracker/settings", {
         settings,

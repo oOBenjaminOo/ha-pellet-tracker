@@ -7,6 +7,8 @@ from decimal import Decimal, InvalidOperation
 
 DEFAULTS = {
     "language": "fr",
+    "stove_control_enabled": False,
+    "stove_control_entity": "",
     "stove_entity": "",
     "stove_attribute": "",
     "stove_on_states": "on,heating",
@@ -65,7 +67,12 @@ def validate_settings(raw: dict, current: dict, choices: dict) -> dict:
         ):
             raise ValueError(f"Invalid setting: {key}")
         settings[key] = int(value)
-    for key in ("notify_enabled", "notify_recovery", "notify_actions"):
+    for key in (
+        "notify_enabled",
+        "notify_recovery",
+        "notify_actions",
+        "stove_control_enabled",
+    ):
         if not isinstance(settings[key], bool):
             raise TypeError(f"Invalid setting: {key}")
     for key in (
@@ -83,6 +90,13 @@ def validate_settings(raw: dict, current: dict, choices: dict) -> dict:
         raise ValueError("Invalid stove entity")
     if len(settings["stove_attribute"]) > 80:
         raise ValueError("Invalid stove attribute")
+    target = settings["stove_control_entity"]
+    if not isinstance(target, str) or (
+        target and not re.fullmatch(r"switch\.[a-z0-9_]+", target)
+    ):
+        raise ValueError("Invalid stove control switch")
+    if settings["stove_control_enabled"] and not target:
+        raise ValueError("Choose a stove control switch")
     values = []
     for key in ("stove_on_states", "stove_off_states"):
         states = list(

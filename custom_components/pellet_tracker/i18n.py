@@ -1,6 +1,8 @@
 """Local messages for generated cards and notifications. Journal data is never translated."""
 
 ENGLISH = {
+    "Allumer le poêle ?": "Turn on the stove?",
+    "Éteindre le poêle ?": "Turn off the stove?",
     "Ouvrir le suivi": "Open tracker",
     "Ajouter un sac consommé": "Add a consumed bag",
     "Enregistrer un nettoyage": "Record a cleaning",
@@ -39,7 +41,19 @@ ENGLISH = {
 }
 
 
+FRENCH_ERRORS = {
+    "Stove control is disabled": "La commande du poêle est désactivée.",
+    "Stove control configuration changed; refresh the card": "Le switch configuré a changé. Actualisez la carte.",
+    "Stove control switch unavailable": "Le switch de commande du poêle est indisponible.",
+    "Invalid stove command": "Commande du poêle non valide.",
+}
+
+
 def text(language, message, **values):
     """Resolve an authored message, retaining French for existing journals."""
-    template = ENGLISH.get(message, message) if language == "en" else message
+    template = (
+        ENGLISH.get(message, message)
+        if language == "en"
+        else FRENCH_ERRORS.get(message, message)
+    )
     return template.format(**values) if values else template

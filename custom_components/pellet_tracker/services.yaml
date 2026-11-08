@@ -154,3 +154,25 @@ check_notifications:
   name: Vérifier les alertes
   description: Vérifie les seuils et les rappels sans contourner les délais de déduplication.
   fields: *id010
+
+control_stove:
+  name: Commander le poêle
+  description: Commande explicite du switch configuré, uniquement si l’option est activée.
+  fields:
+    entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: pellet_tracker
+    entity_id:
+      required: true
+      selector:
+        entity:
+          domain: switch
+    command:
+      required: true
+      selector:
+        select:
+          options:
+            - turn_on
+            - turn_off

@@ -48,3 +48,26 @@ def stove_choices(hass):
             continue
         choices[state.entity_id] = f"{state.name} · {state.entity_id}"
     return dict(sorted(choices.items(), key=lambda item: item[1].casefold()))
+
+
+async def async_control_stove(hass, ledger, entity_id, command, context):
+    """Execute an explicit switch command only while current settings permit it."""
+    async with ledger.lock:
+        settings = ledger.settings
+        if not settings.get("stove_control_enabled", False):
+            raise ValueError("Stove control is disabled")
+        if entity_id != settings.get(
+            "stove_control_entity"
+        ) or not entity_id.startswith("switch."):
+            raise ValueError("Stove control configuration changed; refresh the card")
+        if command not in {"turn_on", "turn_off"}:
+            raise ValueError("Invalid stove command")
+        state = hass.states.get(entity_id)
+        if state is None or state.state not in {"on", "off"}:
+            raise ValueError("Stove control switch unavailable")
+        desired = "on" if command == "turn_on" else "off"
+        if state.state == desired:
+            return  # Replayed confirmations must never toggle the stove back.
+        await hass.services.async_call(
+            "switch", command, {"entity_id": entity_id}, blocking=True, context=context
+        )

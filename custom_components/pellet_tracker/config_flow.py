@@ -63,6 +63,13 @@ class OptionsFlow(config_entries.OptionsFlow):
         if user_input is not None:
             try:
                 settings = validate_settings(user_input, current, choices)
+                if (
+                    settings["stove_control_enabled"]
+                    and settings["stove_control_entity"]
+                    != current["stove_control_entity"]
+                    and settings["stove_control_entity"] not in stove_choices(self.hass)
+                ):
+                    raise ValueError("Choose an available stove control switch")
                 settings["settings_revision"] = (
                     self.config_entry.options.get("settings_revision", 0) + 1
                 )
@@ -73,6 +80,15 @@ class OptionsFlow(config_entries.OptionsFlow):
         if current["stove_entity"] not in sources:
             sources[current["stove_entity"]] = (
                 current["stove_entity"] + " · indisponible"
+            )
+        switches = {
+            "": "—",
+            **{k: v for k, v in sources.items() if k.startswith("switch.")},
+        }
+        if current["stove_control_entity"]:
+            switches.setdefault(
+                current["stove_control_entity"],
+                current["stove_control_entity"] + " · indisponible",
             )
         fields = {
             vol.Required("name", default=current["name"]): str,
@@ -85,6 +101,12 @@ class OptionsFlow(config_entries.OptionsFlow):
             vol.Optional("stove_attribute", default=current["stove_attribute"]): str,
             vol.Required("stove_on_states", default=current["stove_on_states"]): str,
             vol.Required("stove_off_states", default=current["stove_off_states"]): str,
+            vol.Required(
+                "stove_control_enabled", default=current["stove_control_enabled"]
+            ): bool,
+            vol.Optional(
+                "stove_control_entity", default=current["stove_control_entity"]
+            ): vol.In(switches),
         }
         for key, (minimum, maximum) in RANGES.items():
             fields[vol.Required(key, default=current[key])] = vol.All(

@@ -54,7 +54,11 @@ def ui_export(hass, ledger):
         "stove_sources": stove_choices(hass),
         "entities": entities,
         "mushroom_card": mushroom_card(
-            ledger.entry.title, entities, ledger.settings["language"]
+            ledger.entry.title,
+            entities,
+            ledger.settings["language"],
+            ledger.settings,
+            ledger.entry.entry_id,
         ),
     }
 
@@ -240,6 +244,13 @@ async def ws_settings(hass, connection, msg):
                 and source not in stove_choices(hass)
             ):
                 raise ValueError("Choisissez une entité de poêle disponible.")
+            control = options["stove_control_entity"]
+            if (
+                options["stove_control_enabled"]
+                and control != ledger.settings.get("stove_control_entity")
+                and control not in stove_choices(hass)
+            ):
+                raise ValueError("Choose an available stove control switch")
             options["settings_revision"] = msg["revision"] + 1
             hass.config_entries.async_update_entry(
                 ledger.entry, options=options, title=options["name"]

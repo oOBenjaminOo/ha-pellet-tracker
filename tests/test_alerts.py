@@ -28,6 +28,27 @@ settings = load("settings")
 
 
 class AlertTests(unittest.TestCase):
+    def test_stove_control_requires_opt_in_and_a_switch(self):
+        current = {**settings.DEFAULTS, "name": "Poêle"}
+        self.assertFalse(
+            settings.validate_settings({}, current, {"": "Local"})[
+                "stove_control_enabled"
+            ]
+        )
+        for raw in (
+            {"stove_control_enabled": True},
+            {"stove_control_entity": "light.stove"},
+            {"stove_control_enabled": "on"},
+        ):
+            with self.assertRaises((ValueError, TypeError)):
+                settings.validate_settings(raw, current, {"": "Local"})
+        configured = settings.validate_settings(
+            {"stove_control_enabled": True, "stove_control_entity": "switch.stove"},
+            current,
+            {"": "Local"},
+        )
+        self.assertTrue(configured["stove_control_enabled"])
+
     def test_language_defaults_validation_and_english_alerts(self):
         current = {**settings.DEFAULTS, "name": "Poêle"}
         self.assertEqual(

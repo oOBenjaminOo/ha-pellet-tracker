@@ -6,7 +6,9 @@ from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.service import async_register_admin_service
 
 from .const import DOMAIN
+from .i18n import text
 from .model import KINDS
+from .stove import async_control_stove
 
 
 def async_register_services(hass):
@@ -15,7 +17,15 @@ def async_register_services(hass):
         if ledger is None:
             raise HomeAssistantError("Pellet journal not loaded")
         try:
-            if call.service in {"record", "edit"}:
+            if call.service == "control_stove":
+                await async_control_stove(
+                    hass,
+                    ledger,
+                    call.data["entity_id"],
+                    call.data["command"],
+                    call.context,
+                )
+            elif call.service in {"record", "edit"}:
                 payload = dict(call.data)
                 payload.pop("entry_id")
                 if call.service == "edit":
@@ -40,10 +50,17 @@ def async_register_services(hass):
             elif call.service == "export":
                 return ledger.export()
         except (ValueError, TypeError, KeyError, OSError) as err:
-            raise HomeAssistantError(str(err)) from err
+            raise HomeAssistantError(
+                text(ledger.settings.get("language", "fr"), str(err))
+            ) from err
 
     common = {vol.Required("entry_id"): str}
     schemas = {
+        "control_stove": {
+            **common,
+            vol.Required("entity_id"): str,
+            vol.Required("command"): vol.In(["turn_on", "turn_off"]),
+        },
         "record": {
             **common,
             vol.Required("kind"): vol.In(sorted(KINDS)),

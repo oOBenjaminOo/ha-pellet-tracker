@@ -63,6 +63,13 @@ class PelletSensor(CoordinatorEntity, SensorEntity):
         }
 
     @property
+    def native_unit_of_measurement(self):
+        unit = self._attr_native_unit_of_measurement
+        if unit == "d" and self.coordinator.settings.get("language", "fr") == "fr":
+            return "j"
+        return unit
+
+    @property
     def native_value(self):
         data = self.coordinator.data
         if FIELDS[self.key][2]:

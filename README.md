@@ -3,7 +3,7 @@
 Local Home Assistant custom integration for pellet stock, seasonal usage,
 cleaning and purchase costs. Original project by Benjamin (@oOBenjaminOo).
 
-**0.6.3b1 is a feature-complete beta for real-world testing.** No HACS default-catalog submission has
+**0.7.0b1 is a feature-complete beta for real-world testing.** No HACS default-catalog submission has
 been made. No cloud account, stove connection or runtime Python dependency.
 
 ## Language / Langue
@@ -365,3 +365,18 @@ anciens boutons sous la carte Mushroom sont remplacés par ces objets cliquables
 The Mushroom header preserves the original 3:2 photograph framing. Dynamic stock
 and maintenance badges, plus the tracker home shortcut, are positioned directly on
 the image alongside the existing bag and vacuum actions.
+
+### Optional stove control / Commande facultative
+
+In Settings, enable stove image control and select the intended switch. Regenerate
+the card after enabling control or changing the target switch. Clicking the stove
+asks to turn it on or off according to the switch state. Unknown switch states
+have no command hotspot. Disabling the option blocks old copied cards too.
+Control uses explicit commands, never switch.toggle, and does not infer bag usage.
+The observed heating source remains independent: associate it to drive the flame.
+Control actions require an administrator, like journal writes.
+
+Dans Réglages, activez la commande du poêle et choisissez son switch, puis remplacez
+la carte générée. Chaque commande exige une confirmation. L’option est désactivée
+par défaut ; sa désactivation bloque aussi les anciennes cartes. Le switch de
+commande et la source d’état de chauffe peuvent être différents.

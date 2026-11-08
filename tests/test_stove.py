@@ -57,3 +57,66 @@ class StoveTests(unittest.TestCase):
         self.assertEqual(stove.stove_status(self.hass, self.settings), "off")
         self.state.attributes["burning"] = True
         self.assertEqual(stove.stove_status(self.hass, self.settings), "on")
+
+
+class StoveControlTests(unittest.IsolatedAsyncioTestCase):
+    async def asyncSetUp(self):
+        import asyncio
+        from unittest.mock import AsyncMock
+
+        self.state = types.SimpleNamespace(state="off")
+        self.hass = types.SimpleNamespace(
+            states=types.SimpleNamespace(get=lambda _id: self.state),
+            services=types.SimpleNamespace(async_call=AsyncMock()),
+        )
+        self.ledger = types.SimpleNamespace(
+            lock=asyncio.Lock(),
+            settings={
+                "stove_control_enabled": True,
+                "stove_control_entity": "switch.stove",
+            },
+        )
+        self.context = object()
+
+    async def command(self, command="turn_on", entity="switch.stove"):
+        await stove.async_control_stove(
+            self.hass, self.ledger, entity, command, self.context
+        )
+
+    async def test_explicit_commands_preserve_context_and_only_target_selected_switch(
+        self,
+    ):
+        await self.command()
+        self.hass.services.async_call.assert_awaited_once_with(
+            "switch",
+            "turn_on",
+            {"entity_id": "switch.stove"},
+            blocking=True,
+            context=self.context,
+        )
+        self.state.state = "on"
+        await self.command("turn_off")
+        self.assertEqual(self.hass.services.async_call.call_args.args[1], "turn_off")
+
+    async def test_disabled_old_card_and_changed_switch_never_dispatch(self):
+        self.ledger.settings["stove_control_enabled"] = False
+        with self.assertRaises(ValueError):
+            await self.command()
+        self.ledger.settings["stove_control_enabled"] = True
+        with self.assertRaises(ValueError):
+            await self.command(entity="switch.old_stove")
+        with self.assertRaises(ValueError):
+            await self.command("toggle")
+        self.hass.services.async_call.assert_not_awaited()
+
+    async def test_unavailable_and_replayed_commands_never_toggle(self):
+        for state in ("unknown", "unavailable"):
+            self.state.state = state
+            with self.assertRaises(ValueError):
+                await self.command()
+        self.state = None
+        with self.assertRaises(ValueError):
+            await self.command()
+        self.state = types.SimpleNamespace(state="on")
+        await self.command("turn_on")
+        self.hass.services.async_call.assert_not_awaited()

@@ -1,5 +1,14 @@
 /* Authored interface messages only. Never translate journal or entity data. */
 export const ENGLISH = {
+  "Choisir un switch": "Choose a switch",
+  "Commande du poêle · facultatif": "Stove control · optional",
+  "Autoriser la commande depuis l’image du poêle":
+    "Allow control from the stove image",
+  "Switch de commande du poêle": "Stove control switch",
+  "Un clic sur le poêle propose d’allumer ou d’éteindre le switch, avec confirmation. Désactivé par défaut. Associez aussi l’entité d’état pour que la flamme suive la chauffe. Après activation ou changement de switch, remplacez la carte générée. La désactivation bloque aussi les anciennes cartes.":
+    "Clicking the stove offers to turn the switch on or off, with confirmation. Disabled by default. Also associate the state entity so the flame follows heating. After enabling or changing the switch, replace the generated card. Disabling also blocks old cards.",
+  "Choose a stove control switch": "Choose a stove control switch",
+
   " sacs utilisés": " bags used",
   "Langue du suivi": "Tracker language",
   "La langue s’applique après enregistrement. Les cartes déjà ajoutées restent dans leur langue d’origine ; remplacez-les pour changer leur langue.":

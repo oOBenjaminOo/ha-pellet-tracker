@@ -223,6 +223,35 @@ class ReportTests(unittest.TestCase):
                     (ROOT / "frontend" / action["image"].split("/")[-1]).is_file()
                 )
 
+    def test_stove_control_is_opt_in_and_uses_confirmed_explicit_guarded_actions(self):
+        settings = {
+            "stove_control_enabled": True,
+            "stove_control_entity": "switch.stove",
+        }
+        enabled = dashboard.mushroom_card("Poêle", [], "fr", settings, "journal-a")
+        hotspots = [
+            e for e in enabled["cards"][1]["elements"] if e["type"] == "conditional"
+        ]
+        self.assertEqual(len(hotspots), 2)
+        self.assertEqual([e["conditions"][0]["state"] for e in hotspots], ["off", "on"])
+        for hotspot, command in zip(hotspots, ["turn_on", "turn_off"], strict=True):
+            action = hotspot["elements"][0]["tap_action"]
+            self.assertEqual(action["perform_action"], "pellet_tracker.control_stove")
+            self.assertEqual(
+                action["data"],
+                {
+                    "entry_id": "journal-a",
+                    "entity_id": "switch.stove",
+                    "command": command,
+                },
+            )
+            self.assertIn("confirmation", action)
+        settings["stove_control_enabled"] = False
+        disabled = dashboard.mushroom_card("Poêle", [], "fr", settings, "journal-a")
+        self.assertFalse(
+            any(e["type"] == "conditional" for e in disabled["cards"][1]["elements"])
+        )
+
     def test_connected_mushroom_uses_distinct_images_and_today_confirmations(self):
         card = dashboard.mushroom_card(
             "Stove",

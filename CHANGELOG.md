@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.7.0b1
+
+- French day display uses lowercase j; English retains d.
+- Optional, default-disabled stove switch control from the stove image.
+- Explicit on/off confirmations and server-side opt-in/target/state checks.
+- Disabling control also blocks previously copied cards; preserve user context.
+- Separate observed heating source and physical command switch.
+
 ## 0.6.3b1
 
 - Preserve the original 3:2 stove image proportions and full framing.

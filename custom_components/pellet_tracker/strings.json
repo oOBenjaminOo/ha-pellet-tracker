@@ -126,7 +126,9 @@
           "stove_attribute": "Attribute (empty = entity state)",
           "stove_on_states": "On states, comma-separated",
           "stove_off_states": "Off states, comma-separated",
-          "language": "Tracker language"
+          "language": "Tracker language",
+          "stove_control_enabled": "Allow stove control from the card",
+          "stove_control_entity": "Stove control switch"
         }
       }
     },

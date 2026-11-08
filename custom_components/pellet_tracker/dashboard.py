@@ -3,7 +3,7 @@
 from .i18n import text
 
 
-def mushroom_card(name, entities, language="fr"):
+def mushroom_card(name, entities, language="fr", settings=None, entry_id=None):
     def tr(message):
         return text(language, message)
 
@@ -165,6 +165,51 @@ def mushroom_card(name, entities, language="fr"):
             "double_tap_action": {"action": "none"},
         }
     )
+    if (
+        settings
+        and settings.get("stove_control_enabled")
+        and entry_id
+        and settings.get("stove_control_entity")
+    ):
+        target = settings["stove_control_entity"]
+        for state, command, label in (
+            ("off", "turn_on", "Allumer le poêle ?"),
+            ("on", "turn_off", "Éteindre le poêle ?"),
+        ):
+            elements.append(
+                {
+                    "type": "conditional",
+                    "conditions": [{"entity": target, "state": state}],
+                    "elements": [
+                        {
+                            "type": "image",
+                            "image": "/pellet_tracker_static/stove-control.svg",
+                            "entity": target,
+                            "title": tr(label),
+                            "aspect_ratio": "0.7:1",
+                            "filter": "none",
+                            "style": {
+                                "left": "78%",
+                                "top": "51%",
+                                "width": "36%",
+                                "cursor": "pointer",
+                            },
+                            "tap_action": {
+                                "action": "perform-action",
+                                "perform_action": "pellet_tracker.control_stove",
+                                "data": {
+                                    "entry_id": entry_id,
+                                    "entity_id": target,
+                                    "command": command,
+                                },
+                                "confirmation": {"text": tr(label)},
+                            },
+                            "hold_action": {"action": "none"},
+                            "double_tap_action": {"action": "none"},
+                        }
+                    ],
+                }
+            )
     status_entity = by_key.get("stove_status")
 
     def header(image):
