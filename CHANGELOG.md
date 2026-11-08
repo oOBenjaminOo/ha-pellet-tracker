@@ -2,6 +2,8 @@
 
 ## 0.2.0b1
 
+- Classify the integration as a service so journals are selectable in native action pickers.
+
 - Rolling autonomy and exhaustion date with minimum observation rules and stale-data suppression.
 - Monthly quantity, FIFO cost, spending and weighted price charts, with CSV exports.
 - Same-calendar-date season comparisons, including leap-year handling.
