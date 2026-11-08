@@ -899,9 +899,21 @@ class PelletTrackerPanel extends HTMLElement {
       return "# Aucun capteur disponible. Vérifiez que l’intégration est chargée.";
     return `type: vertical-stack\ncards:\n  - type: markdown\n    content: ${quote("## 🔥 " + this.data.name)}\n  - type: grid\n    columns: 2\n    square: false\n    cards:\n${tiles}${actions ? `\n  - type: grid\n    columns: 2\n    square: false\n    cards:\n${actions}` : ""}\n`;
   }
+  cleaningRule() {
+    const cfg = this.data.settings,
+      rules = [];
+    if (cfg.cleaning_bags) rules.push(`${cfg.cleaning_bags} sacs utilisés`);
+    if (cfg.cleaning_days)
+      rules.push(
+        `${cfg.cleaning_days} jours avec consommation depuis le dernier nettoyage`,
+      );
+    return rules.length
+      ? `alerte après ${rules.join(" ou ")}`
+      : "rappel désactivé";
+  }
   dashboardsView() {
     const entities = this.data.entities || [];
-    return `<section><h2>Carte Mushroom</h2><p>Le visuel de poêle fourni avec l’intégration, le stock, l’autonomie, les dépenses, le nettoyage et les actions avec confirmation. Nécessite Mushroom installé depuis HACS.</p><button id="copyMushroom" class="primary">Copier la carte Mushroom</button><p class="muted">Collez ce contenu dans une carte Manuelle. Le format JSON fourni est également du YAML valide. Stock OK : plus de ${this.data.settings.low_stock} sacs. Entretien : alerte après ${this.data.settings.cleaning_bags} sacs utilisés${this.data.settings.cleaning_days ? ` ou ${this.data.settings.cleaning_days} jours avec consommation depuis le dernier nettoyage` : " ; seuil en jours désactivé"}. Les seuils se règlent dans Réglages.</p><details><summary>Afficher la configuration Mushroom</summary><textarea class="code" readonly aria-label="Carte Mushroom YAML">${escapeHTML(JSON.stringify(this.data.mushroom_card, null, 2))}</textarea></details></section><section><h2>Votre suivi dans vos tableaux de bord</h2><p>Les données sont disponibles sous forme d’entités Home Assistant : capteurs, alertes et boutons. Vous pouvez les utiliser dans vos cartes et automatisations, indépendamment de cette interface.</p><div class="row"><span class="badge">${entities.length} entités pour ce poêle</span><span class="badge">Cartes natives · aucune carte supplémentaire à installer</span></div></section>
+    return `<section><h2>Carte Mushroom</h2><p>Le visuel de poêle fourni avec l’intégration, le stock, l’autonomie, les dépenses, le nettoyage et les actions avec confirmation. Nécessite Mushroom installé depuis HACS.</p><button id="copyMushroom" class="primary">Copier la carte Mushroom</button><p class="muted">Collez ce contenu dans une carte Manuelle. Le format JSON fourni est également du YAML valide. Stock OK : plus de ${this.data.settings.low_stock} sacs. Entretien : ${this.cleaningRule()}. Les seuils se règlent dans Réglages.</p><details><summary>Afficher la configuration Mushroom</summary><textarea class="code" readonly aria-label="Carte Mushroom YAML">${escapeHTML(JSON.stringify(this.data.mushroom_card, null, 2))}</textarea></details></section><section><h2>Votre suivi dans vos tableaux de bord</h2><p>Les données sont disponibles sous forme d’entités Home Assistant : capteurs, alertes et boutons. Vous pouvez les utiliser dans vos cartes et automatisations, indépendamment de cette interface.</p><div class="row"><span class="badge">${entities.length} entités pour ce poêle</span><span class="badge">Cartes natives · aucune carte supplémentaire à installer</span></div></section>
       <section><div class="row"><h2>Carte prête à ajouter</h2><span class="spacer"></span><button id="copyCard" class="primary">Copier la carte YAML</button></div><ol><li>Ouvrez votre dashboard et choisissez « Modifier le tableau de bord ».</li><li>Ajoutez une carte « Manuelle ».</li><li>Collez ce YAML et enregistrez.</li></ol><p class="muted">La carte inclut le stock, la consommation, les dépenses, l’autonomie, le nettoyage et le prix moyen. Les boutons demandent confirmation avant d’enregistrer une opération.</p><details><summary>Afficher le YAML</summary><textarea class="code" readonly aria-label="Carte dashboard YAML">${escapeHTML(this.dashboardYaml())}</textarea></details></section>
       ${[
         ["sensor", "Capteurs"],
