@@ -3,7 +3,9 @@
 from .i18n import text
 
 
-def mushroom_card(name, entities, language="fr", settings=None, entry_id=None):
+def mushroom_card(
+    name, entities, language="fr", settings=None, entry_id=None, undo_revision=None
+):
     def tr(message):
         return text(language, message)
 
@@ -165,6 +167,35 @@ def mushroom_card(name, entities, language="fr", settings=None, entry_id=None):
             "double_tap_action": {"action": "none"},
         }
     )
+    if entry_id and undo_revision is not None:
+        elements.append(
+            {
+                "type": "icon",
+                "icon": "mdi:undo-variant",
+                "title": tr("Annuler la dernière saisie"),
+                "style": {
+                    "left": "53%",
+                    "top": "26%",
+                    "color": "#fff",
+                    "background": "rgba(20,20,20,0.78)",
+                    "padding": "7px",
+                    "border-radius": "50%",
+                    "--mdc-icon-size": "20px",
+                },
+                "tap_action": {
+                    "action": "perform-action",
+                    "perform_action": "pellet_tracker.undo_last",
+                    "data": {"entry_id": entry_id, "revision": undo_revision},
+                    "confirmation": {
+                        "text": tr(
+                            "Annuler la dernière saisie et recalculer le stock ?"
+                        )
+                    },
+                },
+                "hold_action": {"action": "none"},
+                "double_tap_action": {"action": "none"},
+            }
+        )
     if (
         settings
         and settings.get("stove_control_enabled")

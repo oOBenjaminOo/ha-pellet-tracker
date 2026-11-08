@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.8.0b1
+
+- Live Pellet Tracker dashboard card with per-journal subscription and native card picker editor.
+- Automatic language/settings/entity-rename updates without recopying dashboard YAML.
+- Confirmed latest-entry undo directly on the image, protected by journal revision.
+- Downloadable French/English season PDFs with embedded fonts and paginated tables.
+- Three-step observed-heating/control/review assistant; saving never actuates hardware.
+- Read permissions for card streams, admin-only control/undo, and subscription cleanup.
+- Remove only a deleted journal’s own storage. ReportLab is installed automatically by HA.
+
 ## 0.7.1b1
 
 - Spell out day units: jour/jours in French and day/days in English.

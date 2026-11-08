@@ -311,3 +311,22 @@ test("English operations, validation and generated native card keep protocol ide
   assert.match(box.textContent,/Insufficient stock on 07\/11\/2018/);
   assert.equal(box.textContent.includes("secret-id"),false);
 });
+
+test("connection assistant separates observation, optional control and review without commanding hardware",()=>{
+  const {p}=fixture();p.data.settings={...p.data.settings,language:"en",stove_entity:"binary_sensor.fire",stove_attribute:"",stove_on_states:"on",stove_off_states:"off",stove_control_enabled:false,stove_control_entity:""};
+  p.data.stove_sources={"binary_sensor.fire":"Real heating","switch.stove":"Stove relay"};
+  p.shadowRoot={querySelector:()=>null};let markup,title,calls=0;
+  p._hass={callWS:()=>calls++};p.showEditor=(heading,html)=>{title=heading;markup=html;return null;};
+  p.openStoveWizard();
+  assert.equal(title,"Setup assistant");
+  assert.match(markup,/1\. Observe heating/);assert.match(markup,/2\. Control the stove/);assert.match(markup,/3\. Review and save/);
+  assert.match(markup,/name="stove_entity"/);assert.match(markup,/name="stove_control_entity"/);
+  assert.match(markup,/never activates it/);assert.equal(calls,0);
+});
+
+test("wizard save can preserve unsaved unrelated general settings",async()=>{
+  const {p}=fixture(),draft={name:"Unsaved stove name",low_stock:"12"};
+  p.closeEditor=()=>{};p._hass={callWS:async()=>({name:"Stored stove",settings:{language:"fr"}})};
+  await p.settingsRequest("pellet_tracker/settings",{settings:{stove_entity:"binary_sensor.fire"},revision:3},draft);
+  assert.equal(p.settingsDraft,draft);assert.equal(p.data.name,"Stored stove");assert.equal(p.busy,false);
+});

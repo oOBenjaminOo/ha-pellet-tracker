@@ -1,5 +1,30 @@
 /* Authored interface messages only. Never translate journal or entity data. */
 export const ENGLISH = {
+  "Assistant de configuration": "Setup assistant",
+  "1. Observer la chauffe": "1. Observe heating",
+  "2. Commander le poêle (facultatif)": "2. Control the stove (optional)",
+  "3. Vérifier et enregistrer": "3. Review and save",
+  "Choisissez l’entité qui indique la chauffe réelle. Elle peut provenir de MQTT, Tasmota ou d’une autre intégration. Cette étape ne commande aucun appareil.":
+    "Choose the entity that indicates actual heating. It may come from MQTT, Tasmota or another integration. This step does not control any device.",
+  "Pour climate, utilisez hvac_action si disponible : heating signifie chauffe et idle repos. Le mode heat seul ne prouve pas une chauffe réelle.":
+    "For climate, use hvac_action if available: heating means heating and idle means idle. Heat mode alone does not prove actual heating.",
+  "Le switch de commande peut être différent de l’entité de chauffe. L’assistant ne l’active jamais. Les commandes depuis la carte demandent confirmation.":
+    "The control switch may differ from the heating entity. The assistant never activates it. Card commands require confirmation.",
+  "Enregistrer ces choix ne démarre pas le poêle. La carte existante sera mise à jour automatiquement.":
+    "Saving these choices does not start the stove. The existing card will update automatically.",
+  Retour: "Back",
+  Suivant: "Next",
+  "Étape ": "Step ",
+  "Observation : ": "Observation: ",
+  "Commande : ": "Control: ",
+  Désactivée: "Disabled",
+  "Télécharger le bilan PDF": "Download PDF report",
+  "Bilan PDF téléchargé.": "PDF report downloaded.",
+  "La langue s’applique après enregistrement. La carte Pellet Tracker se met à jour automatiquement.":
+    "The language applies after saving. The Pellet Tracker card updates automatically.",
+  "Un clic sur le poêle propose d’allumer ou d’éteindre le switch, avec confirmation. Désactivé par défaut. Associez aussi l’entité d’état pour que la flamme suive la chauffe. La carte Pellet Tracker suit automatiquement les réglages. La désactivation bloque aussi les anciennes cartes.":
+    "Clicking the stove offers to turn the switch on or off, with confirmation. Disabled by default. Also associate the state entity so the flame follows heating. The Pellet Tracker card follows settings automatically. Disabling also blocks old cards.",
+
   "Choisir un switch": "Choose a switch",
   "Commande du poêle · facultatif": "Stove control · optional",
   "Autoriser la commande depuis l’image du poêle":
@@ -18,7 +43,7 @@ export const ENGLISH = {
     '<p class="muted">No stock movements recorded.</p>',
   "Chargement…": "Loading…",
   Poêle: "Stove",
-  "Bêta 0.6": "Beta 0.6",
+  "Bêta 0.8": "Beta 0.8",
   "Suivi Granulés": "Pellet Tracker",
   "Ajoute Pellet Tracker dans Paramètres → Appareils et services → Ajouter une intégration.":
     "Add Pellet Tracker in Settings → Devices & services → Add integration.",

@@ -3,8 +3,8 @@
 Local Home Assistant custom integration for pellet stock, seasonal usage,
 cleaning and purchase costs. Original project by Benjamin (@oOBenjaminOo).
 
-**0.7.1b1 is a feature-complete beta for real-world testing.** No HACS default-catalog submission has
-been made. No cloud account, stove connection or runtime Python dependency.
+**0.8.0b1 is a feature-complete beta for real-world testing.** No HACS default-catalog submission has
+been made. No cloud account or mandatory stove connection. Home Assistant installs the pinned ReportLab dependency for PDF exports.
 
 ## Language / Langue
 
@@ -14,13 +14,12 @@ Existing trackers default to French. Numbers, months, interface messages, CSV he
 notifications and newly generated dashboard cards use the selected language.
 User names, comments, entity IDs, MQTT values and historical records are never translated.
 Home Assistant's own settings screens and native entity names follow your HA profile language.
-Existing copied dashboard cards keep their original text; replace their configuration
-with the newly generated card to switch their language.
+The live Pellet Tracker card follows language and settings automatically. Replace old static Mushroom card configurations once with the new live card. Native YAML examples remain static.
 
 Choisissez **Français** ou **English** à la création, ou dans
 **Réglages → Langue du suivi → Enregistrer les paramètres**. Chaque poêle conserve
 son choix ; les suivis existants restent en français. Pour changer la langue d’une
-carte déjà ajoutée, remplacez sa configuration par la nouvelle carte générée.
+ancienne carte statique, remplacez-la une seule fois par la nouvelle carte automatique.
 
 ## Fonctionnement
 
@@ -114,7 +113,7 @@ séparées par des virgules. Pour un thermostat, `hvac_action: heating/idle` peu
 Le capteur **État de chauffe du poêle** suit les changements de l’entité et de
 ses attributs sans interrogation périodique. La carte Mushroom affiche l’image
 avec flamme seulement pour l’état reconnu `on`, l’image sans flamme pour `off`,
-et une indication distincte pour une source inconnue/indisponible ou non configurée.
+et un visuel sans flamme pour une source inconnue/indisponible ou non configurée.
 Les valeurs non reconnues restent inconnues. Aucune consommation, aucun nettoyage
 ni commande du poêle ne découle de cette association.
 
@@ -317,7 +316,7 @@ Le moteur est indépendant de Home Assistant. Les tests couvrent les coûts FIFO
 les frontières de saisons, les prix inconnus, les pertes, les corrections,
 la concurrence, la persistance et le rejet atomique d’un import invalide.
 
-La page de gestion est française ; les entités et les formulaires de configuration
+La page de gestion est bilingue français/anglais ; les entités et les formulaires de configuration
 et d’options ont des traductions FR/EN. Cette bêta doit encore être évaluée en
 usage quotidien avant une version stable. Les diagnostics excluent le contenu
 du journal, les destinataires et les commentaires. Le fonctionnement est local ;
@@ -328,7 +327,7 @@ les destinations de notification choisies peuvent utiliser leurs propres service
 Pellet Tracker is a local inventory ledger. Add purchases with optional unit
 prices, log bag usage and cleaning, and compare heating seasons. FIFO costs
 carry across seasons. Unknown prices remain unknown. Administration uses the
-French built-in panel; configuration and entities are available in English.
+French/English built-in panel; configuration and entities also follow the HA profile language.
 Install the custom component, restart Home Assistant and add Pellet Tracker
 from Devices & services. Monthly charts, same-date comparisons, guarded autonomy
 estimates, native actions, quick buttons and configurable grouped notifications
@@ -368,15 +367,43 @@ the image alongside the existing bag and vacuum actions.
 
 ### Optional stove control / Commande facultative
 
-In Settings, enable stove image control and select the intended switch. Regenerate
-the card after enabling control or changing the target switch. Clicking the stove
+In Settings, enable stove image control and select the intended switch. The live
+card updates automatically after saving. Clicking the stove
 asks to turn it on or off according to the switch state. Unknown switch states
 have no command hotspot. Disabling the option blocks old copied cards too.
 Control uses explicit commands, never switch.toggle, and does not infer bag usage.
 The observed heating source remains independent: associate it to drive the flame.
 Control actions require an administrator, like journal writes.
 
-Dans Réglages, activez la commande du poêle et choisissez son switch, puis remplacez
-la carte générée. Chaque commande exige une confirmation. L’option est désactivée
+Dans Réglages, activez la commande du poêle et choisissez son switch ; la carte
+automatique suit les changements après enregistrement. Chaque commande exige une confirmation. L’option est désactivée
 par défaut ; sa désactivation bloque aussi les anciennes cartes. Le switch de
 commande et la source d’état de chauffe peuvent être différents.
+
+## Live card, PDF report and guided setup / Carte automatique, PDF et assistant
+
+Add the generated card from **Dashboards**, or select **Pellet Tracker** in HA’s card picker.
+Its configuration contains only `type: custom:pellet-tracker-card` and `entry_id`.
+The integration loads the module automatically. Mushroom remains required. Existing
+static cards need one replacement; subsequent settings, language, source and entity-name
+changes stream to the installed card. New frontend code may require a browser refresh.
+No full journal or audit is sent to card subscriptions. Card readers must have read
+permission for the relevant entities; stove control and undo remain administrator-only.
+
+The undo arrow appears only while the latest journal change is an addition. It asks
+for confirmation and sends the displayed revision; concurrent changes reject the undo.
+Consumption/cleaning combined entries are reverted atomically by the existing ledger.
+
+**Seasons → Report and budget → Download PDF report** creates a real local PDF with
+season totals, heating dates, optional budget, monthly data and top suppliers/brands.
+Incomplete prices stay unknown; the current season is marked provisional. No data is
+sent to an external PDF service. PDF generation runs outside the HA event loop.
+
+**Settings → Connected stove → Setup assistant** separates observed heating, optional
+command switch and final review. Current observed values are shown without sending
+any hardware command. General settings being edited remain available as an unsaved draft.
+
+Dans **Dashboards**, ajoutez la carte automatique Pellet Tracker. Une seule migration
+des anciennes cartes est nécessaire. La flèche d’annulation apparaît pour la dernière
+saisie annulable. Le bilan PDF se télécharge dans **Saisons → Bilan et budget**.
+L’assistant se trouve dans **Réglages → Poêle connecté** et n’actionne aucun appareil.

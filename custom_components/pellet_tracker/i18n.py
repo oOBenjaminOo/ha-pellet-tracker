@@ -1,6 +1,8 @@
 """Local messages for generated cards and notifications. Journal data is never translated."""
 
 ENGLISH = {
+    "Annuler la dernière saisie": "Undo latest entry",
+    "Annuler la dernière saisie et recalculer le stock ?": "Undo the latest entry and recalculate stock?",
     "Allumer le poêle ?": "Turn on the stove?",
     "Éteindre le poêle ?": "Turn off the stove?",
     "Ouvrir le suivi": "Open tracker",

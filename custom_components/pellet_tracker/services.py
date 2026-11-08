@@ -17,7 +17,14 @@ def async_register_services(hass):
         if ledger is None:
             raise HomeAssistantError("Pellet journal not loaded")
         try:
-            if call.service == "control_stove":
+            if call.service == "undo_last":
+                await ledger.transact(
+                    "undo",
+                    {},
+                    call.data["revision"],
+                    call.context.user_id or "automation",
+                )
+            elif call.service == "control_stove":
                 await async_control_stove(
                     hass,
                     ledger,
@@ -56,6 +63,10 @@ def async_register_services(hass):
 
     common = {vol.Required("entry_id"): str}
     schemas = {
+        "undo_last": {
+            **common,
+            vol.Required("revision"): vol.All(int, vol.Range(min=0)),
+        },
         "control_stove": {
             **common,
             vol.Required("entity_id"): str,

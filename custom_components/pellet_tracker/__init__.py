@@ -1,9 +1,12 @@
 """Local pellet inventory and maintenance integration."""
 
+import base64
 from pathlib import Path
 
 import voluptuous as vol
+from homeassistant.auth.permissions.const import POLICY_READ
 from homeassistant.components import (
+    frontend,
     panel_custom,
     persistent_notification,
     websocket_api,
@@ -17,6 +20,7 @@ from homeassistant.helpers.event import (
     async_track_state_change_event,
     async_track_time_change,
 )
+from homeassistant.helpers.storage import Store
 
 from .const import DOMAIN, PLATFORMS, VERSION
 from .dashboard import mushroom_card
@@ -29,7 +33,7 @@ from .stove import stove_choices, stove_status
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 
-def ui_export(hass, ledger):
+def registered_entities(hass, ledger):
     """Include actual entity IDs, including user renames, for dashboard helpers."""
     prefix = f"{ledger.entry.entry_id}_"
     entities = []
@@ -48,18 +52,50 @@ def ui_export(hass, ledger):
                 "enabled": entity.disabled_by is None,
             }
         )
+    return entities
+
+
+def card_payload(hass, ledger, allow_control=True):
+    """Only card configuration is streamed, never the full journal or audit."""
+    entities = registered_entities(hass, ledger)
+    last = ledger.journal["audit"][-1] if ledger.journal["audit"] else None
+    undo_revision = (
+        ledger.journal["revision"]
+        if last
+        and last["action"] == "add"
+        and last["revision"] == ledger.journal["revision"]
+        else None
+    )
+    settings = ledger.settings
+    if not allow_control:
+        settings = {**settings, "stove_control_enabled": False}
+        undo_revision = None
+    return {
+        "language": ledger.settings["language"],
+        "config": mushroom_card(
+            ledger.entry.title,
+            entities,
+            ledger.settings["language"],
+            settings,
+            ledger.entry.entry_id,
+            undo_revision,
+        ),
+    }
+
+
+def ui_export(hass, ledger):
+    """The installed card stores only the stable journal ID, never a frozen copy."""
+    entities = registered_entities(hass, ledger)
     return {
         **ledger.export(),
         "notification_choices": notification_choices(hass),
         "stove_sources": stove_choices(hass),
         "entities": entities,
-        "mushroom_card": mushroom_card(
-            ledger.entry.title,
-            entities,
-            ledger.settings["language"],
-            ledger.settings,
-            ledger.entry.entry_id,
-        ),
+        "mushroom_card": {
+            "type": "custom:pellet-tracker-card",
+            "entry_id": ledger.entry.entry_id,
+        },
+        "card_language": ledger.settings["language"],
     }
 
 
@@ -71,6 +107,8 @@ async def async_setup(hass, config):
     websocket_api.async_register_command(hass, ws_mutate)
     websocket_api.async_register_command(hass, ws_settings)
     websocket_api.async_register_command(hass, ws_test_notification)
+    websocket_api.async_register_command(hass, ws_card_updates)
+    websocket_api.async_register_command(hass, ws_report_pdf)
     async_register_services(hass)
     await hass.http.async_register_static_paths(
         [
@@ -79,6 +117,7 @@ async def async_setup(hass, config):
             )
         ]
     )
+    frontend.add_extra_js_url(hass, f"/pellet_tracker_static/card.js?v={VERSION}")
     await panel_custom.async_register_panel(
         hass,
         webcomponent_name="pellet-tracker-panel",
@@ -284,3 +323,95 @@ async def ws_test_notification(hass, connection, msg):
         connection.send_error(msg["id"], "delivery_failed", str(err))
         return
     connection.send_result(msg["id"], {"success": True})
+
+
+@websocket_api.websocket_command(
+    {vol.Required("type"): "pellet_tracker/card_updates", vol.Required("entry_id"): str}
+)
+@websocket_api.async_response
+async def ws_card_updates(hass, connection, msg):
+    ledger = hass.data[DOMAIN].get(msg["entry_id"])
+    if ledger is None:
+        connection.send_error(msg["id"], "not_found", "Journal not found")
+        return
+
+    def can_read():
+        required = [e["entity_id"] for e in registered_entities(hass, ledger)]
+        required += [
+            ledger.settings.get(key)
+            for key in ("stove_entity", "stove_control_entity")
+            if ledger.settings.get(key)
+        ]
+        return connection.user.is_admin or all(
+            connection.user.permissions.check_entity(entity_id, POLICY_READ)
+            for entity_id in required
+        )
+
+    if not can_read():
+        connection.send_error(msg["id"], "unauthorized", "Access denied")
+        return
+
+    @callback
+    def publish(*_args):
+        if not can_read():
+            connection.send_event(msg["id"], {"error": "Access denied"})
+            return
+        connection.send_event(
+            msg["id"], card_payload(hass, ledger, connection.user.is_admin)
+        )
+
+    remove_coordinator = ledger.async_add_listener(publish)
+    remove_registry = hass.bus.async_listen("entity_registry_updated", publish)
+
+    @callback
+    def unsubscribe():
+        remove_coordinator()
+        remove_registry()
+
+    connection.subscriptions[msg["id"]] = unsubscribe
+    connection.send_result(msg["id"])
+    publish()
+
+
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): "pellet_tracker/report_pdf",
+        vol.Required("entry_id"): str,
+        vol.Required("season"): str,
+    }
+)
+@websocket_api.require_admin
+@websocket_api.async_response
+async def ws_report_pdf(hass, connection, msg):
+    ledger = hass.data[DOMAIN].get(msg["entry_id"])
+    if ledger is None:
+        connection.send_error(msg["id"], "not_found", "Journal not found")
+        return
+    snapshot = ledger.export()
+    snapshot["report_date"] = ledger.today
+    if msg["season"] not in snapshot["summary"]["seasons"]:
+        connection.send_error(msg["id"], "invalid_season", "Season not found")
+        return
+    content = await hass.async_add_executor_job(
+        build_season_pdf, snapshot, msg["season"]
+    )
+    connection.send_result(
+        msg["id"],
+        {
+            "filename": "pellet-tracker-" + msg["season"].replace("/", "-") + ".pdf",
+            "content": base64.b64encode(content).decode("ascii"),
+        },
+    )
+
+
+async def async_remove_entry(hass, entry):
+    """Remove only this deleted journal's own durable data."""
+    await Store(hass, 1, f"{DOMAIN}.{entry.entry_id}").async_remove()
+    await Store(hass, 1, f"{DOMAIN}_notifications.{entry.entry_id}").async_remove()
+
+
+def build_season_pdf(snapshot, season):
+    """Keep dependency import, font I/O and rendering off the HA event loop."""
+    from .pdf_report import season_pdf
+
+    return season_pdf(snapshot, season)

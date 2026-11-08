@@ -32,7 +32,7 @@ class PelletTrackerPanel extends HTMLElement {
 
       [hidden]{display:none!important}.tabs{display:flex;gap:6px;overflow-x:auto;padding:8px 0 14px;border-bottom:1px solid var(--divider-color)}.tabs button{white-space:nowrap;background:transparent;border-color:transparent}.tabs button[aria-current],.subtabs button[aria-current]{background:var(--primary-color);color:var(--text-primary-color,#fff)}.page-heading{margin:24px 0 8px}.page-heading h2{font-size:26px;margin:0}.eyebrow{text-transform:uppercase;letter-spacing:.08em;font-size:11px;color:var(--secondary-text-color);margin:0 0 8px}.hero{display:flex;justify-content:space-between;align-items:center;gap:24px;padding:28px;background:linear-gradient(120deg,#ef9f1914,var(--card-background-color))}.stock{font-size:48px;font-weight:700;line-height:1.2}.stock small{display:block;font-size:16px;font-weight:400;margin-top:6px}.quick-actions{display:grid;gap:10px;min-width:220px}.value{font-size:23px}.activity,.entity{padding:16px 0;border-bottom:1px solid var(--divider-color)}.activity:last-child,.entity:last-child{border-bottom:0}.activity-icon{font-size:24px;background:#ef9f1920;padding:8px 14px;border-radius:12px}.two-columns,.season-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.section-title{margin-top:28px}.season-grid section{margin:0}.subtabs{margin:20px 0}.comparison-mode{max-width:450px}.pagination{margin-top:18px}.filters{align-items:end}.filters label{flex:1;min-width:160px}.filters .check{min-width:180px}.code{font-family:monospace;min-height:320px}.entity code{overflow-wrap:anywhere}.footer{margin-top:24px}.entity-list strong{font-weight:500}li{margin-bottom:10px}@media(max-width:700px){.hero{align-items:stretch;flex-direction:column;padding:20px}.two-columns,.season-grid{grid-template-columns:1fr}.entity{align-items:flex-start}.entity>div{width:100%}.tabs{margin:0 -12px;padding-left:12px}.stock{font-size:42px}.page-heading h2{font-size:23px}}
 dialog{color:var(--primary-text-color);background:var(--card-background-color);border:1px solid var(--divider-color);border-radius:18px;padding:24px;width:min(720px,calc(100vw - 32px));max-height:calc(100dvh - 32px);overflow:auto;box-shadow:0 20px 70px #0008}dialog::backdrop{background:#0009}dialog .dialog-heading{margin-bottom:16px}dialog h2{margin:0}dialog form{margin-top:16px}dialog .dialog-heading button{padding:8px 12px}dialog #dialogNotice:empty{display:none}@media(max-width:600px){dialog{padding:18px;width:calc(100vw - 20px);max-height:calc(100dvh - 20px)}dialog form{grid-template-columns:1fr}}
-      </style><header><ha-menu-button></ha-menu-button><span>🔥</span><h1>${this.t("Suivi Granulés")}</h1><span class="badge">${this.t("Bêta 0.6")}</span><span class="spacer"></span><select id="journal" aria-label="${this.t("Poêle")}"></select></header><main><div id="notice" role="status"></div><div id="content">${this.t("Chargement…")}</div></main>`;
+      </style><header><ha-menu-button></ha-menu-button><span>🔥</span><h1>${this.t("Suivi Granulés")}</h1><span class="badge">${this.t("Bêta 0.8")}</span><span class="spacer"></span><select id="journal" aria-label="${this.t("Poêle")}"></select></header><main><div id="notice" role="status"></div><div id="content">${this.t("Chargement…")}</div></main>`;
     this.shadowRoot
       .querySelector("ha-menu-button")
       .addEventListener("click", () =>
@@ -240,7 +240,7 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
     this.view = views[this.view] ? this.view : "overview";
     const root = this.shadowRoot;
     root.querySelector("h1").textContent = this.t("Suivi Granulés");
-    root.querySelector("header .badge").textContent = this.t("Bêta 0.6");
+    root.querySelector("header .badge").textContent = this.t("Bêta 0.8");
     root.querySelector("#journal").setAttribute("aria-label", this.t("Poêle"));
     root.host?.setAttribute("lang", this.language);
     let content;
@@ -922,7 +922,7 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
       )
       .join(
         "",
-      )}</select></label><div class="grid"><div class="card"><div class="muted">${this.t("Premier allumage")}</div><div class="value">${this.formatDate(r.first_start)}</div></div><div class="card"><div class="muted">${this.t("Fin de chauffe")}</div><div class="value">${this.formatDate(r.last_end)}</div></div><div class="card"><div class="muted">${this.t("Durée de chauffe")}</div><div class="value">${r.heating_days == null ? this.t("À compléter") : r.heating_days + this.t(" jours")}</div></div><div class="card"><div class="muted">${this.t("Sacs sur la période de chauffe")}</div><div class="value">${this.number(r.heating_used)}</div></div></div><p>${this.t("Saison comptable : ")}${this.number(r.used)}${this.t(" sacs utilisés · dépenses ")}${this.money(r.spend)}${this.t(" · coût des sacs utilisés ")}${this.money(r.cost)}.</p><p class="muted">${r.heating_days == null ? this.t("Renseignez le premier allumage et la fin de chauffe pour calculer la durée et la consommation sur cette période.") : `${this.t("Moyenne sur la période : ")}${this.number(r.heating_daily_rate)}${this.t(" sacs/jour. ")}${this.number(r.outside_heating_used)}${this.t(" sacs enregistrés en dehors de cette période restent comptabilisés dans la saison.")}`}${this.t(" Les dates de chauffe ne ferment pas le journal et ne remettent jamais le stock à zéro.")}</p><form id="endForm"><label>${this.t("Dernier jour de chauffe")}<input name="date" type="date" required max="${this.localDate() < this.seasonDates(this.reportSeason).end ? this.localDate() : this.seasonDates(this.reportSeason).end}" min="${r.first_start || this.seasonDates(this.reportSeason).start}" value="${r.last_end || ""}"></label><div class="row"><button type="submit">${r.last_end ? this.t("Modifier la fin de chauffe") : this.t("Enregistrer la fin de chauffe")}</button><button id="reportExport" type="button">${this.t("Exporter le bilan JSON")}</button></div></form><hr><h2>${this.t("Budget facultatif · ")}${escapeHTML(this.reportSeason)}</h2><p>Budget : <strong>${this.money(r.budget)}</strong>${this.t(" · restant : ")}<strong>${this.money(r.budget_remaining)}</strong>${r.budget_percent == null ? "" : ` · ${this.number(r.budget_percent)}${this.t(" % utilisé")}`}.</p><form id="budgetForm"><label>Budget (${escapeHTML(d.currency)})<input name="budget" type="number" min="0" max="1000000" step="0.01" placeholder="${this.t("Laisser vide pour désactiver")}" value="${escapeHTML(d.settings.season_budgets?.[this.reportSeason] ?? "")}"></label><button type="submit">${this.t("Enregistrer le budget")}</button></form><p class="muted">${this.t("Aucun budget n’est requis. Une valeur vide le désactive pour cette saison. Le restant n’est pas calculé si les dépenses sont incomplètes. Un dépassement apparaît comme un restant négatif.")}</p></section>`;
+      )}</select></label><div class="grid"><div class="card"><div class="muted">${this.t("Premier allumage")}</div><div class="value">${this.formatDate(r.first_start)}</div></div><div class="card"><div class="muted">${this.t("Fin de chauffe")}</div><div class="value">${this.formatDate(r.last_end)}</div></div><div class="card"><div class="muted">${this.t("Durée de chauffe")}</div><div class="value">${r.heating_days == null ? this.t("À compléter") : r.heating_days + this.t(" jours")}</div></div><div class="card"><div class="muted">${this.t("Sacs sur la période de chauffe")}</div><div class="value">${this.number(r.heating_used)}</div></div></div><p>${this.t("Saison comptable : ")}${this.number(r.used)}${this.t(" sacs utilisés · dépenses ")}${this.money(r.spend)}${this.t(" · coût des sacs utilisés ")}${this.money(r.cost)}.</p><p class="muted">${r.heating_days == null ? this.t("Renseignez le premier allumage et la fin de chauffe pour calculer la durée et la consommation sur cette période.") : `${this.t("Moyenne sur la période : ")}${this.number(r.heating_daily_rate)}${this.t(" sacs/jour. ")}${this.number(r.outside_heating_used)}${this.t(" sacs enregistrés en dehors de cette période restent comptabilisés dans la saison.")}`}${this.t(" Les dates de chauffe ne ferment pas le journal et ne remettent jamais le stock à zéro.")}</p><form id="endForm"><label>${this.t("Dernier jour de chauffe")}<input name="date" type="date" required max="${this.localDate() < this.seasonDates(this.reportSeason).end ? this.localDate() : this.seasonDates(this.reportSeason).end}" min="${r.first_start || this.seasonDates(this.reportSeason).start}" value="${r.last_end || ""}"></label><div class="row"><button type="submit">${r.last_end ? this.t("Modifier la fin de chauffe") : this.t("Enregistrer la fin de chauffe")}</button><button id="reportPdf" type="button">${this.t("Télécharger le bilan PDF")}</button><button id="reportExport" type="button">${this.t("Exporter le bilan JSON")}</button></div></form><hr><h2>${this.t("Budget facultatif · ")}${escapeHTML(this.reportSeason)}</h2><p>Budget : <strong>${this.money(r.budget)}</strong>${this.t(" · restant : ")}<strong>${this.money(r.budget_remaining)}</strong>${r.budget_percent == null ? "" : ` · ${this.number(r.budget_percent)}${this.t(" % utilisé")}`}.</p><form id="budgetForm"><label>Budget (${escapeHTML(d.currency)})<input name="budget" type="number" min="0" max="1000000" step="0.01" placeholder="${this.t("Laisser vide pour désactiver")}" value="${escapeHTML(d.settings.season_budgets?.[this.reportSeason] ?? "")}"></label><button type="submit">${this.t("Enregistrer le budget")}</button></form><p class="muted">${this.t("Aucun budget n’est requis. Une valeur vide le désactive pour cette saison. Le restant n’est pas calculé si les dépenses sont incomplètes. Un dépassement apparaît comme un restant négatif.")}</p></section>`;
   }
   bindSeasonReport() {
     const root = this.shadowRoot;
@@ -941,6 +941,30 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
         settings: { season_budgets: budgets },
         revision: this.data.settings.settings_revision || 0,
       });
+    };
+    root.querySelector("#reportPdf").onclick = async (event) => {
+      const button = event.currentTarget,
+        entry = this.entry,
+        season = this.reportSeason;
+      if (button.disabled) return;
+      button.disabled = true;
+      try {
+        const result = await this._hass.callWS({
+          type: "pellet_tracker/report_pdf",
+          entry_id: entry,
+          season,
+        });
+        if (entry !== this.entry || season !== this.reportSeason) return;
+        const bytes = Uint8Array.from(atob(result.content), (character) =>
+          character.charCodeAt(0),
+        );
+        this.download(bytes, result.filename, "application/pdf");
+        this.notice(this.t("Bilan PDF téléchargé."));
+      } catch (error) {
+        this.notice(error.message || String(error), true);
+      } finally {
+        button.disabled = false;
+      }
     };
     root.querySelector("#reportExport").onclick = () =>
       this.download(
@@ -1497,7 +1521,7 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
       choices[cfg.notification_action] = this.t(
         "Destination indisponible - en choisir une autre",
       );
-    return `<section id="settingsSection"><h2>${this.t("Paramètres et notifications")}</h2><p class="muted">${this.t("Les alertes regroupées apparaissent dans Home Assistant. Une destination supplémentaire peut être choisie parmi tes services de notification et tes scripts existants. Les scripts reçoivent title, message, kind et entry_id. Devise : ")}${escapeHTML(this.data.currency)}${this.t(" · début de saison : 1er ")}${this.seasonDates().label}.</p>${this.data.notification_error ? `<p class="error">${this.t("Dernier échec de notification : ")}${escapeHTML(this.data.notification_error)}</p>` : ""}<p class="muted">${this.t("Stock faible : stock inférieur ou égal au seuil. Nettoyage : seuil de sacs OU seuil de jours atteint, avec au moins un sac utilisé depuis le nettoyage. Un réapprovisionnement ne déclenche pas le compteur de nettoyage. Un seuil de jours à 0 le désactive.")}</p><form id="settingsForm"><label>${this.t("Langue du suivi")}<select name="language"><option value="fr" ${cfg.language !== "en" ? "selected" : ""}>Français</option><option value="en" ${cfg.language === "en" ? "selected" : ""}>English</option></select></label><p class="wide muted">${this.t("La langue s’applique après enregistrement. Les cartes déjà ajoutées restent dans leur langue d’origine ; remplacez-les pour changer leur langue.")}</p><label>${this.t("Nom du poêle")}<input name="name" value="${escapeHTML(cfg.name)}" maxlength="80" required></label>${numbers.map(([key, label, min, max]) => `<label>${label}<input type="number" name="${key}" min="${min}" max="${max}" step="1" value="${cfg[key]}" required></label>`).join("")}<h2 class="wide">${this.t("Poêle connecté · facultatif")}</h2><p class="wide muted">${this.t("Choisissez une entité qui indique la chauffe réelle. Pour une entité climate, l’attribut hvac_action peut fournir heating/idle s’il est exposé ; le mode heat ne signifie pas forcément que le poêle chauffe. Sans association, l’image reste sans flamme et l’état est « non renseigné ». Les états absents ou non reconnus restent inconnus.")}</p><label class="wide">${this.t("Entité d’état du poêle")}<select name="stove_entity">${Object.entries(
+    return `<section id="settingsSection"><h2>${this.t("Paramètres et notifications")}</h2><p class="muted">${this.t("Les alertes regroupées apparaissent dans Home Assistant. Une destination supplémentaire peut être choisie parmi tes services de notification et tes scripts existants. Les scripts reçoivent title, message, kind et entry_id. Devise : ")}${escapeHTML(this.data.currency)}${this.t(" · début de saison : 1er ")}${this.seasonDates().label}.</p>${this.data.notification_error ? `<p class="error">${this.t("Dernier échec de notification : ")}${escapeHTML(this.data.notification_error)}</p>` : ""}<p class="muted">${this.t("Stock faible : stock inférieur ou égal au seuil. Nettoyage : seuil de sacs OU seuil de jours atteint, avec au moins un sac utilisé depuis le nettoyage. Un réapprovisionnement ne déclenche pas le compteur de nettoyage. Un seuil de jours à 0 le désactive.")}</p><form id="settingsForm"><label>${this.t("Langue du suivi")}<select name="language"><option value="fr" ${cfg.language !== "en" ? "selected" : ""}>Français</option><option value="en" ${cfg.language === "en" ? "selected" : ""}>English</option></select></label><p class="wide muted">${this.t("La langue s’applique après enregistrement. La carte Pellet Tracker se met à jour automatiquement.")}</p><label>${this.t("Nom du poêle")}<input name="name" value="${escapeHTML(cfg.name)}" maxlength="80" required></label>${numbers.map(([key, label, min, max]) => `<label>${label}<input type="number" name="${key}" min="${min}" max="${max}" step="1" value="${cfg[key]}" required></label>`).join("")}<div class="row wide"><h2>${this.t("Poêle connecté · facultatif")}</h2><button type="button" id="openStoveWizard">${this.t("Assistant de configuration")}</button></div><p class="wide muted">${this.t("Choisissez une entité qui indique la chauffe réelle. Pour une entité climate, l’attribut hvac_action peut fournir heating/idle s’il est exposé ; le mode heat ne signifie pas forcément que le poêle chauffe. Sans association, l’image reste sans flamme et l’état est « non renseigné ». Les états absents ou non reconnus restent inconnus.")}</p><label class="wide">${this.t("Entité d’état du poêle")}<select name="stove_entity">${Object.entries(
       sources,
     )
       .map(
@@ -1515,7 +1539,7 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
       )
       .join(
         "",
-      )}</select></label><p class="wide muted">${this.t("Un clic sur le poêle propose d’allumer ou d’éteindre le switch, avec confirmation. Désactivé par défaut. Associez aussi l’entité d’état pour que la flamme suive la chauffe. Après activation ou changement de switch, remplacez la carte générée. La désactivation bloque aussi les anciennes cartes.")}</p><label class="wide">${this.t("Destination supplémentaire")}<select name="notification_action">${Object.entries(
+      )}</select></label><p class="wide muted">${this.t("Un clic sur le poêle propose d’allumer ou d’éteindre le switch, avec confirmation. Désactivé par défaut. Associez aussi l’entité d’état pour que la flamme suive la chauffe. La carte Pellet Tracker suit automatiquement les réglages. La désactivation bloque aussi les anciennes cartes.")}</p><label class="wide">${this.t("Destination supplémentaire")}<select name="notification_action">${Object.entries(
       choices,
     )
       .map(
@@ -1526,6 +1550,157 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
         "",
       )}</select></label><label class="check"><input name="notify_enabled" type="checkbox" ${cfg.notify_enabled ? "checked" : ""}>${this.t("Notifications automatiques")}</label><label class="check"><input name="notify_recovery" type="checkbox" ${cfg.notify_recovery ? "checked" : ""}>${this.t("Notifier aussi le retour à la normale")}</label><label class="check wide"><input name="notify_actions" type="checkbox" ${cfg.notify_actions !== false ? "checked" : ""}>${this.t("Boutons sur les notifications Companion : nettoyage fait, +1 sac utilisé, rappel dans 24 h")}</label><div class="row wide"><button type="button" id="testNotification">${this.t("Tester la notification enregistrée")}</button><span class="spacer"></span><button type="submit" class="primary">${this.t("Enregistrer les paramètres")}</button></div></form><p class="muted">${this.t("Nouvelle alerte après une saisie : immédiate. Rappels : à l’heure choisie, seulement après le délai configuré. Le choix d’une nouvelle destination s’applique après enregistrement des paramètres.")}</p></section>`;
   }
+  openStoveWizard() {
+    if (this.busy) return;
+    const general = this.shadowRoot.querySelector("#settingsForm");
+    const cfg = { ...this.data.settings };
+    let draft = null;
+    const stoveKeys = [
+      "stove_entity",
+      "stove_attribute",
+      "stove_on_states",
+      "stove_off_states",
+      "stove_control_enabled",
+      "stove_control_entity",
+    ];
+    if (general) {
+      draft = Object.fromEntries(new FormData(general));
+      for (const key of [
+        "notify_enabled",
+        "notify_recovery",
+        "notify_actions",
+        "stove_control_enabled",
+      ])
+        draft[key] = general.elements[key].checked;
+      for (const key of stoveKeys) {
+        cfg[key] = draft[key];
+        delete draft[key];
+      }
+    }
+    const sources = {
+      "": this.t("Pas de poêle connecté"),
+      ...(this.data.stove_sources || {}),
+    };
+    if (cfg.stove_entity)
+      sources[cfg.stove_entity] ||=
+        cfg.stove_entity + this.t(" · indisponible");
+    const switches = {
+      "": this.t("Choisir un switch"),
+      ...Object.fromEntries(
+        Object.entries(sources).filter(([key]) => key.startsWith("switch.")),
+      ),
+    };
+    if (cfg.stove_control_entity)
+      switches[cfg.stove_control_entity] ||=
+        cfg.stove_control_entity + this.t(" · indisponible");
+    const options = (choices, selected) =>
+      Object.entries(choices)
+        .map(
+          ([key, name]) =>
+            `<option value="${escapeHTML(key)}" ${key === selected ? "selected" : ""}>${escapeHTML(name)}</option>`,
+        )
+        .join("");
+    const dialog = this.showEditor(
+      this.t("Assistant de configuration"),
+      `
+      <p id="wizardStep" class="muted" role="status"></p><form id="stoveWizardForm">
+      <div class="wide" data-wizard-step="0"><h2>${this.t("1. Observer la chauffe")}</h2>
+      <p>${this.t("Choisissez l’entité qui indique la chauffe réelle. Elle peut provenir de MQTT, Tasmota ou d’une autre intégration. Cette étape ne commande aucun appareil.")}</p>
+      <label>${this.t("Entité d’état du poêle")}<select name="stove_entity">${options(sources, cfg.stove_entity)}</select></label>
+      <label>${this.t("Attribut à lire (facultatif)")}<input name="stove_attribute" maxlength="80" value="${escapeHTML(cfg.stove_attribute)}" placeholder="hvac_action"></label>
+      <p class="muted">${this.t("Pour climate, utilisez hvac_action si disponible : heating signifie chauffe et idle repos. Le mode heat seul ne prouve pas une chauffe réelle.")}</p>
+      <label>${this.t("États correspondant à allumé")}<input name="stove_on_states" value="${escapeHTML(cfg.stove_on_states)}" required></label>
+      <label>${this.t("États correspondant à éteint")}<input name="stove_off_states" value="${escapeHTML(cfg.stove_off_states)}" required></label>
+      <p id="wizardObserved" class="muted" role="status"></p></div>
+      <div class="wide" data-wizard-step="1" hidden><h2>${this.t("2. Commander le poêle (facultatif)")}</h2>
+      <p>${this.t("Le switch de commande peut être différent de l’entité de chauffe. L’assistant ne l’active jamais. Les commandes depuis la carte demandent confirmation.")}</p>
+      <label class="check"><input name="stove_control_enabled" type="checkbox" ${cfg.stove_control_enabled ? "checked" : ""}>${this.t("Autoriser la commande depuis l’image du poêle")}</label>
+      <label>${this.t("Switch de commande du poêle")}<select name="stove_control_entity">${options(switches, cfg.stove_control_entity)}</select></label></div>
+      <div class="wide" data-wizard-step="2" hidden><h2>${this.t("3. Vérifier et enregistrer")}</h2><div id="wizardReview"></div><p class="muted">${this.t("Enregistrer ces choix ne démarre pas le poêle. La carte existante sera mise à jour automatiquement.")}</p></div>
+      <div class="row wide"><button type="button" id="wizardBack">${this.t("Retour")}</button><span class="spacer"></span><button type="button" id="wizardNext">${this.t("Suivant")}</button><button type="submit" id="wizardSave" hidden>${this.t("Enregistrer")}</button></div></form>`,
+    );
+    if (!dialog) return;
+    const form = dialog.querySelector("#stoveWizardForm");
+    let step = 0;
+    const preview = () => {
+      const id = form.elements.stove_entity.value,
+        attr = form.elements.stove_attribute.value.trim();
+      const state = this._hass.states[id];
+      const value = attr ? state?.attributes?.[attr] : state?.state;
+      dialog.querySelector("#wizardObserved").textContent = !id
+        ? this.t("Aucune association : état du poêle non renseigné.")
+        : value == null
+          ? this.t("L’entité sélectionnée ne fournit pas d’état actuellement.")
+          : this.t("Valeur actuellement lue : ") + String(value);
+    };
+    const renderStep = () => {
+      dialog
+        .querySelectorAll("[data-wizard-step]")
+        .forEach((el) => (el.hidden = Number(el.dataset.wizardStep) !== step));
+      dialog.querySelector("#wizardStep").textContent =
+        this.t("Étape ") + (step + 1) + " / 3";
+      dialog.querySelector("#wizardBack").hidden = step === 0;
+      dialog.querySelector("#wizardNext").hidden = step === 2;
+      dialog.querySelector("#wizardSave").hidden = step !== 2;
+      const review = dialog.querySelector("#wizardReview");
+      review.replaceChildren();
+      const observed = document.createElement("p"),
+        control = document.createElement("p");
+      observed.textContent =
+        this.t("Observation : ") +
+        (sources[form.elements.stove_entity.value] || "—") +
+        (form.elements.stove_attribute.value
+          ? " · " + form.elements.stove_attribute.value
+          : "");
+      control.textContent =
+        this.t("Commande : ") +
+        (form.elements.stove_control_enabled.checked
+          ? switches[form.elements.stove_control_entity.value]
+          : this.t("Désactivée"));
+      review.append(observed, control);
+      preview();
+      dialog
+        .querySelector(`[data-wizard-step="${step}"] h2`)
+        .setAttribute("tabindex", "-1");
+      dialog.querySelector(`[data-wizard-step="${step}"] h2`).focus();
+    };
+    form.elements.stove_entity.onchange = preview;
+    form.elements.stove_attribute.oninput = preview;
+    dialog.querySelector("#wizardBack").onclick = () => {
+      step--;
+      renderStep();
+    };
+    dialog.querySelector("#wizardNext").onclick = () => {
+      const fields = dialog
+        .querySelector(`[data-wizard-step="${step}"]`)
+        .querySelectorAll("input,select");
+      if ([...fields].some((field) => !field.reportValidity())) return;
+      if (
+        step === 1 &&
+        form.elements.stove_control_enabled.checked &&
+        !form.elements.stove_control_entity.value
+      ) {
+        this.notice(this.t("Choisir un switch"), true);
+        return;
+      }
+      step++;
+      renderStep();
+    };
+    form.onsubmit = async (event) => {
+      event.preventDefault();
+      if (step !== 2 || this.busy) return;
+      const settings = Object.fromEntries(new FormData(form));
+      settings.stove_control_enabled =
+        form.elements.stove_control_enabled.checked;
+      await this.settingsRequest(
+        "pellet_tracker/settings",
+        { settings, revision: this.data.settings.settings_revision || 0 },
+        draft,
+      );
+    };
+    renderStep();
+  }
+
   updateStovePreview() {
     const form = this.shadowRoot.querySelector("#settingsForm"),
       preview = this.shadowRoot.querySelector("#stoveObserved");
@@ -1553,6 +1728,8 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
   }
   bindSettings() {
     const form = this.shadowRoot.getElementById("settingsForm");
+    this.shadowRoot.getElementById("openStoveWizard").onclick = () =>
+      this.openStoveWizard();
     form.elements.stove_entity.onchange = () => this.updateStovePreview();
     form.elements.stove_attribute.oninput = () => this.updateStovePreview();
     this.updateStovePreview();
@@ -1575,7 +1752,7 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
     this.shadowRoot.getElementById("testNotification").onclick = () =>
       this.settingsRequest("pellet_tracker/test_notification", {});
   }
-  async settingsRequest(type, payload) {
+  async settingsRequest(type, payload, preserveDraft = null) {
     if (this.busy) return;
     this.busy = true;
     const controls = [
@@ -1590,7 +1767,7 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
       });
       if (type === "pellet_tracker/settings") {
         this.data = result;
-        this.settingsDraft = null;
+        this.settingsDraft = preserveDraft;
         this.closeEditor(true);
         this.render();
         this.notice(this.t("Paramètres enregistrés."));

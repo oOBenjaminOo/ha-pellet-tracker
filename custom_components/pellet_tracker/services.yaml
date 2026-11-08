@@ -176,3 +176,20 @@ control_stove:
           options:
             - turn_on
             - turn_off
+
+undo_last:
+  name: Annuler la dernière saisie
+  description: Annulation atomique de la dernière saisie, protégée par la révision affichée.
+  fields:
+    entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: pellet_tracker
+    revision:
+      required: true
+      selector:
+        number:
+          min: 0
+          max: 2147483647
+          mode: box
