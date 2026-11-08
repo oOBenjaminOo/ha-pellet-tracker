@@ -414,6 +414,7 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
   showEditor(title, content) {
     if (this.busy) return null;
     this.shadowRoot.querySelector("#editorDialog")?.remove();
+    this.notice("");
     this.editorOpener = this.shadowRoot.activeElement;
     const dialog = document.createElement("dialog");
     dialog.id = "editorDialog";
@@ -434,6 +435,7 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
     if (!dialog) return;
     dialog.close();
     dialog.remove();
+    if (!force) this.notice("");
     this.editing = null;
     if (this.editorOpener?.isConnected) this.editorOpener.focus();
   }
