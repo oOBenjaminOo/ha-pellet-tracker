@@ -3,14 +3,18 @@
 Local Home Assistant custom integration for pellet stock, seasonal usage,
 cleaning and purchase costs. Original project by Benjamin (@oOBenjaminOo).
 
-**0.4.0b1 is a feature-complete beta for real-world testing.** No HACS default-catalog submission has
+**0.4.1b1 is a feature-complete beta for real-world testing.** No HACS default-catalog submission has
 been made. No cloud account, stove connection or runtime Python dependency.
 
 ## Fonctionnement
 
-- Interface française avec sept vues distinctes : **Accueil, Saisie, Statistiques,
+- Interface française avec six vues distinctes : **Accueil, Statistiques,
   Saisons, Historique, Dashboards et Réglages**. Seule la vue choisie est affichée.
-- Saisie contextuelle, brouillons conservés entre vues, historique filtrable et paginé.
+- Saisies et modifications dans des fenêtres modales, avec champs contextuels.
+- Consommation, réapprovisionnement et nettoyage depuis l’accueil, sans changer de page.
+- Accès direct **Modifier mes seuils** sur l’accueil ; seuil de stock et rappels
+  d’entretien par sacs/jours personnalisables. Les options complètes restent dans Réglages.
+- Historique filtrable et paginé.
 - Réapprovisionnement avec quantité, prix unitaire facultatif, fournisseur et marque.
 - Consommation, nettoyage, premier allumage, perte, note et correction de stock.
 - Valorisation FIFO : les sacs les plus anciens sont utilisés en premier.

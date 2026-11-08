@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.1b1
+
+- Replace the entry page with accessible modal forms for consumption, purchases, cleaning and edits.
+- Preserve the underlying page, keep form errors in the modal and close only after successful saving.
+- Add direct editable stock/cleaning thresholds from the overview, with live settings and alert updates.
+
 ## 0.4.0b1
 
 - Atomic undo of the latest compound entry, protected by journal revision.

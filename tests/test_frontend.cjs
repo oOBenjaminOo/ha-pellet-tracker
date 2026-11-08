@@ -189,3 +189,40 @@ test("history filters before pagination so it mounts at most 25 operations", () 
   assert.equal((html.match(/data-edit=/g)||[]).length,20);
   assert.match(html,/Page 1 \/ 1/);
 });
+
+test("operation popup stays on the current page and adapts purchase and cleaning fields", () => {
+  const p=panel();
+  p.data={currency:"EUR"};p.view="journal";p.localDate=()=>"2018-11-08";
+  const labels={}; const inputs={};
+  for(const name of ["kind","date","quantity","unit_price","shipping","discount","supplier","brand","cleaned"]){
+    labels[name]={hidden:false};inputs[name]={value:"",disabled:false,closest:()=>labels[name],focus(){}};
+  }
+  inputs.kind.value="purchase";inputs.quantity.value="10";inputs.unit_price.value="5";inputs.shipping.value="10";inputs.discount.value="5";
+  const listeners={},nodes={"#entryHelp":{},"#formTotal":{},"#cancel":{}};
+  const form={elements:inputs,addEventListener:(name,fn)=>listeners[name]=fn};
+  p.showEditor=(_title,html)=>{
+    assert.match(html,/id="operation"/);
+    return {querySelector:selector=>selector==="#operation"?form:selector==='[name="date"]'?inputs.date:nodes[selector]};
+  };
+  p.openOperation("purchase");
+  assert.equal(p.view,"journal");
+  assert.match(nodes["#formTotal"].textContent,/55,00/);
+  assert.equal(labels.shipping.hidden,false);
+  inputs.kind.value="clean";listeners.input();
+  assert.equal(labels.quantity.hidden,true);
+  assert.equal(labels.unit_price.hidden,true);
+  assert.equal(inputs.cleaned.disabled,true);
+});
+
+test("successful popup saving closes it and retains the original page", async () => {
+  const p=panel();p.view="journal";p.data={revision:4};
+  p.shadowRoot={querySelectorAll:()=>[]};let closed=0;
+  p.closeEditor=force=>{assert.equal(force,true);closed++;};
+  p._hass={callWS:async()=>({revision:5})};
+  await p.mutate("add",{});
+  assert.equal(closed,1);
+  assert.equal(p.view,"journal");
+  p._hass.callWS=async()=>{throw Error("save failed");};
+  await p.mutate("add",{});
+  assert.equal(closed,1);
+});
