@@ -3,7 +3,7 @@
 Local Home Assistant custom integration for pellet stock, seasonal usage,
 cleaning and purchase costs. Original project by Benjamin (@oOBenjaminOo).
 
-**0.6.1b1 is a feature-complete beta for real-world testing.** No HACS default-catalog submission has
+**0.6.2b1 is a feature-complete beta for real-world testing.** No HACS default-catalog submission has
 been made. No cloud account, stove connection or runtime Python dependency.
 
 ## Language / Langue
@@ -350,3 +350,14 @@ copied cards once to use the four-image configuration.
 La vitre devient sale lorsque le capteur de nettoyage indique un entretien à prévoir,
 selon vos seuils de sacs/jours. Enregistrer un nettoyage réinitialise le rappel et
 rétablit la vitre propre. Le foyer est vide sur les deux images du poêle éteint.
+
+### Image actions / Actions dans l’image
+
+Click the pellet bag to record one bag consumed today; click the ash vacuum to record
+a cleaning today. Both actions require confirmation. These actions only update the
+journal and never control the stove or a vacuum device. The standalone HA button
+entities remain available for automations and other cards.
+
+Cliquez sur le sac pour ajouter un sac consommé aujourd’hui, ou sur l’aspirateur
+pour enregistrer un nettoyage aujourd’hui. Une confirmation est demandée. Les
+anciens boutons sous la carte Mushroom sont remplacés par ces objets cliquables.

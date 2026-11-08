@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.2b1
+
+- Click the pellet bag or ash vacuum directly on the stove image to record usage or cleaning.
+- Preserve today confirmations and disable long/double-tap writes.
+- Remove duplicate Mushroom action buttons below the image; retain native entities.
+- Bundle transparent object assets, with French/English action titles.
+
 ## 0.6.1b1
 
 - Four dynamic stove images combining heating and maintenance-due states.

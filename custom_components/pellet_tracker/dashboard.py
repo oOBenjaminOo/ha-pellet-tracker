@@ -38,7 +38,7 @@ def mushroom_card(name, entities, language="fr"):
         }
     ]
     elements = []
-    for key, top, size in (("stock", "43%", "34px"), ("autonomy_days", "65%", "13px")):
+    for key, top, size in (("stock", "23%", "34px"), ("autonomy_days", "39%", "13px")):
         if key in by_key:
             elements.append(
                 {
@@ -55,6 +55,43 @@ def mushroom_card(name, entities, language="fr"):
                     },
                 }
             )
+    for key, filename, label, left, width in (
+        ("add_bag", "pellet-bag.webp", "Ajouter un sac consommé", "16%", "20%"),
+        ("clean", "ash-vacuum.webp", "Enregistrer un nettoyage", "42%", "22%"),
+    ):
+        if key not in by_key:
+            continue
+        elements.append(
+            {
+                "type": "image",
+                "image": f"/pellet_tracker_static/{filename}",
+                "title": tr(label),
+                "aspect_ratio": "1:1",
+                "filter": "none",
+                "entity": by_key[key],
+                "style": {
+                    "left": left,
+                    "top": "73%",
+                    "width": width,
+                    "cursor": "pointer",
+                    "filter": "drop-shadow(0 4px 5px #0008)",
+                },
+                "tap_action": {
+                    "action": "perform-action",
+                    "perform_action": "button.press",
+                    "target": {"entity_id": by_key[key]},
+                    "confirmation": {
+                        "text": tr(
+                            "Ajouter un sac à la consommation d’aujourd’hui ?"
+                            if key == "add_bag"
+                            else "Enregistrer un nettoyage pour aujourd’hui ?"
+                        )
+                    },
+                },
+                "hold_action": {"action": "none"},
+                "double_tap_action": {"action": "none"},
+            }
+        )
     status_entity = by_key.get("stove_status")
 
     def header(image):
@@ -185,39 +222,4 @@ def mushroom_card(name, entities, language="fr"):
     cards.append(
         {"type": "custom:mushroom-chips-card", "alignment": "center", "chips": chips}
     )
-    actions = []
-    for key, title, subtitle, icon in (
-        (
-            "add_bag",
-            tr("Ajouter un sac"),
-            tr("Consommation du jour"),
-            "mdi:plus-circle-outline",
-        ),
-        ("clean", tr("Nettoyage"), tr("Aujourd’hui"), "mdi:broom"),
-    ):
-        if key in by_key:
-            actions.append(
-                {
-                    "type": "custom:mushroom-template-card",
-                    "primary": title,
-                    "secondary": subtitle,
-                    "icon": icon,
-                    "color": "orange",
-                    "icon_color": "orange",
-                    "tap_action": {
-                        "action": "perform-action",
-                        "perform_action": "button.press",
-                        "target": {"entity_id": by_key[key]},
-                        "confirmation": {
-                            "text": tr(
-                                "Ajouter un sac à la consommation d’aujourd’hui ?"
-                            )
-                            if key == "add_bag"
-                            else tr("Enregistrer un nettoyage pour aujourd’hui ?")
-                        },
-                    },
-                }
-            )
-    if actions:
-        cards.append({"type": "horizontal-stack", "cards": actions})
     return {"type": "vertical-stack", "cards": cards}

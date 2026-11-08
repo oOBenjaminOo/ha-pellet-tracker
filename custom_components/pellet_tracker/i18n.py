@@ -1,6 +1,8 @@
 """Local messages for generated cards and notifications. Journal data is never translated."""
 
 ENGLISH = {
+    "Ajouter un sac consommé": "Add a consumed bag",
+    "Enregistrer un nettoyage": "Record a cleaning",
     "Indisponible": "Unavailable",
     "{{ states(entity) | replace('.', ',') if is_number(states(entity)) else 'Indisponible' }}": "{{ states(entity) if is_number(states(entity)) else 'Unavailable' }}",
     "{{ (('%.2f' | format(states(entity) | float)) | replace('.', ',')) + ' ' + (state_attr(entity, 'unit_of_measurement') or '') if is_number(states(entity)) else 'Non renseigné' }}": "{{ (('%.2f' | format(states(entity) | float))) + ' ' + (state_attr(entity, 'unit_of_measurement') or '') if is_number(states(entity)) else 'Not provided' }}",

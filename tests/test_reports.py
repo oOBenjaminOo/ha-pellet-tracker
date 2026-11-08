@@ -127,7 +127,9 @@ class ReportTests(unittest.TestCase):
             card["cards"][1]["card"]["elements"][0]["entity"], "sensor.stock"
         )
         self.assertEqual(
-            card["cards"][-1]["cards"][0]["tap_action"]["confirmation"]["text"],
+            next(
+                e for e in card["cards"][1]["card"]["elements"] if e["type"] == "image"
+            )["tap_action"]["confirmation"]["text"],
             "Add one bag to today’s consumption?",
         )
         metric = next(c for c in card["cards"] if c["type"] == "grid")["cards"][0]
@@ -178,6 +180,39 @@ class ReportTests(unittest.TestCase):
                     self.assertTrue((ROOT / "frontend" / filename).is_file())
                     self.assertEqual(visible[0]["elements"], [])
 
+    def test_picture_actions_are_confirmed_local_buttons_in_every_visual_variant(self):
+        entities = [
+            {"key": key, "entity_id": entity, "enabled": True}
+            for key, entity in {
+                "stock": "sensor.stock",
+                "stove_status": "sensor.heating",
+                "cleaning_due": "binary_sensor.cleaning",
+                "add_bag": "button.renamed_use",
+                "clean": "button.renamed_clean",
+            }.items()
+        ]
+        card = dashboard.mushroom_card("Stove", entities, "en")
+        self.assertFalse(any(c["type"] == "horizontal-stack" for c in card["cards"]))
+        headers = [c["card"] for c in card["cards"] if c["type"] == "conditional"]
+        for header in headers:
+            actions = [e for e in header["elements"] if e["type"] == "image"]
+            self.assertEqual(
+                [e["title"] for e in actions],
+                ["Add a consumed bag", "Record a cleaning"],
+            )
+            self.assertEqual(
+                [e["tap_action"]["target"]["entity_id"] for e in actions],
+                ["button.renamed_use", "button.renamed_clean"],
+            )
+            for action in actions:
+                self.assertEqual(action["tap_action"]["perform_action"], "button.press")
+                self.assertIn("confirmation", action["tap_action"])
+                self.assertEqual(action["hold_action"], {"action": "none"})
+                self.assertEqual(action["double_tap_action"], {"action": "none"})
+                self.assertTrue(
+                    (ROOT / "frontend" / action["image"].split("/")[-1]).is_file()
+                )
+
     def test_connected_mushroom_uses_distinct_images_and_today_confirmations(self):
         card = dashboard.mushroom_card(
             "Stove",
@@ -198,7 +233,9 @@ class ReportTests(unittest.TestCase):
         self.assertNotIn("on", headers[1]["conditions"][0]["state"])
         self.assertNotEqual(headers[0]["card"]["image"], headers[1]["card"]["image"])
         confirmations = [
-            c["tap_action"]["confirmation"]["text"] for c in card["cards"][-1]["cards"]
+            e["tap_action"]["confirmation"]["text"]
+            for e in headers[0]["card"]["elements"]
+            if e["type"] == "image"
         ]
         self.assertEqual(
             confirmations,
@@ -226,4 +263,9 @@ class ReportTests(unittest.TestCase):
         )["chips"][0]
         self.assertIn("is_state(entity, 'off')", chip["content"])
         self.assertIn("Indisponible", chip["content"])
-        self.assertIn("confirmation", card["cards"][-1]["cards"][0]["tap_action"])
+        self.assertIn(
+            "confirmation",
+            next(e for e in card["cards"][1]["elements"] if e["type"] == "image")[
+                "tap_action"
+            ],
+        )
