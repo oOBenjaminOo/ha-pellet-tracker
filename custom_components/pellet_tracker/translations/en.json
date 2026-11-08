@@ -10,7 +10,8 @@
           "currency": "Currency",
           "season_month": "Season start month",
           "low_stock": "Low stock threshold (bags)",
-          "cleaning_bags": "Cleaning reminder after (bags)"
+          "cleaning_bags": "Cleaning reminder after (bags)",
+          "language": "Tracker language"
         }
       }
     }
@@ -124,7 +125,8 @@
           "stove_entity": "Stove state entity (optional)",
           "stove_attribute": "Attribute (empty = entity state)",
           "stove_on_states": "On states, comma-separated",
-          "stove_off_states": "Off states, comma-separated"
+          "stove_off_states": "Off states, comma-separated",
+          "language": "Tracker language"
         }
       }
     },

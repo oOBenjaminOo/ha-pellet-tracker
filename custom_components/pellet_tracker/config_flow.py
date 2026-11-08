@@ -29,6 +29,9 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             data_schema=vol.Schema(
                 {
                     vol.Required("name", default="Poêle"): str,
+                    vol.Required("language", default="fr"): vol.In(
+                        {"fr": "Français", "en": "English"}
+                    ),
                     vol.Required("currency", default="EUR"): vol.In(
                         ["EUR", "CHF", "GBP", "USD", "CAD"]
                     ),
@@ -73,6 +76,9 @@ class OptionsFlow(config_entries.OptionsFlow):
             )
         fields = {
             vol.Required("name", default=current["name"]): str,
+            vol.Required("language", default=current["language"]): vol.In(
+                {"fr": "Français", "en": "English"}
+            ),
             vol.Optional("stove_entity", default=current["stove_entity"]): vol.In(
                 sources
             ),

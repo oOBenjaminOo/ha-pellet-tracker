@@ -12,6 +12,7 @@ from homeassistant.util import dt as dt_util
 
 from .alert_model import active_alerts, delivery_due
 from .const import DOMAIN
+from .i18n import text
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -25,6 +26,9 @@ class Notifications:
         self.last_error = None
         self.closed = False
         self.cancel_snooze = None
+
+    def tr(self, message):
+        return text(self.ledger.settings.get("language", "fr"), message)
 
     @property
     def notification_id(self):
@@ -63,9 +67,9 @@ class Notifications:
         return [
             {"action": f"PELLET_{token}_{key}", "title": title}
             for key, title in (
-                ("clean", "Nettoyage fait"),
-                ("use", "+1 sac utilisé"),
-                ("snooze", "Rappeler dans 24 h"),
+                ("clean", self.tr("Nettoyage fait")),
+                ("use", self.tr("+1 sac utilisé")),
+                ("snooze", self.tr("Rappeler dans 24 h")),
             )
         ]
 
@@ -107,7 +111,7 @@ class Notifications:
                             "kind": kind,
                             "quantity": 1 if kind == "use" else 0,
                             "request_id": f"notification:{buttons['token']}",
-                            "comment": "Action depuis une notification",
+                            "comment": self.tr("Action depuis une notification"),
                         },
                         buttons["revision"],
                         event.context.user_id or "notification",
@@ -119,7 +123,9 @@ class Notifications:
             except (ValueError, TypeError, KeyError, OSError) as err:
                 persistent_notification.async_create(
                     self.hass,
-                    "Cette action n’a pas été enregistrée. Le journal a peut-être changé ; vérifiez le suivi avant de recommencer.",
+                    self.tr(
+                        "Cette action n’a pas été enregistrée. Le journal a peut-être changé ; vérifiez le suivi avant de recommencer."
+                    ),
                     self.ledger.entry.title,
                     f"{self.notification_id}_action",
                 )
@@ -169,7 +175,7 @@ class Notifications:
 
     async def async_test(self):
         title = f"🔥 {self.ledger.entry.title}"
-        message = "Notification de test du suivi des granulés."
+        message = self.tr("Notification de test du suivi des granulés.")
         persistent_notification.async_create(
             self.hass, message, title, f"{self.notification_id}_test"
         )
@@ -194,7 +200,7 @@ class Notifications:
             message = (
                 "\n".join(alerts.values())
                 if alerts
-                else "Le stock et l’entretien sont à jour."
+                else self.tr("Le stock et l’entretien sont à jour.")
             )
             now = dt_util.utcnow().isoformat()
             self.last_error = None

@@ -3,12 +3,28 @@
 Local Home Assistant custom integration for pellet stock, seasonal usage,
 cleaning and purchase costs. Original project by Benjamin (@oOBenjaminOo).
 
-**0.5.0b1 is a feature-complete beta for real-world testing.** No HACS default-catalog submission has
+**0.6.0b1 is a feature-complete beta for real-world testing.** No HACS default-catalog submission has
 been made. No cloud account, stove connection or runtime Python dependency.
+
+## Language / Langue
+
+Choose **Français** or **English** when creating a tracker, or later in
+**Settings → Tracker language → Save settings**. Each stove keeps its own language.
+Existing trackers default to French. Numbers, months, interface messages, CSV headings,
+notifications and newly generated dashboard cards use the selected language.
+User names, comments, entity IDs, MQTT values and historical records are never translated.
+Home Assistant's own settings screens and native entity names follow your HA profile language.
+Existing copied dashboard cards keep their original text; replace their configuration
+with the newly generated card to switch their language.
+
+Choisissez **Français** ou **English** à la création, ou dans
+**Réglages → Langue du suivi → Enregistrer les paramètres**. Chaque poêle conserve
+son choix ; les suivis existants restent en français. Pour changer la langue d’une
+carte déjà ajoutée, remplacez sa configuration par la nouvelle carte générée.
 
 ## Fonctionnement
 
-- Interface française avec six vues distinctes : **Accueil, Statistiques,
+- Interface français/anglais avec six vues distinctes : **Accueil, Statistiques,
   Saisons, Historique, Dashboards et Réglages**. Seule la vue choisie est affichée.
 - Saisies et modifications dans des fenêtres modales, avec champs contextuels.
 - Un seul bouton **Ajouter une action** sur l’accueil : choisir consommation,

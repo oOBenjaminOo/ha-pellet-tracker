@@ -108,6 +108,31 @@ class ReportTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.data([event("start", "2018-10-03"), event("end", "2018-10-02")])
 
+    def test_english_card_preserves_entity_ids_and_translates_confirmations(self):
+        card = dashboard.mushroom_card(
+            "Poêle personnel",
+            [
+                {"key": key, "entity_id": entity, "available": True}
+                for key, entity in {
+                    "stock": "sensor.stock",
+                    "used": "sensor.used",
+                    "add_bag": "button.add",
+                    "cleaning_due": "binary_sensor.clean",
+                }.items()
+            ],
+            "en",
+        )
+        self.assertEqual(card["cards"][0]["title"], "Poêle personnel")
+        self.assertEqual(card["cards"][1]["elements"][0]["entity"], "sensor.stock")
+        self.assertEqual(
+            card["cards"][-1]["cards"][0]["tap_action"]["confirmation"]["text"],
+            "Add one bag to today’s consumption?",
+        )
+        metric = card["cards"][2]["cards"][0]
+        self.assertEqual(metric["primary"], "Consumption")
+        self.assertNotIn("replace('.', ',')", metric["secondary"])
+        self.assertIn("Unavailable", metric["secondary"])
+
     def test_connected_mushroom_uses_distinct_images_and_today_confirmations(self):
         card = dashboard.mushroom_card(
             "Stove",

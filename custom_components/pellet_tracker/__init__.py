@@ -53,7 +53,9 @@ def ui_export(hass, ledger):
         "notification_choices": notification_choices(hass),
         "stove_sources": stove_choices(hass),
         "entities": entities,
-        "mushroom_card": mushroom_card(ledger.entry.title, entities),
+        "mushroom_card": mushroom_card(
+            ledger.entry.title, entities, ledger.settings["language"]
+        ),
     }
 
 
@@ -77,7 +79,7 @@ async def async_setup(hass, config):
         hass,
         webcomponent_name="pellet-tracker-panel",
         frontend_url_path="pellet-tracker",
-        sidebar_title="Suivi Granulés",
+        sidebar_title="Pellet Tracker",
         sidebar_icon="mdi:fire",
         module_url=f"/pellet_tracker_static/panel.js?v={VERSION}",
         require_admin=True,

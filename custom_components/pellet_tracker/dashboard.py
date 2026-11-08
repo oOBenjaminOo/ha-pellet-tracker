@@ -1,7 +1,12 @@
 """Portable Mushroom card configuration, using registered IDs rather than guessed names."""
 
+from .i18n import text
 
-def mushroom_card(name, entities):
+
+def mushroom_card(name, entities, language="fr"):
+    def tr(message):
+        return text(language, message)
+
     by_key = {
         e["key"]: e["entity_id"]
         for e in entities
@@ -28,7 +33,7 @@ def mushroom_card(name, entities):
         {
             "type": "custom:mushroom-title-card",
             "title": name,
-            "subtitle": "Granulés · stock, consommation et entretien",
+            "subtitle": tr("Granulés · stock, consommation et entretien"),
             "alignment": "center",
         }
     ]
@@ -40,7 +45,7 @@ def mushroom_card(name, entities):
                     "type": "state-label",
                     "entity": by_key[key],
                     "prefix": "≈ " if key == "autonomy_days" else "",
-                    "suffix": " de réserve" if key == "autonomy_days" else "",
+                    "suffix": tr(" de réserve") if key == "autonomy_days" else "",
                     "style": {
                         "left": "25%",
                         "top": top,
@@ -86,20 +91,36 @@ def mushroom_card(name, entities):
         )
     else:
         cards.append(header(off_image))
-    number = "{{ states(entity) | replace('.', ',') if is_number(states(entity)) else 'Indisponible' }}"
-    money = "{{ (('%.2f' | format(states(entity) | float)) | replace('.', ',')) + ' ' + (state_attr(entity, 'unit_of_measurement') or '') if is_number(states(entity)) else 'Non renseigné' }}"
+    number = tr(
+        "{{ states(entity) | replace('.', ',') if is_number(states(entity)) else 'Indisponible' }}"
+    )
+    money = tr(
+        "{{ (('%.2f' | format(states(entity) | float)) | replace('.', ',')) + ' ' + (state_attr(entity, 'unit_of_measurement') or '') if is_number(states(entity)) else 'Non renseigné' }}"
+    )
     metrics = [
         template(
-            "used", "Consommation", number + " sacs cette saison", "mdi:fire", "orange"
+            "used",
+            tr("Consommation"),
+            number + tr(" sacs cette saison"),
+            "mdi:fire",
+            "orange",
         ),
         template(
-            "spend", "Dépenses", money + " cette saison", "mdi:wallet-outline", "amber"
+            "spend",
+            tr("Dépenses"),
+            money + tr(" cette saison"),
+            "mdi:wallet-outline",
+            "amber",
         ),
-        template("average_price", "Prix moyen / sac", money, "mdi:tag-outline", "blue"),
+        template(
+            "average_price", tr("Prix moyen / sac"), money, "mdi:tag-outline", "blue"
+        ),
         template(
             "last_clean",
-            "Nettoyage",
-            "{{ as_timestamp(states(entity), 0) | timestamp_custom('%d/%m/%Y', true) if states(entity) not in ['unknown','unavailable'] else 'À renseigner' }}",
+            tr("Nettoyage"),
+            tr(
+                "{{ as_timestamp(states(entity), 0) | timestamp_custom('%d/%m/%Y', true) if states(entity) not in ['unknown','unavailable'] else 'À renseigner' }}"
+            ),
             "mdi:broom",
             "teal",
         ),
@@ -114,8 +135,8 @@ def mushroom_card(name, entities):
     )
     chips = []
     for key, icon, ok, due in (
-        ("low_stock", "mdi:package-variant", "Stock OK", "Stock faible"),
-        ("cleaning_due", "mdi:broom", "Entretien OK", "À nettoyer"),
+        ("low_stock", "mdi:package-variant", "Stock OK", tr("Stock faible")),
+        ("cleaning_due", "mdi:broom", tr("Entretien OK"), tr("À nettoyer")),
     ):
         if key not in by_key:
             continue
@@ -129,7 +150,9 @@ def mushroom_card(name, entities):
                 + due
                 + "' if is_state(entity, 'on') else '"
                 + ok
-                + "' if is_state(entity, 'off') else 'Indisponible' }}",
+                + "' if is_state(entity, 'off') else '"
+                + tr("Indisponible")
+                + "' }}",
                 "tap_action": {"action": "more-info"},
             }
         )
@@ -137,7 +160,9 @@ def mushroom_card(name, entities):
         if chip.get("entity") == by_key.get("cleaning_due"):
             chip["content"] = chip["content"].replace(
                 "{{ ",
-                "{{ 'Rappel désactivé' if state_attr(entity, 'enabled') == false else ",
+                tr(
+                    "{{ 'Rappel désactivé' if state_attr(entity, 'enabled') == false else "
+                ),
                 1,
             )
     chips.append(
@@ -154,11 +179,11 @@ def mushroom_card(name, entities):
     for key, title, subtitle, icon in (
         (
             "add_bag",
-            "Ajouter un sac",
-            "Consommation du jour",
+            tr("Ajouter un sac"),
+            tr("Consommation du jour"),
             "mdi:plus-circle-outline",
         ),
-        ("clean", "Nettoyage", "Aujourd’hui", "mdi:broom"),
+        ("clean", tr("Nettoyage"), tr("Aujourd’hui"), "mdi:broom"),
     ):
         if key in by_key:
             actions.append(
@@ -174,9 +199,11 @@ def mushroom_card(name, entities):
                         "perform_action": "button.press",
                         "target": {"entity_id": by_key[key]},
                         "confirmation": {
-                            "text": "Ajouter un sac à la consommation d’aujourd’hui ?"
+                            "text": tr(
+                                "Ajouter un sac à la consommation d’aujourd’hui ?"
+                            )
                             if key == "add_bag"
-                            else "Enregistrer un nettoyage pour aujourd’hui ?"
+                            else tr("Enregistrer un nettoyage pour aujourd’hui ?")
                         },
                     },
                 }

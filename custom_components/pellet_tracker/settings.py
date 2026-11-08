@@ -6,6 +6,7 @@ import re
 from decimal import Decimal, InvalidOperation
 
 DEFAULTS = {
+    "language": "fr",
     "stove_entity": "",
     "stove_attribute": "",
     "stove_on_states": "on,heating",
@@ -53,6 +54,8 @@ def validate_settings(raw: dict, current: dict, choices: dict) -> dict:
     if not name or len(name) > 80:
         raise ValueError("Le nom doit contenir entre 1 et 80 caractères.")
     settings["name"] = name
+    if settings["language"] not in ("fr", "en"):
+        raise ValueError("Unsupported language")
     for key, (minimum, maximum) in RANGES.items():
         value = settings[key]
         if (

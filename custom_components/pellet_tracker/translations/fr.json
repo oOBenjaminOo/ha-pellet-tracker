@@ -10,7 +10,8 @@
           "currency": "Devise",
           "season_month": "Premier mois de la saison",
           "low_stock": "Seuil de stock faible (sacs)",
-          "cleaning_bags": "Rappel nettoyage après (sacs)"
+          "cleaning_bags": "Rappel nettoyage après (sacs)",
+          "language": "Langue du suivi"
         }
       }
     }
@@ -124,7 +125,8 @@
           "stove_entity": "Entité d’état du poêle (facultatif)",
           "stove_attribute": "Attribut à lire (vide = état)",
           "stove_on_states": "États allumé, séparés par des virgules",
-          "stove_off_states": "États éteint, séparés par des virgules"
+          "stove_off_states": "États éteint, séparés par des virgules",
+          "language": "Langue du suivi"
         }
       }
     },

@@ -2,11 +2,16 @@
 
 from datetime import datetime, timedelta
 
+from .i18n import text
+
 
 def active_alerts(summary: dict, settings: dict) -> dict:
     alerts = {}
+    language = settings.get("language", "fr")
     if summary["stock"] <= settings["low_stock"]:
-        alerts["low_stock"] = f"Stock faible : {summary['stock']:g} sacs restants."
+        alerts["low_stock"] = text(
+            language, "Stock faible : {stock:g} sacs restants.", stock=summary["stock"]
+        )
     days = summary["days_since_clean"]
     if (
         settings["cleaning_bags"]
@@ -16,9 +21,14 @@ def active_alerts(summary: dict, settings: dict) -> dict:
         and days is not None
         and days >= settings["cleaning_days"]
     ):
-        elapsed = f", {days} jours" if days is not None else ""
-        alerts["cleaning_due"] = (
-            f"Nettoyage à prévoir : {summary['bags_since_clean']:g} sacs{elapsed} depuis le dernier nettoyage."
+        elapsed = (
+            text(language, ", {days} jours", days=days) if days is not None else ""
+        )
+        alerts["cleaning_due"] = text(
+            language,
+            "Nettoyage à prévoir : {bags:g} sacs{elapsed} depuis le dernier nettoyage.",
+            bags=summary["bags_since_clean"],
+            elapsed=elapsed,
         )
     autonomy = summary["autonomy_days"]
     if (
@@ -26,7 +36,11 @@ def active_alerts(summary: dict, settings: dict) -> dict:
         and autonomy is not None
         and autonomy <= settings["low_autonomy_days"]
     ):
-        alerts["low_autonomy"] = f"Autonomie estimée courte : {autonomy:g} jours."
+        alerts["low_autonomy"] = text(
+            language,
+            "Autonomie estimée courte : {autonomy:g} jours.",
+            autonomy=autonomy,
+        )
     return alerts
 
 

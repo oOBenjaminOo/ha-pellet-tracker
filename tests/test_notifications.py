@@ -101,6 +101,22 @@ class NotificationDeliveryTests(unittest.IsolatedAsyncioTestCase):
         self.manager = module.Notifications(self.hass, self.ledger)
         await self.manager.async_load()
 
+    async def test_english_delivery_and_buttons_preserve_stove_name(self):
+        self.cfg["language"] = "en"
+        self.ledger.entry.title = "Poêle chez François"
+        await self.manager.async_test()
+        self.assertEqual(
+            self.calls[-1][2]["message"], "Pellet Tracker test notification."
+        )
+        self.assertIn("Poêle chez François", self.calls[-1][2]["title"])
+        self.cfg["notify_actions"] = True
+        self.ledger.journal = {"revision": 4}
+        buttons = await self.manager.action_buttons("alert")
+        self.assertEqual(
+            [button["title"] for button in buttons],
+            ["Cleaning done", "+1 bag used", "Remind in 24 h"],
+        )
+
     async def test_mobile_actions_are_scoped_single_use_and_revision_bound(self):
         self.cfg["notify_actions"] = True
         self.ledger.journal = {"revision": 4}

@@ -1,14 +1,23 @@
 """Alert thresholds and reminder decisions with explicit time fixtures."""
 
 import importlib.util
+import sys
+import types
 import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).parents[1] / "custom_components/pellet_tracker"
 
 
+package = types.ModuleType("alerts_test")
+package.__path__ = [str(ROOT)]
+sys.modules["alerts_test"] = package
+
+
 def load(name):
-    spec = importlib.util.spec_from_file_location(name, ROOT / f"{name}.py")
+    spec = importlib.util.spec_from_file_location(
+        f"alerts_test.{name}", ROOT / f"{name}.py"
+    )
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
@@ -19,6 +28,33 @@ settings = load("settings")
 
 
 class AlertTests(unittest.TestCase):
+    def test_language_defaults_validation_and_english_alerts(self):
+        current = {**settings.DEFAULTS, "name": "Poêle"}
+        self.assertEqual(
+            settings.validate_settings({}, current, {"": "Local"})["language"], "fr"
+        )
+        self.assertEqual(
+            settings.validate_settings({"language": "en"}, current, {"": "Local"})[
+                "language"
+            ],
+            "en",
+        )
+        with self.assertRaises(ValueError):
+            settings.validate_settings({"language": "de"}, current, {"": "Local"})
+        summary = {
+            "stock": 2,
+            "bags_since_clean": 6,
+            "days_since_clean": 8,
+            "autonomy_days": 3,
+        }
+        english = alerts.active_alerts(summary, {**settings.DEFAULTS, "language": "en"})
+        self.assertEqual(english["low_stock"], "Low stock: 2 bags remaining.")
+        self.assertEqual(
+            english["cleaning_due"],
+            "Cleaning due: 6 bags, 8 days since the last cleaning.",
+        )
+        self.assertEqual(english["low_autonomy"], "Low estimated autonomy: 3 days.")
+
     def test_no_cleaning_reminder_without_usage_since_cleaning(self):
         summary = {
             "stock": 20,

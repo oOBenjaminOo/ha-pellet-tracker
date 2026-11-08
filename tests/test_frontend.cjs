@@ -7,7 +7,8 @@ const assert = require("node:assert/strict");
 
 let Panel;
 const encodeCsv = vm.runInNewContext(
-  readFileSync(join(__dirname, "../custom_components/pellet_tracker/frontend/panel.js"), "utf8") + "\n csvCell;",
+  readFileSync(join(__dirname, "../custom_components/pellet_tracker/frontend/translations.js"), "utf8").replace("export const", "const") + "\n" +
+  readFileSync(join(__dirname, "../custom_components/pellet_tracker/frontend/panel.js"), "utf8").replace(/^import .*;\n/, "") + "\n csvCell;",
   { HTMLElement: class {}, customElements: { define(_name, value) { Panel = value; } }, Intl, Date, Set, console },
 );
 
@@ -135,7 +136,7 @@ function fixture() {
   p.data = {name:"Test",currency:"EUR",season_month:7,revision:4,events:[],audit:[],settings:{low_stock:10},entities:[],summary:{season:"2018/2019",seasons:{"2018/2019":season},monthly:{"2018/2019":[]},same_date:[],stock:38,autonomy_days:null,stock_history:[]}};
   const nodes = new Map();
   p.shadowRoot = {
-    querySelector: id => { if(!nodes.has(id)) nodes.set(id,{addEventListener(){}}); return nodes.get(id); },
+    querySelector: id => { if(!nodes.has(id)) nodes.set(id,{addEventListener(){},setAttribute(){}}); return nodes.get(id); },
     querySelectorAll: () => []
   };
   p.bindSeasonReport = () => {};
@@ -265,4 +266,46 @@ test("dashboard changes between selection and submission prevent a write", async
   assert.equal(p.messages.some(m=>m.includes("dashboard a changé")),true);
   assert.equal(p.busy,false);
   assert.equal(controls[0].disabled,false);
+});
+
+test("journal language is isolated, formats values and keeps user text unchanged", () => {
+  const {p} = fixture(), {p: french} = fixture();
+  p.data.settings.language = "en";
+  p.data.events = [{id:"sample",kind:"note",date:"2018-11-07",quantity:0,order:1,comment:"Réapprovisionnement chez François <test>",supplier:"Marque",brand:"Poêle"}];
+  assert.equal(p.labels.purchase, "Restock");
+  assert.equal(french.labels.purchase, "Réapprovisionnement");
+  assert.equal(p.number(1234.5), "1,234.5");
+  assert.equal(french.number(1234.5), "1 234,5");
+  assert.equal(p.seasonDates().label, "July");
+  assert.match(p.overviewView(), /Your stock/);
+  assert.match(p.overviewView(), /Réapprovisionnement chez François &lt;test&gt;/);
+  assert.match(p.journalView(), /Include cancelled entries/);
+  assert.match(p.seasonsView(), /How does the changeover work/);
+  assert.match(p.settingsForm(), /Tracker language/);
+  assert.match(p.seasonReport(), /Heating report and budget/);
+  assert.match(p.dashboardsView(), /Copy Mushroom card/);
+  assert.match(p.cleaningRule(), /reminder disabled/);
+  assert.equal(p.number(null), "Not provided");
+  p.data.settings.language = "fr";
+  assert.match(p.overviewView(), /Votre réserve/);
+});
+
+test("English operations, validation and generated native card keep protocol identifiers", () => {
+  const {p} = fixture(); p.data.settings.language="en";
+  p.data.entities=[{key:"add_bag",entity_id:"button.poele_ajouter",available:true},{key:"stock",entity_id:"sensor.poele_stock",available:true}];
+  const yaml=p.dashboardYaml();
+  assert.match(yaml,/Add one bag to today’s consumption\?/);
+  assert.match(yaml,/sensor.poele_stock/);
+  assert.match(yaml,/button.press/);
+  let title, markup;
+  p.showEditor=(t,html)=>{title=t;markup=html;return null;};
+  p.openOperation("purchase");
+  assert.equal(title,"Add action");
+  assert.match(markup,/Unit price/);
+  assert.match(markup,/name="unit_price"/);
+  assert.match(markup,/value="purchase"/);
+  const box={};p.shadowRoot={querySelector:()=>box};
+  Panel.prototype.notice.call(p,"Insufficient stock on 2018-11-07 (secret-id)",true);
+  assert.match(box.textContent,/Insufficient stock on 07\/11\/2018/);
+  assert.equal(box.textContent.includes("secret-id"),false);
 });

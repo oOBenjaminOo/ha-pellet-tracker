@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.6.0b1
+
+- French/English language choice per journal at setup and in settings.
+- Full panel translation, including dialogs, charts, CSV headings and messages.
+- Localised notification text/actions and generated Mushroom/native cards.
+- Locale-aware numbers and month names; preserve user data and entity identifiers.
+- French default for existing journals; existing dashboard cards retain their language.
+- Neutral Pellet Tracker sidebar name for multilingual installations.
+
 ## 0.5.0b2
 
 - Carte Mushroom : état du poêle indiqué uniquement par l’image, sans libellé ni badge redondant.
