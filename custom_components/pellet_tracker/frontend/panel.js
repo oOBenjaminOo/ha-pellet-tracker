@@ -335,8 +335,13 @@ class PelletTrackerPanel extends HTMLElement {
       .querySelectorAll("#events tr")
       .forEach((row) => (row.hidden = row.dataset.season !== s.season));
     root.querySelector("#export").onclick = () => {
+      const backup = { ...d };
+      delete backup.notification_choices;
+      delete backup.notification_error;
       const url = URL.createObjectURL(
-        new Blob([JSON.stringify(d, null, 2)], { type: "application/json" }),
+        new Blob([JSON.stringify(backup, null, 2)], {
+          type: "application/json",
+        }),
       );
       const a = document.createElement("a");
       a.href = url;
