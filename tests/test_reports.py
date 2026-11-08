@@ -178,7 +178,17 @@ class ReportTests(unittest.TestCase):
                     }[(heat == "on", maintenance == "on")]
                     self.assertEqual(filename, expected)
                     self.assertTrue((ROOT / "frontend" / filename).is_file())
-                    self.assertEqual(visible[0]["elements"], [])
+                    self.assertEqual(visible[0]["aspect_ratio"], "3:2")
+                    self.assertFalse(
+                        any(e["type"] == "state-label" for e in visible[0]["elements"])
+                    )
+                    home = next(
+                        e for e in visible[0]["elements"] if e["type"] == "icon"
+                    )
+                    self.assertEqual(
+                        home["tap_action"],
+                        {"action": "navigate", "navigation_path": "/pellet-tracker"},
+                    )
 
     def test_picture_actions_are_confirmed_local_buttons_in_every_visual_variant(self):
         entities = [
@@ -259,7 +269,9 @@ class ReportTests(unittest.TestCase):
         )
         self.assertEqual(card["cards"][1]["elements"][0]["entity"], "sensor.renamed")
         chip = next(
-            c for c in card["cards"] if c["type"] == "custom:mushroom-chips-card"
+            c
+            for c in card["cards"][1]["elements"]
+            if c["type"] == "custom:mushroom-chips-card"
         )["chips"][0]
         self.assertIn("is_state(entity, 'off')", chip["content"])
         self.assertIn("Indisponible", chip["content"])

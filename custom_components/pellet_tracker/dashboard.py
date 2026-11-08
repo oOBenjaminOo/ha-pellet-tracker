@@ -38,7 +38,10 @@ def mushroom_card(name, entities, language="fr"):
         }
     ]
     elements = []
-    for key, top, size in (("stock", "23%", "34px"), ("autonomy_days", "39%", "13px")):
+    for key, top, size in (
+        ("stock", "45%", "clamp(22px, 5vw, 34px)"),
+        ("autonomy_days", "56%", "clamp(10px, 2.5vw, 13px)"),
+    ):
         if key in by_key:
             elements.append(
                 {
@@ -71,7 +74,7 @@ def mushroom_card(name, entities, language="fr"):
                 "entity": by_key[key],
                 "style": {
                     "left": left,
-                    "top": "73%",
+                    "top": "80%",
                     "width": width,
                     "cursor": "pointer",
                     "filter": "drop-shadow(0 4px 5px #0008)",
@@ -92,13 +95,83 @@ def mushroom_card(name, entities, language="fr"):
                 "double_tap_action": {"action": "none"},
             }
         )
+    chips = []
+    for key, icon, ok, due in (
+        ("low_stock", "mdi:package-variant", "Stock OK", tr("Stock faible")),
+        ("cleaning_due", "mdi:broom", tr("Entretien OK"), tr("À nettoyer")),
+    ):
+        if key not in by_key:
+            continue
+        chips.append(
+            {
+                "type": "template",
+                "entity": by_key[key],
+                "icon": icon,
+                "icon_color": "{{ 'orange' if is_state(entity, 'on') else 'green' if is_state(entity, 'off') else 'grey' }}",
+                "content": "{{ '"
+                + due
+                + "' if is_state(entity, 'on') else '"
+                + ok
+                + "' if is_state(entity, 'off') else '"
+                + tr("Indisponible")
+                + "' }}",
+                "tap_action": {"action": "more-info"},
+            }
+        )
+    for chip in chips:
+        if chip.get("entity") == by_key.get("cleaning_due"):
+            chip["content"] = chip["content"].replace(
+                "{{ ",
+                tr(
+                    "{{ 'Rappel désactivé' if state_attr(entity, 'enabled') == false else "
+                ),
+                1,
+            )
+    for chip, top in zip(chips, ("12%", "26%"), strict=False):
+        elements.append(
+            {
+                "type": "custom:mushroom-chips-card",
+                "alignment": "center",
+                "chips": [chip],
+                "style": {
+                    "left": "25%",
+                    "top": top,
+                    "width": "43%",
+                    "--chip-height": "30px",
+                    "--chip-font-size": "11px",
+                    "--chip-background": "rgba(20,20,20,0.78)",
+                    "--chip-border-color": "rgba(255,255,255,0.18)",
+                    "--chip-border-width": "1px",
+                    "--primary-text-color": "#fff",
+                },
+            }
+        )
+    elements.append(
+        {
+            "type": "icon",
+            "icon": "mdi:home-outline",
+            "title": tr("Ouvrir le suivi"),
+            "style": {
+                "left": "53%",
+                "top": "12%",
+                "color": "#fff",
+                "background": "rgba(20,20,20,0.78)",
+                "border-radius": "50%",
+                "padding": "7px",
+                "--mdc-icon-size": "20px",
+            },
+            "tap_action": {"action": "navigate", "navigation_path": "/pellet-tracker"},
+            "hold_action": {"action": "none"},
+            "double_tap_action": {"action": "none"},
+        }
+    )
     status_entity = by_key.get("stove_status")
 
     def header(image):
         return {
             "type": "picture-elements",
             "image": image,
-            "aspect_ratio": "2:1",
+            "aspect_ratio": "3:2",
             "elements": elements,
         }
 
@@ -179,47 +252,5 @@ def mushroom_card(name, entities, language="fr"):
             "square": False,
             "cards": [c for c in metrics if c],
         }
-    )
-    chips = []
-    for key, icon, ok, due in (
-        ("low_stock", "mdi:package-variant", "Stock OK", tr("Stock faible")),
-        ("cleaning_due", "mdi:broom", tr("Entretien OK"), tr("À nettoyer")),
-    ):
-        if key not in by_key:
-            continue
-        chips.append(
-            {
-                "type": "template",
-                "entity": by_key[key],
-                "icon": icon,
-                "icon_color": "{{ 'orange' if is_state(entity, 'on') else 'green' if is_state(entity, 'off') else 'grey' }}",
-                "content": "{{ '"
-                + due
-                + "' if is_state(entity, 'on') else '"
-                + ok
-                + "' if is_state(entity, 'off') else '"
-                + tr("Indisponible")
-                + "' }}",
-                "tap_action": {"action": "more-info"},
-            }
-        )
-    for chip in chips:
-        if chip.get("entity") == by_key.get("cleaning_due"):
-            chip["content"] = chip["content"].replace(
-                "{{ ",
-                tr(
-                    "{{ 'Rappel désactivé' if state_attr(entity, 'enabled') == false else "
-                ),
-                1,
-            )
-    chips.append(
-        {
-            "type": "action",
-            "icon": "mdi:chart-box-outline",
-            "tap_action": {"action": "navigate", "navigation_path": "/pellet-tracker"},
-        }
-    )
-    cards.append(
-        {"type": "custom:mushroom-chips-card", "alignment": "center", "chips": chips}
     )
     return {"type": "vertical-stack", "cards": cards}

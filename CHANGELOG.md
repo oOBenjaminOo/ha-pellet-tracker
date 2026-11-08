@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.3b1
+
+- Preserve the original 3:2 stove image proportions and full framing.
+- Overlay live stock and maintenance chips directly on every stove image variant.
+- Add an in-image home shortcut and reposition metrics/actions for narrower screens.
+- Preserve unknown/disabled alert handling and French/English translations.
+
 ## 0.6.2b1
 
 - Click the pellet bag or ash vacuum directly on the stove image to record usage or cleaning.

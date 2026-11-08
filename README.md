@@ -3,7 +3,7 @@
 Local Home Assistant custom integration for pellet stock, seasonal usage,
 cleaning and purchase costs. Original project by Benjamin (@oOBenjaminOo).
 
-**0.6.2b1 is a feature-complete beta for real-world testing.** No HACS default-catalog submission has
+**0.6.3b1 is a feature-complete beta for real-world testing.** No HACS default-catalog submission has
 been made. No cloud account, stove connection or runtime Python dependency.
 
 ## Language / Langue
@@ -361,3 +361,7 @@ entities remain available for automations and other cards.
 Cliquez sur le sac pour ajouter un sac consommé aujourd’hui, ou sur l’aspirateur
 pour enregistrer un nettoyage aujourd’hui. Une confirmation est demandée. Les
 anciens boutons sous la carte Mushroom sont remplacés par ces objets cliquables.
+
+The Mushroom header preserves the original 3:2 photograph framing. Dynamic stock
+and maintenance badges, plus the tracker home shortcut, are positioned directly on
+the image alongside the existing bag and vacuum actions.

@@ -1,6 +1,7 @@
 """Local messages for generated cards and notifications. Journal data is never translated."""
 
 ENGLISH = {
+    "Ouvrir le suivi": "Open tracker",
     "Ajouter un sac consommé": "Add a consumed bag",
     "Enregistrer un nettoyage": "Record a cleaning",
     "Indisponible": "Unavailable",
