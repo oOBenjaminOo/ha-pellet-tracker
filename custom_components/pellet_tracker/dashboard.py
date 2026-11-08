@@ -65,32 +65,42 @@ def mushroom_card(name, entities, language="fr"):
             "elements": elements,
         }
 
-    off_image = "/pellet_tracker_static/pellet-stove-off.jpg"
-    if status_entity:
-        cards.extend(
-            [
-                {
-                    "type": "conditional",
-                    "conditions": [
-                        {"condition": "state", "entity": status_entity, "state": "on"}
-                    ],
-                    "card": header("/pellet_tracker_static/pellet-stove.jpg"),
-                },
-                {
-                    "type": "conditional",
-                    "conditions": [
-                        {
-                            "condition": "state",
-                            "entity": status_entity,
-                            "state": ["off", "unknown", "unavailable", "unconfigured"],
-                        }
-                    ],
-                    "card": header(off_image),
-                },
-            ]
-        )
-    else:
-        cards.append(header(off_image))
+    cleaning_entity = by_key.get("cleaning_due")
+    # Unknown maintenance data retains the neutral clean illustration; the badge
+    # continues to report unavailable, rather than inventing a maintenance alert.
+    for heating in (True, False) if status_entity else (False,):
+        for dirty in (True, False) if cleaning_entity else (False,):
+            conditions = []
+            if status_entity:
+                conditions.append(
+                    {
+                        "condition": "state",
+                        "entity": status_entity,
+                        "state": "on"
+                        if heating
+                        else ["off", "unknown", "unavailable", "unconfigured"],
+                    }
+                )
+            if cleaning_entity:
+                conditions.append(
+                    {
+                        "condition": "state",
+                        "entity": cleaning_entity,
+                        "state": "on" if dirty else ["off", "unknown", "unavailable"],
+                    }
+                )
+            filename = (
+                "pellet-stove"
+                + ("" if heating else "-off")
+                + ("-dirty" if dirty else "")
+                + ".jpg"
+            )
+            picture = header(f"/pellet_tracker_static/{filename}?v=0.6.1b1")
+            cards.append(
+                {"type": "conditional", "conditions": conditions, "card": picture}
+                if conditions
+                else picture
+            )
     number = tr(
         "{{ states(entity) | replace('.', ',') if is_number(states(entity)) else 'Indisponible' }}"
     )

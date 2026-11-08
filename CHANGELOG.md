@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.1b1
+
+- Four dynamic stove images combining heating and maintenance-due states.
+- Dirty glass follows the existing configurable cleaning reminder sensor.
+- Empty firebox burn pot when off, with pellets retained in the upper hopper.
+- Preserve unknown-state handling and dashboard metrics without extra status labels.
+
 ## 0.6.0b1
 
 - French/English language choice per journal at setup and in settings.

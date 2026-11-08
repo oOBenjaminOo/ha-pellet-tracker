@@ -3,7 +3,7 @@
 Local Home Assistant custom integration for pellet stock, seasonal usage,
 cleaning and purchase costs. Original project by Benjamin (@oOBenjaminOo).
 
-**0.6.0b1 is a feature-complete beta for real-world testing.** No HACS default-catalog submission has
+**0.6.1b1 is a feature-complete beta for real-world testing.** No HACS default-catalog submission has
 been made. No cloud account, stove connection or runtime Python dependency.
 
 ## Language / Langue
@@ -337,3 +337,16 @@ are included. This beta is intended for a test instance first.
 ## License
 
 MIT. See [LICENSE](LICENSE).
+
+### Dynamic glass / Vitre dynamique
+
+The Mushroom image combines heating state with the existing cleaning-due sensor.
+Dirty glass means the configured maintenance threshold has been reached; recording
+a cleaning resets the reminder and restores the clean image. Off images have an empty
+firebox burn pot and keep pellets in the upper hopper. Unknown maintenance data keeps
+the clean illustration while the alert badge remains unavailable. Replace previously
+copied cards once to use the four-image configuration.
+
+La vitre devient sale lorsque le capteur de nettoyage indique un entretien à prévoir,
+selon vos seuils de sacs/jours. Enregistrer un nettoyage réinitialise le rappel et
+rétablit la vitre propre. Le foyer est vide sur les deux images du poêle éteint.

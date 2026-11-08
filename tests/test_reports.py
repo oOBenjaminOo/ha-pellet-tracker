@@ -123,15 +123,60 @@ class ReportTests(unittest.TestCase):
             "en",
         )
         self.assertEqual(card["cards"][0]["title"], "Poêle personnel")
-        self.assertEqual(card["cards"][1]["elements"][0]["entity"], "sensor.stock")
+        self.assertEqual(
+            card["cards"][1]["card"]["elements"][0]["entity"], "sensor.stock"
+        )
         self.assertEqual(
             card["cards"][-1]["cards"][0]["tap_action"]["confirmation"]["text"],
             "Add one bag to today’s consumption?",
         )
-        metric = card["cards"][2]["cards"][0]
+        metric = next(c for c in card["cards"] if c["type"] == "grid")["cards"][0]
         self.assertEqual(metric["primary"], "Consumption")
         self.assertNotIn("replace('.', ',')", metric["secondary"])
         self.assertIn("Unavailable", metric["secondary"])
+
+    def test_dynamic_glass_has_exactly_one_image_for_every_state_combination(self):
+        card = dashboard.mushroom_card(
+            "Stove",
+            [
+                {"key": "stove_status", "entity_id": "sensor.heat", "enabled": True},
+                {
+                    "key": "cleaning_due",
+                    "entity_id": "binary_sensor.dirty",
+                    "enabled": True,
+                },
+            ],
+        )
+        headers = [c for c in card["cards"] if c["type"] == "conditional"]
+        self.assertEqual(len(headers), 4)
+        for heat in ("on", "off", "unknown", "unavailable", "unconfigured"):
+            for maintenance in ("on", "off", "unknown", "unavailable"):
+                with self.subTest(heat=heat, maintenance=maintenance):
+                    states = {"sensor.heat": heat, "binary_sensor.dirty": maintenance}
+                    visible = [
+                        c["card"]
+                        for c in headers
+                        if all(
+                            states[q["entity"]]
+                            in (
+                                q["state"]
+                                if isinstance(q["state"], list)
+                                else [q["state"]]
+                            )
+                            for q in c["conditions"]
+                        )
+                    ]
+                    self.assertEqual(len(visible), 1)
+                    filename = visible[0]["image"].split("/")[-1].split("?")[0]
+                    expected = {
+                        (True, True): "pellet-stove-dirty.jpg",
+                        (True, False): "pellet-stove.jpg",
+                        (False, True): "pellet-stove-off-dirty.jpg",
+                        (False, False): "pellet-stove-off.jpg",
+                    }[(heat == "on", maintenance == "on")]
+                    self.assertEqual(filename, expected)
+                    self.assertTrue((ROOT / "frontend" / filename).is_file())
+                    self.assertEqual(visible[0]["elements"], [])
 
     def test_connected_mushroom_uses_distinct_images_and_today_confirmations(self):
         card = dashboard.mushroom_card(
