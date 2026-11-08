@@ -2,7 +2,6 @@
 class PelletTrackerCard extends HTMLElement {
   constructor() {
     super();
-    this.style?.setProperty("display", "block");
     this.attachShadow({ mode: "open" });
     this.generation = 0;
     this.renderGeneration = 0;
@@ -25,6 +24,7 @@ class PelletTrackerCard extends HTMLElement {
     if (this.isConnected && this.config && !this.subscribing) this.subscribe();
   }
   connectedCallback() {
+    this.style.setProperty("display", "block");
     if (this._hass && this.config && !this.subscribing) this.subscribe();
   }
   disconnectedCallback() {

@@ -5,7 +5,7 @@ const vm=require('node:vm');
 function deferred(){let resolve;const promise=new Promise(r=>resolve=r);return{promise,resolve};}
 function environment(){
   let helpers;
-  class Element {constructor(){this.isConnected=true;}attachShadow(){this.shadowRoot={children:[],replaceChildren:(...children)=>this.shadowRoot.children=children};}}
+  class Element {constructor(){this.isConnected=true;this.style={setProperty(){throw new Error("Custom element constructor must not add attributes");}};}attachShadow(){this.shadowRoot={children:[],replaceChildren:(...children)=>this.shadowRoot.children=children};}}
   const context={HTMLElement:Element,window:{loadCardHelpers:()=>helpers || Promise.resolve({createCardElement:config=>({config})})},customElements:{whenDefined:()=>new Promise(()=>{}),get:()=>null},document:{createElement:()=>({style:{},append(){}})},CustomEvent:class{}};
   const Card=vm.runInNewContext(readFileSync('custom_components/pellet_tracker/frontend/card.js','utf8')+'\nPelletTrackerCard;',context);
   return {Card,setHelpers:value=>helpers=value};
