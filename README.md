@@ -11,7 +11,7 @@ It works with any pellet stove, including an unconnected stove. No cloud account
 MQTT broker or manufacturer integration is required to track bags.
 
 **Current version: 1.0.0 — first stable release.** Available as a HACS custom
-repository. Default-catalog inclusion is subject to a separate HACS review.
+repository. Default-catalog inclusion is pending review in [hacs/default#13692](https://github.com/hacs/default/pull/13692).
 This project is independent of Home Assistant and HACS.
 
 ## Features

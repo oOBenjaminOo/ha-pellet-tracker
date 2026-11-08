@@ -10,8 +10,8 @@ Projet original de [@oOBenjaminOo](https://github.com/oOBenjaminOo), utilisable 
 un poêle connecté ou non. Aucun compte cloud ni serveur MQTT n’est nécessaire au suivi.
 
 **Version 1.0.0 : première version stable.** Installation possible comme dépôt
-personnalisé HACS. L’inclusion au catalogue par défaut reste soumise à une revue
-séparée de l’équipe HACS.
+personnalisé HACS. La [demande d’inclusion au catalogue HACS #13692](https://github.com/hacs/default/pull/13692)
+est déposée et reste en attente de validation.
 
 ## Fonctions
 
