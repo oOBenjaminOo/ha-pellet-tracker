@@ -331,3 +331,49 @@ test("wizard save can preserve unsaved unrelated general settings",async()=>{
   await p.settingsRequest("pellet_tracker/settings",{settings:{stove_entity:"binary_sensor.fire"},revision:3},draft);
   assert.equal(p.settingsDraft,draft);assert.equal(p.data.name,"Stored stove");assert.equal(p.busy,false);
 });
+
+function backupPanel() {
+  const p=panel(), nodes=new Map();
+  for(const id of ['restoreApply','restoreConfirm','restoreSummary','backupDownload','restoreJson','restorePreview','restoreFile','recoveryList','recoveryArchives']) nodes.set('#'+id,{disabled:false,checked:false,value:'',textContent:''});
+  p.shadowRoot={querySelector:id=>nodes.get(id)};
+  p.data={revision:7,settings:{language:'fr'}};
+  p.number=value=>String(value);
+  p.downloadBackup=()=>{};
+  const calls=[];p.mutate=(...args)=>calls.push(args);
+  p.bindBackups();
+  return {p,nodes,calls};
+}
+
+test('restore preview requires confirmation and sends its captured revision and digest', async()=>{
+  const {p,nodes,calls}=backupPanel();
+  p._hass={callWS:async()=>({operations:3,seasons:['2017/2018'],existing_ids:1,new_ids:2,removed_ids:4,voided:0,stock:14,revision:7,digest:'checked'})};
+  nodes.get('#restoreJson').value=JSON.stringify({schema_version:1,events:[{id:'fictional'}]});
+  await nodes.get('#restorePreview').onclick();
+  assert.equal(nodes.get('#restoreApply').disabled,true);
+  nodes.get('#restoreConfirm').checked=true;nodes.get('#restoreConfirm').onchange();
+  assert.equal(nodes.get('#restoreApply').disabled,false);
+  p.data.revision=8;
+  nodes.get('#restoreApply').onclick();nodes.get('#restoreApply').onclick();
+  assert.equal(calls.length,1);
+  assert.equal(calls[0][0],'restore_backup');assert.equal(calls[0][1].digest,'checked');assert.equal(calls[0][2],7);
+});
+
+test('edited restore input and late preview responses cannot re-enable an obsolete restore',async()=>{
+  const {p,nodes}=backupPanel(), response=deferred();
+  p._hass={callWS:()=>response.promise};
+  nodes.get('#restoreJson').value='{"schema_version":1,"events":[]}';
+  const pending=nodes.get('#restorePreview').onclick();await Promise.resolve();
+  nodes.get('#restoreJson').value='different';nodes.get('#restoreJson').oninput();
+  response.resolve({operations:1,seasons:[],existing_ids:0,new_ids:1,removed_ids:0,voided:0,stock:0,revision:7,digest:'obsolete'});
+  await pending;
+  assert.equal(nodes.get('#restoreApply').disabled,true);
+  assert.equal(nodes.get('#restoreConfirm').disabled,true);
+  assert.equal(nodes.get('#restoreSummary').textContent,'');
+});
+
+test('partial financial data is explicitly labelled in French and English',()=>{
+  const p=panel();p.data={settings:{language:'fr'}};
+  assert.match(p.costWarning({spend:null,cost:0}),/Coût partiel/);
+  assert.equal(p.costWarning({spend:0,cost:0}),'');
+  p.data.settings.language='en';assert.match(p.costWarning({spend:2,cost:null}),/Partial cost/);
+});

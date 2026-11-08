@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.9.0b1
+
+- Add server-validated JSON restore preview and explicit journal replacement confirmation.
+- Save a local recovery copy before restoration and on tracker removal; expose recovery copies in the panel.
+- Keep restore revision/digest guards and refuse incompatible currency or season settings.
+- Label incomplete financial data explicitly in French and English.
+- Improve panel touch target sizes and header reflow for narrow screens.
+- Rewrite English/French installation, backup and recovery documentation for HACS preparation.
+- Add HACS validation alongside hassfest, formatting and regression tests.
+
 ## 0.8.0b1
 
 - Live Pellet Tracker dashboard card with per-journal subscription and native card picker editor.

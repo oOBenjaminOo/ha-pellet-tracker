@@ -488,4 +488,48 @@ export const ENGLISH = {
     "The number is outside the supported range.",
   "Vérifiez les réglages saisis.": "Check the settings entered.",
   "Journal introuvable.": "Journal not found.",
+  "Bêta 0.9": "Beta 0.9",
+  "Sauvegarde et restauration": "Backup and restore",
+  "Le journal est conservé indépendamment de Recorder. Avant de supprimer un poêle, téléchargez sa sauvegarde. Une copie de récupération locale est aussi conservée automatiquement lors de la suppression ou avant une restauration.":
+    "The journal is stored independently of Recorder. Download a backup before removing a stove. A local recovery copy is also saved automatically when a tracker is removed or before a restore.",
+  "Télécharger la sauvegarde JSON": "Download JSON backup",
+  "Restaurer une sauvegarde": "Restore a backup",
+  "La restauration remplace toutes les opérations de ce poêle, y compris leurs corrections et annulations. Les réglages actuels restent inchangés. Choisissez la même devise et le même mois de début de saison que la sauvegarde.":
+    "Restoring replaces all operations for this stove, including corrections and voided entries. Current settings remain unchanged. Choose the same currency and season start month as the backup.",
+  "Fichier de sauvegarde JSON": "JSON backup file",
+  "Coller une sauvegarde JSON": "Paste a JSON backup",
+  "Sauvegarde JSON à restaurer": "JSON backup to restore",
+  "Vérifier la sauvegarde": "Check backup",
+  "Rechercher les copies de récupération": "Find recovery copies",
+  "Je confirme le remplacement du journal de ce poêle.":
+    "I confirm replacing this stove’s journal.",
+  "Restaurer le journal": "Restore journal",
+  opérations: "operations",
+  "Identifiants déjà présents": "Existing IDs",
+  "Nouveaux identifiants": "New IDs",
+  "Opérations actuelles absentes de la sauvegarde":
+    "Current operations absent from backup",
+  "Opérations annulées": "Voided operations",
+  "Stock après restauration": "Stock after restore",
+  "Aucune copie de récupération disponible.": "No recovery copies available.",
+  "Poêle supprimé": "Deleted stove",
+  "Avant restauration": "Before restore",
+  "Coût partiel — certains achats ou sacs consommés n’ont pas de prix. Les montants manquants ne sont pas comptés comme zéro.":
+    "Partial cost — some purchases or consumed bags have no price. Missing amounts are not counted as zero.",
+  "Format de sauvegarde non reconnu.": "Invalid backup format",
+  "La devise de la sauvegarde est différente de celle du suivi.":
+    "Backup currency differs from this tracker",
+  "Le mois de début de saison de la sauvegarde est différent de celui du suivi.":
+    "Backup season month differs from this tracker",
+  "La sauvegarde doit contenir de 1 à 10 000 opérations.":
+    "Backup requires 1 to 10000 operations",
+  "La sauvegarde dépasse 10 Mo.": "Backup exceeds 10 MB",
+  "Une opération de la sauvegarde est invalide.": "Invalid backup operation",
+  "Un identifiant d’opération est invalide.": "Invalid backup operation ID",
+  "La sauvegarde contient des identifiants d’opération en double.":
+    "Duplicate operation IDs in backup",
+  "La sauvegarde a changé. Vérifiez-la à nouveau avant de restaurer.":
+    "Backup changed. Preview again before restoring.",
+  "Identifiant de copie de récupération invalide.": "Invalid archive ID",
+  "Copie de récupération introuvable.": "Recovery archive not found",
 };

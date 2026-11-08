@@ -1,423 +1,189 @@
-# Pellet Tracker · Suivi Granulés
+# Pellet Tracker
 
-Local Home Assistant custom integration for pellet stock, seasonal usage,
-cleaning and purchase costs. Original project by Benjamin (@oOBenjaminOo).
+**Pellet stock, heating seasons, costs and maintenance — entirely in Home Assistant.**
 
-**0.8.0b1 is a feature-complete beta for real-world testing.** No HACS default-catalog submission has
-been made. No cloud account or mandatory stove connection. Home Assistant installs the pinned ReportLab dependency for PDF exports.
+[Français](README.fr.md) · [Changelog](CHANGELOG.md) · [Report a bug](https://github.com/oOBenjaminOo/ha-pellet-tracker/issues)
 
-## Language / Langue
+![Pellet Tracker dashboard — fictional example](docs/images/dashboard-en.png)
 
-Choose **Français** or **English** when creating a tracker, or later in
-**Settings → Tracker language → Save settings**. Each stove keeps its own language.
-Existing trackers default to French. Numbers, months, interface messages, CSV headings,
-notifications and newly generated dashboard cards use the selected language.
-User names, comments, entity IDs, MQTT values and historical records are never translated.
-Home Assistant's own settings screens and native entity names follow your HA profile language.
-The live Pellet Tracker card follows language and settings automatically. Replace old static Mushroom card configurations once with the new live card. Native YAML examples remain static.
+Pellet Tracker is an original custom integration by [@oOBenjaminOo](https://github.com/oOBenjaminOo).
+It works with any pellet stove, including an unconnected stove. No cloud account,
+MQTT broker or manufacturer integration is required to track bags.
 
-Choisissez **Français** ou **English** à la création, ou dans
-**Réglages → Langue du suivi → Enregistrer les paramètres**. Chaque poêle conserve
-son choix ; les suivis existants restent en français. Pour changer la langue d’une
-ancienne carte statique, remplacez-la une seule fois par la nouvelle carte automatique.
+**Current version: 0.9.0b1 (beta).** Available as a HACS custom repository;
+not yet included in the default HACS catalog. A stable release and catalog request
+will follow user acceptance. This project is independent of Home Assistant and HACS.
 
-## Fonctionnement
+## Features
 
-- Interface français/anglais avec six vues distinctes : **Accueil, Statistiques,
-  Saisons, Historique, Dashboards et Réglages**. Seule la vue choisie est affichée.
-- Saisies et modifications dans des fenêtres modales, avec champs contextuels.
-- Un seul bouton **Ajouter une action** sur l’accueil : choisir consommation,
-  réapprovisionnement, nettoyage ou autre opération dans le formulaire.
-- Accès direct **Modifier mes seuils** sur l’accueil ; seuil de stock et rappels
-  d’entretien par sacs/jours personnalisables. Les options complètes restent dans Réglages.
-- Historique filtrable et paginé.
-- Réapprovisionnement avec quantité, prix unitaire facultatif, fournisseur et marque.
-- Consommation, nettoyage, premier allumage, perte, note et correction de stock.
-- Valorisation FIFO : les sacs les plus anciens sont utilisés en premier.
-- Dépenses d’achat et coût des sacs utilisés calculés séparément par saison.
-- Prix moyen pondéré sur les achats dont le prix est connu ; min/max par saison.
-- Prix manquant ≠ gratuit : les totaux incomplets restent inconnus. Les
-  sous-totaux connus et quantités non valorisées restent disponibles dans l’export.
-- Journal local dans `.storage/pellet_tracker.<entry_id>`, indépendant du Recorder.
-  Sauvegardes Home Assistant complètes incluant `.storage` recommandées.
-- Écritures sérialisées, sauvegarde avant publication, contrôle de révision.
-  Une modification concurrente est refusée, jamais écrasée silencieusement.
-- Piste d’audit des corrections et annulations ; aucune suppression physique
-  d’opérations depuis l’interface.
-- Plusieurs journaux indépendants, capteurs traduits en français et anglais.
-- Autonomie estimée, date d’épuisement et rythme récent, sans inventer de données.
-- Graphiques mensuels des quantités, coûts et prix, avec export CSV.
-- Comparaison des saisons complètes et à date équivalente.
-- Notifications regroupées intégrées, rappels et destination supplémentaire facultative.
-- Paramètres modifiables sans redémarrage, boutons rapides et actions d’automatisation.
-- Une saisie peut enregistrer les sacs et un nettoyage dans la même transaction.
+- Separate Home, Statistics, Seasons, History, Dashboards and Settings views.
+- Quick action dialog for consumption, purchases, cleaning and other journal entries.
+- Purchases with optional unit price, shipping, discount, supplier and pellet brand.
+- Automatic heating seasons, stock carried forward, monthly graphs and comparisons.
+- FIFO valuation: oldest bags are consumed first; purchase spending and consumed
+  bag cost are distinct. Unknown prices remain unknown, with an explicit partial-cost notice.
+- Estimated autonomy based on recent recorded consumption; no weather prediction.
+- Configurable stock and cleaning thresholds, grouped notifications and reminders.
+- Optional season budget, heating start/end dates and downloadable PDF season report.
+- Reversible entry cancellation, immediate undo of the latest addition, revision checks.
+- JSON backups, server-validated restore preview and automatic local recovery copies.
+- French/English per tracker, local number/date formatting and translated messages.
+- Multiple independent stoves; 20 sensors, 3 binary sensors and 2 buttons per stove.
+- Ready-to-add dashboard card, with clickable bag and ash vacuum, dynamic stock and
+  cleaning badges, and four stove images (on/off × clean/dirty).
+- Optional observed stove state and separately enabled, confirmed switch control.
 
-## Installation de test
+## Requirements
 
-1. Télécharger le dépôt et copier **uniquement** `custom_components/pellet_tracker`
-   dans le dossier `custom_components` de Home Assistant.
-2. Redémarrer Home Assistant.
-3. Paramètres → Appareils et services → Ajouter une intégration → **Pellet Tracker**.
-4. Nommer le poêle, choisir la devise, le premier mois de saison (juillet par
-   défaut), le seuil de stock et le seuil de nettoyage.
-5. Ouvrir **Suivi Granulés** dans la barre latérale. Pour démarrer sans historique,
-   enregistrer une correction positive du stock initial, avec son prix si connu.
-
-Le dépôt peut également être ajouté comme dépôt personnalisé de type intégration
-dans HACS. Les mises à jour de code nécessitent un redémarrage de Home Assistant.
-L’interface et les API du journal sont réservées aux administrateurs. Les
-capteurs peuvent être utilisés dans les tableaux de bord habituels.
-
-## Règles de calcul
-
-Une quantité positive en correction ajoute un lot ; une quantité négative retire
-des sacs des lots les plus anciens. Les corrections ne sont pas des achats.
-Les pertes réduisent le stock mais sont séparées de la consommation. Toute
-transaction créant un stock négatif, même dans le passé, est refusée en entier.
-Les opérations du même jour sont rejouées dans leur ordre d’enregistrement.
-Une correction de date recalcule tous les mouvements suivants.
-
-Les prix unitaires acceptent quatre décimales. Les calculs utilisent `Decimal` ;
-l’affichage monétaire arrondit à deux décimales. Une devise unique est définie
-par journal, sans conversion. Les saisons sont définies par leur premier mois
-et ne réinitialisent jamais le stock. La date du premier allumage est distincte.
-
-Les sacs enregistrés comme utilisés représentent des sorties de stock vers le
-poêle, pas une mesure du combustible effectivement brûlé ni de chaleur produite.
-Les seuils d’entretien sont des rappels personnalisés, pas des prescriptions.
-
-## Nouveautés : saisie, bilan, budget et prix
-
-- **Annuler la dernière saisie** retire en une transaction les opérations du dernier
-  ajout, y compris un nettoyage associé. Une nouvelle modification rend cette
-  annulation rapide indisponible ; l’annulation détaillée reste dans l’historique.
-- **Saisons → Bilan et budget** : premier allumage, fin de chauffe, durée inclusive,
-  sacs sur cette période et moyenne quotidienne. Les opérations hors période restent
-  dans les totaux comptables. La fin de chauffe ne ferme pas la saison et ne vide pas le stock.
-- Budget facultatif **par saison** : laisser le champ vide pour le désactiver.
-  Le restant est inconnu si des achats n’ont pas de prix ; un dépassement reste négatif.
-- **Statistiques → Fournisseurs et marques** : prix moyen pondéré, min/max, sacs
-  sans prix et dépenses, regroupés par saison et nom (espaces et casse normalisés).
-- Les achats acceptent une livraison et une remise **totales pour l’achat**.
-  Le prix unitaire saisi reste le prix de base ; le coût réel réparti par sac inclut
-  livraison moins remise dans les dépenses, prix moyens et valorisation FIFO.
-  Les anciens achats sans ces champs conservent exactement leurs montants.
-
-## Image dynamique d’un poêle connecté (facultatif)
-
-Dans **Réglages → Poêle connecté**, choisir l’entité d’état et, si nécessaire,
-l’attribut à lire. Renseigner les valeurs exactes signifiant allumé et éteint,
-séparées par des virgules. Pour un thermostat, `hvac_action: heating/idle` peut
-être adapté s’il est disponible ; le mode `heat` seul ne prouve pas une chauffe.
-
-Le capteur **État de chauffe du poêle** suit les changements de l’entité et de
-ses attributs sans interrogation périodique. La carte Mushroom affiche l’image
-avec flamme seulement pour l’état reconnu `on`, l’image sans flamme pour `off`,
-et un visuel sans flamme pour une source inconnue/indisponible ou non configurée.
-Les valeurs non reconnues restent inconnues. Aucune consommation, aucun nettoyage
-ni commande du poêle ne découle de cette association.
-
-Les anciennes cartes copiées avant cette version gardent leur configuration :
-remplacer leur YAML par la nouvelle carte proposée dans **Dashboards** pour activer
-le visuel dynamique et les nouvelles confirmations. Les changements ultérieurs
-d’association dans Réglages seront suivis automatiquement par cette nouvelle carte.
-
-## Seuils d’alerte
-
-Les seuils se modifient dans **Réglages**, ou via les options de l’intégration.
-Stock faible : stock **inférieur ou égal** au seuil (10 sacs par défaut).
-Entretien : **5 sacs utilisés OU 7 jours** depuis le nettoyage par défaut ; le
-critère en jours exige au moins une consommation depuis ce nettoyage.
-Un réapprovisionnement n’augmente pas le compteur d’entretien.
-Chaque critère d’entretien accepte `0` pour le désactiver ; les deux à zéro
-désactivent ce rappel. Les valeurs sont aussi visibles dans les attributs des alertes.
-
-## Notifications avec actions
-
-Avec une destination `notify.mobile_app_…` explicitement choisie, les alertes
-Companion proposent **Nettoyage fait**, **+1 sac utilisé**, **Rappeler dans 24 h**.
-L’option de boutons est désactivable. Les actions d’écriture sont limitées à la
-révision du journal au moment de l’envoi, expirent au bout de 24 h et ne peuvent
-être rejouées. Une notification ancienne ne crée pas silencieusement une nouvelle
-opération. Le report suspend les envois externes, sans masquer les capteurs ni
-l’alerte locale. Les destinations génériques et scripts restent des messages simples.
-Le bouton de test envoie uniquement un message, sans action d’écriture.
-
-## Saisons automatiques
-
-Aucune création manuelle n’est nécessaire. Par défaut, la saison 2026/2027 couvre
-le 1er juillet 2026 au 30 juin 2027. Le 1er juillet suivant, la nouvelle saison
-est prise en compte automatiquement et le stock restant est conservé. Les saisies
-rétroactives sont rattachées à la saison de leur date. Le premier mois est choisi
-à la configuration du journal ; il reste fixe pour préserver l’historique.
-
-La vue **Saisons** présente la période courante, la prochaine bascule, les saisons
-passées et la date du premier allumage. Celle-ci est un repère de début de chauffe,
-indépendant de la période comptable, et ne consomme aucun sac.
-
-## Intégration aux dashboards
-
-Chaque journal expose **20 capteurs, 3 alertes binaires et 2 boutons**, utilisables
-dans les dashboards et les automatisations habituels de Home Assistant.
-La vue **Dashboards → Ajouter à un dashboard** propose un assistant : choisir le
-tableau de bord, la vue et, pour une vue Sections, une section existante ou nouvelle,
-puis **Ajouter la carte**. La carte entière est ajoutée via les API Home Assistant ;
-les autres cartes et options sont conservées. Les dashboards YAML, les vues générées
-automatiquement et les vues Panneau déjà occupées ne sont pas modifiés. La configuration
-est relue avant l’écriture ; si elle a changé depuis le choix, il faut revérifier la destination.
-La copie YAML reste disponible pour les usages avancés.
-
-La vue **Dashboards** propose aussi la **carte Mushroom prête à copier**, avec
-le visuel de poêle fourni localement (`frontend/pellet-stove.jpg`). Installer Mushroom
-depuis HACS pour cette variante ; la carte native reste disponible sans dépendance.
-L’image est une illustration générique générée pour le projet, et ne représente pas
-un modèle commercial précis. Aucune valeur d’exemple n’est utilisée par la carte distribuée.
-
-La vue **Dashboards** affiche leurs identifiants réels, même après renommage,
-et propose une carte YAML native prête à copier : modifier un dashboard, ajouter
-une carte **Manuelle**, puis coller le YAML. Aucune carte personnalisée requise.
-Les boutons de la carte demandent confirmation avant d’enregistrer un sac utilisé
-ou un nettoyage. Les boutons et services directs restent utilisables dans les
-automatisations sans confirmation interactive.
-
-## Import et export
-
-La page accepte un JSON `schema_version: 1` contenant `events`. L’import ajoute
-les opérations nouvelles en conservant leurs identifiants ; les identifiants
-déjà présents sont ignorés. Il ne remplace jamais un journal existant.
-Vérifier le fichier et l’aperçu avant de confirmer. Importer plusieurs fois le
-même fichier ne duplique pas les opérations.
-
-L’export contient le journal courant, ses révisions d’audit et les statistiques.
-Conserver aussi une sauvegarde Home Assistant pour une restauration complète.
-L’import est une reprise des événements ; il ne restaure pas l’audit d’un autre
-journal. Une opération annulée exportée reste annulée lors de l’import.
-
-Pour l’ancien tableau français `Suivie XX-XX`, un convertisseur facultatif est
-disponible :
-
-```bash
-python tools/convert_xlsx.py source.xlsx private-import.json
-```
-
-Il nécessite `openpyxl` sur la machine de conversion seulement. Vérifier le
-JSON avant de l’importer. Les sorties antérieures au premier inventaire sont
-marquées comme historiques sans suivi de stock. Les saisons sans suivi des achats
-restent inconnues pour les dépenses et quantités achetées. Les commentaires et le type
-des mouvements sources sont conservés ; une anomalie métier doit être revue
-avant de reclasser une sortie en perte. Aucun historique personnel n’est fourni
-dans le dépôt.
-
-## Capteurs
-
-Stock, sacs utilisés et achetés cette saison, nettoyages, dépenses, coût utilisé,
-prix moyen, valeur du stock, date du dernier nettoyage, jours et sacs depuis
-nettoyage, autonomie, date d’épuisement estimée, consommation récente et évolution
-à date équivalente. Trois capteurs binaires : stock faible, nettoyage à prévoir
-et autonomie courte. Deux boutons : ajouter un sac au poêle et enregistrer un nettoyage.
-Les valeurs saisonnières corrigibles n’utilisent pas `total_increasing`.
-Les boutons et capteurs fonctionnent dans les cartes natives Home Assistant.
-La page Suivi Granulés fournit l’interface complète sans carte externe à installer.
-
-## Autonomie et comparaisons
-
-La fenêtre de consommation est configurable de 7 à 180 jours (30 par défaut).
-Le rythme est calculé sur les jours calendaires de la fenêtre, ou depuis le
-premier allumage connu lorsqu’il est plus récent. Il faut au moins 7 jours de
-recul, 3 dates de consommation distinctes et une utilisation dans les 14 derniers
-jours. Une estimation issue de peu de saisies est signalée comme limitée.
-Le stock nul donne 0 jour ; une absence de consommation récente donne une
-estimation inconnue, jamais une autonomie infinie. Il ne s’agit pas d’une
-prévision météo ni d’une mesure du réservoir du poêle.
-
-Les graphiques affichent 12 mois par saison. Les mois futurs sont distingués des
-mois sans opération. Les coûts mensuels utilisent les mêmes allocations FIFO que
-le journal, y compris pour les sacs achetés les saisons précédentes. Les prix
-moyens sont pondérés par le nombre de sacs dont le prix est connu.
-
-La comparaison à date équivalente s’arrête au même jour et au même mois de
-chaque saison. Le 29 février devient le 28 février pour les années non bissextiles.
-Un pourcentage n’est calculé que si la saison précédente existe avec une
-consommation non nulle. Les exports CSV sont compatibles avec Excel (UTF-8,
-séparateur point-virgule) ; les formules dans les champs texte sont neutralisées.
-
-## Notifications prêtes à l’emploi
-
-Les notifications automatiques sont actives par défaut dans Home Assistant :
-stock faible (10 sacs), nettoyage (5 sacs ou 7 jours après le dernier nettoyage,
-avec consommation depuis celui-ci), autonomie courte (7 jours si calculable).
-Une seule notification regroupe les alertes du poêle. Elle est actualisée et
-retirée quand les conditions disparaissent. Aucun rappel de nettoyage en période
-d’inactivité après un nettoyage de fin de saison.
-
-Une nouvelle condition déclenche une alerte après la saisie. Les rappels sont
-vérifiés à l’heure configurée (08h par défaut), après le délai choisi (3 jours par
-défaut ; 0 désactive les rappels). La déduplication est conservée après redémarrage.
-Le retour à la normale est facultatif pour les destinations supplémentaires.
-
-Dans **Paramètres et notifications**, choisir éventuellement un service notify,
-une entité notify ou un script existant. Aucune destination privée n’est devinée.
-Un script reçoit les variables `title`, `message`, `kind` (`alert`, `recovery`,
-`test`) et `entry_id` : il peut relayer vers Telegram ou AWTRIX avec les actions
-habituelles du propriétaire. Le bouton de test utilise la destination enregistrée.
-Une erreur de livraison conserve l’opération du journal ; elle est affichée
-séparément et la destination en échec est réessayée après un délai minimal d’une
-heure lors de la prochaine vérification. L’événement `pellet_tracker_alert` est
-également émis lors d’un changement des conditions pour des automatisations avancées.
-
-## Actions natives
-
-Toutes les actions nécessitent `entry_id`, sélectionnable dans l’éditeur visuel.
-Elles sont réservées aux administrateurs et aux automatisations locales.
-
-| Action | Fonction |
+| Component | Requirement |
 | --- | --- |
-| `pellet_tracker.record` | Ajout : use, purchase, clean, start, adjust, loss ou note |
-| `pellet_tracker.edit` | Modification partielle d’une opération existante |
-| `pellet_tracker.cancel` | Annulation réversible par `operation_id` |
-| `pellet_tracker.restore` | Rétablissement avec contrôle du stock |
-| `pellet_tracker.export` | Retour du journal et des statistiques (réponse obligatoire) |
-| `pellet_tracker.test_notification` | Envoi d’un test vers les destinations enregistrées |
-| `pellet_tracker.check_notifications` | Vérification des alertes en respectant la déduplication |
+| Home Assistant | 2026.7.0 or later; tested on 2026.7.1 |
+| HACS | Required only for HACS installation/updates |
+| Mushroom | Required for the illustrated ready-made dashboard card |
+| Internet | Required for installation/dependencies/updates; journal runs locally |
+| Stove connection | Optional; an existing HA entity is used for observation/control |
 
-Exemple de réapprovisionnement (remplacer `IDENTIFIANT_DU_JOURNAL`) :
+Home Assistant installs `reportlab==4.4.10` for local PDF generation. The panel
+and native entities work without Mushroom. Monetary values use one currency per
+tracker, with no exchange-rate conversion.
+
+## Install with HACS
+
+[![Open your Home Assistant instance and add this HACS repository](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=oOBenjaminOo&repository=ha-pellet-tracker&category=integration)
+
+1. In HACS, open **Custom repositories**.
+2. Add `https://github.com/oOBenjaminOo/ha-pellet-tracker`, category **Integration**.
+3. Download **Pellet Tracker**. During beta testing, select the default branch if
+   no published release is available.
+4. Restart Home Assistant.
+5. Open **Settings → Devices & services → Add integration → Pellet Tracker**.
+6. Choose the tracker name, language, currency, season start month and alert thresholds.
+7. Open **Pellet Tracker** in the sidebar.
+
+Manual alternative: copy only `custom_components/pellet_tracker` into your
+Home Assistant `custom_components` directory, restart, then add the integration.
+Code updates require a restart; changing tracker settings does not.
+
+## First use
+
+Start with an empty journal. Record an initial positive stock adjustment for bags
+already owned, including their price only if known; an adjustment is not a purchase.
+Record subsequent purchases with their quantity and optional price per bag.
+Use **Add an action** to record bags consumed or cleaning.
+
+The season start month is chosen at setup (July by default). Seasons roll over
+automatically, without resetting stock. The first lighting date is a separate
+heating marker and never consumes a bag. Historical entries use their own dates.
+The start month stays fixed to preserve historical consistency.
+
+Cleaning alerts can use a bag threshold, elapsed days, or both. A zero disables
+that individual threshold; day reminders require consumption since cleaning.
+Stock alerts trigger at or below your configured threshold. All are user-adjustable.
+
+## Add the dashboard card
+
+Install **Mushroom** from HACS. In **Pellet Tracker → Dashboards → Add to a dashboard**,
+choose a storage-managed dashboard, view and section, then confirm. The live card
+follows the tracker language and settings automatically.
+
+Manual card configuration (replace the placeholder with your tracker ID):
 
 ```yaml
-action: pellet_tracker.record
-data:
-  entry_id: IDENTIFIANT_DU_JOURNAL
-  kind: purchase
-  quantity: 20
-  unit_price: 6.50
-  comment: Livraison
-  request_id: livraison-unique-001
+type: custom:pellet-tracker-card
+entry_id: YOUR_TRACKER_ENTRY_ID
 ```
 
-`request_id` est facultatif : répéter une requête identique ne duplique pas la
-saisie. Réutiliser l’identifiant avec un autre contenu est refusé. Pour les
-boutons physiques, chaque nouvelle utilisation doit avoir un identifiant
-nouveau, ou ne pas transmettre ce champ. `cleaned: true` ajoute atomiquement
-un nettoyage avec une consommation ou un achat. Les dates sont facultatives
-(jour courant par défaut). Une édition conserve les champs non fournis.
-Les corrections peuvent être antidatées ; les écritures sont sérialisées.
-Les paramètres de seuils et de notification sont aussi accessibles dans le
-flux d’options de l’intégration. Devise et premier mois de saison restent fixés
-par journal pour préserver la signification de l’historique.
+The card is registered by the integration; no additional JS resource is needed.
+Existing old static Mushroom cards can be replaced once with the live card.
+Native sensors also work in your own cards and automations. YAML dashboards,
+strategy-generated views and occupied panel views require manual placement.
 
-## Développement et limites actuelles
+## Connected stove (optional)
 
-```bash
-python -m unittest discover -s tests -v
-node --check custom_components/pellet_tracker/frontend/panel.js
-node --test tests/test_frontend.cjs
-```
+**Settings → Connected stove → Setup assistant** guides observation, optional
+control and review. Select an existing entity, optionally an attribute, and the
+exact values that mean on/off. Unknown or unavailable readings are not treated as off.
+Tasmota/MQTT users first expose their device through the relevant HA integration.
 
-Le moteur est indépendant de Home Assistant. Les tests couvrent les coûts FIFO,
-les frontières de saisons, les prix inconnus, les pertes, les corrections,
-la concurrence, la persistance et le rejet atomique d’un import invalide.
+Control is **disabled by default** and independent of observation. Explicitly
+select the switch and enable control to make the stove image ask for confirmation
+before sending an on/off command. The setup assistant sends no device command.
+No manufacturer safety or ignition sequence is implemented by this tracker.
 
-La page de gestion est bilingue français/anglais ; les entités et les formulaires de configuration
-et d’options ont des traductions FR/EN. Cette bêta doit encore être évaluée en
-usage quotidien avant une version stable. Les diagnostics excluent le contenu
-du journal, les destinataires et les commentaires. Le fonctionnement est local ;
-les destinations de notification choisies peuvent utiliser leurs propres services.
+## Backups, restore and removal
 
-## English
+Journal data is stored in `/config/.storage/pellet_tracker.<entry_id>` separately
+from Recorder. Recorder purges do not remove purchases, consumption or seasons.
+Normal integration updates and restarts preserve the journal. Sensor Recorder
+history follows Home Assistant's usual retention settings.
 
-Pellet Tracker is a local inventory ledger. Add purchases with optional unit
-prices, log bag usage and cleaning, and compare heating seasons. FIFO costs
-carry across seasons. Unknown prices remain unknown. Administration uses the
-French/English built-in panel; configuration and entities also follow the HA profile language.
-Install the custom component, restart Home Assistant and add Pellet Tracker
-from Devices & services. Monthly charts, same-date comparisons, guarded autonomy
-estimates, native actions, quick buttons and configurable grouped notifications
-are included. This beta is intended for a test instance first.
+Use **History or Settings → Backup and restore → Download JSON backup**.
+A Home Assistant backup that includes its configuration also preserves the journal.
+Keep an off-device backup: local recovery copies do not protect against disk loss.
 
-## License
+To restore, choose **Restore a backup**, select a JSON file (or paste JSON), and
+check the server-validated preview: seasons, operations, existing/new IDs, current
+operations absent from the backup, voided entries and resulting stock. Tick the
+replacement confirmation and restore. A stale journal or changed backup is refused.
 
-MIT. See [LICENSE](LICENSE).
+**Restore replaces the journal operations, rather than merging them.** It restores
+corrections and voided flags. Current tracker settings, notification destinations,
+control options and budgets are not changed; exported settings remain available
+in the file for reference. Currency and season start month must match.
+The backup's old audit is not trusted/imported: restoration is logged in the
+current audit. The whole previous journal is retained in the local recovery copy.
 
-### Dynamic glass / Vitre dynamique
+Before restore, or when deleting a tracker through HA, the integration saves the
+journal to `.storage/pellet_tracker_recovery.<entry_id>`. Deleting the tracker
+removes its active journal and entities, while retaining that recovery copy.
+Create another tracker with the same currency/start month, then use **Find recovery
+copies** to preview and restore it. One recovery copy per tracker is retained;
+a later restore overwrites that tracker's previous recovery copy. There is no
+scheduled purge of these copies. A save failure prevents active journal removal.
 
-The Mushroom image combines heating state with the existing cleaning-due sensor.
-Dirty glass means the configured maintenance threshold has been reached; recording
-a cleaning resets the reminder and restores the clean image. Off images have an empty
-firebox burn pot and keep pellets in the upper hopper. Unknown maintenance data keeps
-the clean illustration while the alert badge remains unavailable. Replace previously
-copied cards once to use the four-image configuration.
+**Merge import** is separate, under **History → Import history**. It adds new IDs
+and skips existing IDs; it does not restore corrections to existing records.
+The optional `tools/convert_xlsx.py` converts the supported legacy French workbook
+locally; install `openpyxl` on the conversion machine only. Never commit its output.
 
-La vitre devient sale lorsque le capteur de nettoyage indique un entretien à prévoir,
-selon vos seuils de sacs/jours. Enregistrer un nettoyage réinitialise le rappel et
-rétablit la vitre propre. Le foyer est vide sur les deux images du poêle éteint.
+## Statistics and limitations
 
-### Image actions / Actions dans l’image
+- Bags recorded as consumed measure bags put into the stove, not actual burned
+  fuel, useful heat or measured energy.
+- Autonomy needs recent observations and is an estimate, not a guarantee.
+- Missing prices are never invented. Partial totals must not be compared as full costs.
+- Prices support up to four decimals; money display rounds to two. FIFO uses Decimal.
+- Negative stock, including an impossible historical stock sequence, is rejected atomically.
+- Maintenance reminders reflect user settings, not a manufacturer's service schedule.
+- The tracker panel and journal APIs require an administrator. Entity read/control
+  permissions still apply to dashboard users.
 
-Click the pellet bag to record one bag consumed today; click the ash vacuum to record
-a cleaning today. Both actions require confirmation. These actions only update the
-journal and never control the stove or a vacuum device. The standalone HA button
-entities remain available for automations and other cards.
+## Automation actions
 
-Cliquez sur le sac pour ajouter un sac consommé aujourd’hui, ou sur l’aspirateur
-pour enregistrer un nettoyage aujourd’hui. Une confirmation est demandée. Les
-anciens boutons sous la carte Mushroom sont remplacés par ces objets cliquables.
+`pellet_tracker.record`, `edit`, `cancel`, `restore`, `export`, `undo_last`,
+`check_notifications`, `test_notification` and `control_stove` are available in
+Home Assistant's action editor. The entry selector targets the correct tracker.
+`restore` here reinstates a cancelled operation; full JSON restore is a separate
+panel workflow. Export returns a response containing the journal.
 
-The Mushroom header preserves the original 3:2 photograph framing. Dynamic stock
-and maintenance badges, plus the tracker home shortcut, are positioned directly on
-the image alongside the existing bag and vacuum actions.
+## Troubleshooting and support
 
-### Optional stove control / Commande facultative
+After installing/updating, restart HA and refresh the browser/Companion frontend.
+If the card reports an unknown custom element, check that the integration loaded
+and Mushroom is installed. Use **Settings → System → Logs**, filtered for
+`pellet_tracker`, and the integration diagnostics when reporting an issue.
+Do not publish your JSON backup, workbook, notification targets or full journal.
+Repository fixtures and screenshots use fictional examples only.
 
-In Settings, enable stove image control and select the intended switch. The live
-card updates automatically after saving. Clicking the stove
-asks to turn it on or off according to the switch state. Unknown switch states
-have no command hotspot. Disabling the option blocks old copied cards too.
-Control uses explicit commands, never switch.toggle, and does not infer bag usage.
-The observed heating source remains independent: associate it to drive the flame.
-Control actions require an administrator, like journal writes.
+Include HA/integration versions, language, reproduction steps and a redacted
+screenshot in [an issue](https://github.com/oOBenjaminOo/ha-pellet-tracker/issues).
 
-Dans Réglages, activez la commande du poêle et choisissez son switch ; la carte
-automatique suit les changements après enregistrement. Chaque commande exige une confirmation. L’option est désactivée
-par défaut ; sa désactivation bloque aussi les anciennes cartes. Le switch de
-commande et la source d’état de chauffe peuvent être différents.
+## Development and HACS readiness
 
-## Live card, PDF report and guided setup / Carte automatique, PDF et assistant
+CI runs Python/Node regression tests, Ruff, Prettier, hassfest and HACS validation.
+See [the release checklist](docs/release-checklist.md) for executed checks and
+remaining acceptance gates. HACS catalog inclusion is a separate review; a passing
+validation does not imply approval. Do not open a catalog request before acceptance.
 
-Add the generated card from **Dashboards**, or select **Pellet Tracker** in HA’s card picker.
-Its configuration contains only `type: custom:pellet-tracker-card` and `entry_id`.
-The integration loads the module automatically. Mushroom remains required. Existing
-static cards need one replacement; subsequent settings, language, source and entity-name
-changes stream to the installed card. New frontend code may require a browser refresh.
-No full journal or audit is sent to card subscriptions. Card readers must have read
-permission for the relevant entities; stove control and undo remain administrator-only.
-
-The undo arrow appears only while the latest journal change is an addition. It asks
-for confirmation and sends the displayed revision; concurrent changes reject the undo.
-Consumption/cleaning combined entries are reverted atomically by the existing ledger.
-
-**Seasons → Report and budget → Download PDF report** creates a real local PDF with
-season totals, heating dates, optional budget, monthly data and top suppliers/brands.
-Incomplete prices stay unknown; the current season is marked provisional. No data is
-sent to an external PDF service. PDF generation runs outside the HA event loop.
-
-**Settings → Connected stove → Setup assistant** separates observed heating, optional
-command switch and final review. Current observed values are shown without sending
-any hardware command. General settings being edited remain available as an unsaved draft.
-
-Dans **Dashboards**, ajoutez la carte automatique Pellet Tracker. Une seule migration
-des anciennes cartes est nécessaire. La flèche d’annulation apparaît pour la dernière
-saisie annulable. Le bilan PDF se télécharge dans **Saisons → Bilan et budget**.
-L’assistant se trouve dans **Réglages → Poêle connecté** et n’actionne aucun appareil.
-
-## Data privacy and backups / Confidentialité et sauvegardes
-
-Journal data stays in Home Assistant, in `/config/.storage/pellet_tracker.<entry_id>`.
-Recorder history purges do not remove it. Home Assistant backups that include the
-configuration preserve this storage; the journal JSON export provides an extra
-portable copy. Removing a stove integration entry explicitly deletes its journal.
-Repository test examples are fictional and must never be copied from a real journal.
-
-Le journal reste dans Home Assistant, dans `/config/.storage/pellet_tracker.<entry_id>`.
-La purge de Recorder ne le supprime pas. Les sauvegardes Home Assistant incluant
-la configuration conservent ce stockage ; l’export JSON fournit une copie
-supplémentaire. La suppression du poêle dans les intégrations efface son journal.
-Les exemples des tests sont fictifs : ne jamais y recopier un journal réel.
+Licensed under [MIT](LICENSE). Included stove illustrations are illustrative assets;
+no manufacturer affiliation is implied.

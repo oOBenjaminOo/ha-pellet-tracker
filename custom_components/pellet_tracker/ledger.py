@@ -8,6 +8,7 @@ from homeassistant.helpers.storage import Store
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.util import dt as dt_util
 
+from .backup import prepare_backup
 from .const import DOMAIN
 from .model import calculate, validate
 from .reports import enrich_summary
@@ -72,7 +73,32 @@ class Ledger(DataUpdateCoordinator):
                 raise ValueError("Journal changed. Refresh before saving.")
             candidate = deepcopy(self.journal)
             events = candidate["events"]
-            if operation == "undo":
+            if operation == "restore_backup":
+                restored, preview = prepare_backup(
+                    payload.get("backup"),
+                    self.today,
+                    self.entry.data.get("season_month", 7),
+                    self.entry.data.get("currency", "EUR"),
+                    events,
+                )
+                if payload.get("digest") != preview["digest"]:
+                    raise ValueError("Backup changed. Preview again before restoring.")
+                # A failed checkpoint must prevent the destructive replacement.
+                await Store(
+                    self.hass, 1, f"{DOMAIN}_recovery.{self.entry.entry_id}"
+                ).async_save(
+                    {
+                        "schema_version": 1,
+                        **deepcopy(self.journal),
+                        "name": self.entry.title,
+                        "currency": self.entry.data.get("currency", "EUR"),
+                        "season_month": self.entry.data.get("season_month", 7),
+                        "reason": "before_restore",
+                        "saved_at": dt_util.utcnow().isoformat(),
+                    }
+                )
+                candidate["events"] = events = restored
+            elif operation == "undo":
                 last = candidate["audit"][-1] if candidate["audit"] else None
                 if (
                     not last
@@ -213,7 +239,11 @@ class Ledger(DataUpdateCoordinator):
                     "actor": actor,
                     "before": [
                         deepcopy(previous[e["id"]])
-                        for e in changed
+                        for e in (
+                            self.journal["events"]
+                            if operation == "restore_backup"
+                            else changed
+                        )
                         if e["id"] in previous
                     ],
                     "after": deepcopy(changed),

@@ -1,6 +1,7 @@
 """Local pellet inventory and maintenance integration."""
 
 import base64
+import re
 from pathlib import Path
 
 import voluptuous as vol
@@ -22,6 +23,7 @@ from homeassistant.helpers.event import (
 )
 from homeassistant.helpers.storage import Store
 
+from .backup import prepare_backup
 from .const import DOMAIN, PLATFORMS, VERSION
 from .dashboard import mushroom_card
 from .ledger import Ledger
@@ -109,6 +111,8 @@ async def async_setup(hass, config):
     websocket_api.async_register_command(hass, ws_test_notification)
     websocket_api.async_register_command(hass, ws_card_updates)
     websocket_api.async_register_command(hass, ws_report_pdf)
+    websocket_api.async_register_command(hass, ws_backup_preview)
+    websocket_api.async_register_command(hass, ws_recovery)
     async_register_services(hass)
     await hass.http.async_register_static_paths(
         [
@@ -217,7 +221,7 @@ async def ws_journal(hass, connection, msg):
         vol.Required("type"): "pellet_tracker/mutate",
         vol.Required("entry_id"): str,
         vol.Required("operation"): vol.In(
-            ["add", "edit", "void", "restore", "import", "undo"]
+            ["add", "edit", "void", "restore", "import", "undo", "restore_backup"]
         ),
         vol.Required("payload"): dict,
         vol.Required("revision"): vol.All(int, vol.Range(min=0)),
@@ -405,9 +409,92 @@ async def ws_report_pdf(hass, connection, msg):
 
 
 async def async_remove_entry(hass, entry):
-    """Remove only this deleted journal's own durable data."""
-    await Store(hass, 1, f"{DOMAIN}.{entry.entry_id}").async_remove()
+    """Archive a deleted stove before removing its active journal."""
+    source = Store(hass, 1, f"{DOMAIN}.{entry.entry_id}")
+    journal = await source.async_load()
+    if journal is not None:
+        await Store(hass, 1, f"{DOMAIN}_recovery.{entry.entry_id}").async_save(
+            {
+                "schema_version": 1,
+                **journal,
+                "name": entry.title,
+                "currency": entry.data.get("currency", "EUR"),
+                "season_month": entry.data.get("season_month", 7),
+                "reason": "deleted_tracker",
+            }
+        )
+    await source.async_remove()
     await Store(hass, 1, f"{DOMAIN}_notifications.{entry.entry_id}").async_remove()
+
+
+@websocket_api.websocket_command(
+    {
+        vol.Required("type"): "pellet_tracker/backup_preview",
+        vol.Required("entry_id"): str,
+        vol.Required("backup"): dict,
+    }
+)
+@websocket_api.require_admin
+@websocket_api.async_response
+async def ws_backup_preview(hass, connection, msg):
+    ledger = hass.data[DOMAIN].get(msg["entry_id"])
+    if ledger is None:
+        connection.send_error(msg["id"], "not_found", "Journal not found")
+        return
+    try:
+        _, preview = prepare_backup(
+            msg["backup"],
+            ledger.today,
+            ledger.entry.data.get("season_month", 7),
+            ledger.entry.data.get("currency", "EUR"),
+            ledger.journal["events"],
+        )
+        connection.send_result(
+            msg["id"], {**preview, "revision": ledger.journal["revision"]}
+        )
+    except (ValueError, TypeError, KeyError) as err:
+        connection.send_error(msg["id"], "invalid_backup", str(err))
+
+
+@websocket_api.websocket_command(
+    {vol.Required("type"): "pellet_tracker/recovery", vol.Optional("archive_id"): str}
+)
+@websocket_api.require_admin
+@websocket_api.async_response
+async def ws_recovery(hass, connection, msg):
+    archive_id = msg.get("archive_id")
+    if archive_id is not None:
+        if not re.fullmatch(r"[A-Za-z0-9_-]{1,100}", archive_id):
+            connection.send_error(msg["id"], "invalid_backup", "Invalid archive ID")
+            return
+        backup = await Store(hass, 1, f"{DOMAIN}_recovery.{archive_id}").async_load()
+        if backup is None:
+            connection.send_error(msg["id"], "not_found", "Recovery archive not found")
+            return
+        connection.send_result(msg["id"], backup)
+        return
+    folder = Path(hass.config.path(".storage"))
+    paths = await hass.async_add_executor_job(
+        lambda: list(folder.glob(f"{DOMAIN}_recovery.*"))
+    )
+    archives = []
+    for path in paths:
+        identifier = path.name.split(".", 1)[1]
+        if not re.fullmatch(r"[A-Za-z0-9_-]{1,100}", identifier):
+            continue
+        backup = await Store(hass, 1, path.name).async_load()
+        if backup:
+            archives.append(
+                {
+                    "id": identifier,
+                    "name": backup.get("name", identifier),
+                    "operations": len(backup.get("events", [])),
+                    "reason": backup.get("reason", "before_restore"),
+                }
+            )
+    connection.send_result(
+        msg["id"], {"archives": sorted(archives, key=lambda x: x["id"])}
+    )
 
 
 def build_season_pdf(snapshot, season):

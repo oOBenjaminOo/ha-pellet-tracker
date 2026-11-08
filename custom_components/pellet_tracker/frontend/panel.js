@@ -27,12 +27,12 @@ class PelletTrackerPanel extends HTMLElement {
       *{box-sizing:border-box} header{display:flex;align-items:center;gap:12px;padding:16px 24px;border-bottom:1px solid var(--divider-color);background:var(--card-background-color)}
       h1{font-size:22px;margin:0} h2{font-size:17px;margin:0 0 15px} main{max-width:1200px;margin:auto;padding:24px} .muted{color:var(--secondary-text-color);font-size:12px} .badge{border-radius:20px;padding:5px 10px;background:#ef9f1925;color:var(--primary-text-color)}
       .grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:16px 0}.card,section{background:var(--card-background-color);border:1px solid var(--divider-color);border-radius:14px;padding:18px}.value{font-size:24px;margin-top:7px;font-weight:600}section{margin-top:16px}.row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.spacer{flex:1}
-      button,select,input,textarea{font:inherit;color:inherit;border:1px solid var(--divider-color);border-radius:8px;background:var(--secondary-background-color);padding:10px}button{cursor:pointer}button:hover{border-color:var(--primary-color)}button.primary{background:var(--primary-color);color:var(--text-primary-color,#fff)}button:disabled{opacity:.45;cursor:wait}label{display:flex;flex-direction:column;gap:6px}form{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}textarea{min-height:70px;width:100%}.wide{grid-column:1/-1}table{border-collapse:collapse;width:100%;font-size:13px}th,td{text-align:left;padding:11px 9px;border-bottom:1px solid var(--divider-color);white-space:nowrap}td.comment{white-space:normal;min-width:140px;max-width:300px}th{color:var(--secondary-text-color)}.scroll{overflow:auto}.error{color:var(--error-color,#db4437);padding:12px 0;white-space:pre-wrap}.success{color:var(--success-color,#4caf50);padding:8px 0}details{margin-top:12px}summary{cursor:pointer;padding:8px 0}.voided{opacity:.5;text-decoration:line-through}svg{display:block;width:100%;height:150px}#formTotal{font-size:16px;font-weight:600} @media(max-width:600px){main{padding:12px}header{padding:12px}.grid{grid-template-columns:repeat(2,1fr)}.value{font-size:23px}}
+      button,select,input,textarea{font:inherit;color:inherit;border:1px solid var(--divider-color);border-radius:8px;background:var(--secondary-background-color);padding:10px}button{cursor:pointer;min-height:44px}input,select{min-height:44px}header select{min-width:0;max-width:100%}header{flex-wrap:wrap}button:hover{border-color:var(--primary-color)}button.primary{background:var(--primary-color);color:var(--text-primary-color,#fff)}button:disabled{opacity:.45;cursor:wait}label{display:flex;flex-direction:column;gap:6px}form{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}textarea{min-height:70px;width:100%}.wide{grid-column:1/-1}table{border-collapse:collapse;width:100%;font-size:13px}th,td{text-align:left;padding:11px 9px;border-bottom:1px solid var(--divider-color);white-space:nowrap}td.comment{white-space:normal;min-width:140px;max-width:300px}th{color:var(--secondary-text-color)}.scroll{overflow:auto}.error{color:var(--error-color,#db4437);padding:12px 0;white-space:pre-wrap}.success{color:var(--success-color,#4caf50);padding:8px 0}details{margin-top:12px}summary{cursor:pointer;padding:8px 0}.voided{opacity:.5;text-decoration:line-through}svg{display:block;width:100%;height:150px}#formTotal{font-size:16px;font-weight:600} @media(max-width:600px){main{padding:12px}header{padding:12px}.grid{grid-template-columns:repeat(2,1fr)}.value{font-size:23px}}
       .check{flex-direction:row;align-items:center}.check input{width:18px;height:18px}.warning{color:var(--warning-color,#ffa726)}.chart-large{overflow:auto}.chart-large svg{height:230px;min-width:640px}.nav{margin-top:12px}.value small{font-size:13px;font-weight:400}button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--primary-color);outline-offset:2px}
 
       [hidden]{display:none!important}.tabs{display:flex;gap:6px;overflow-x:auto;padding:8px 0 14px;border-bottom:1px solid var(--divider-color)}.tabs button{white-space:nowrap;background:transparent;border-color:transparent}.tabs button[aria-current],.subtabs button[aria-current]{background:var(--primary-color);color:var(--text-primary-color,#fff)}.page-heading{margin:24px 0 8px}.page-heading h2{font-size:26px;margin:0}.eyebrow{text-transform:uppercase;letter-spacing:.08em;font-size:11px;color:var(--secondary-text-color);margin:0 0 8px}.hero{display:flex;justify-content:space-between;align-items:center;gap:24px;padding:28px;background:linear-gradient(120deg,#ef9f1914,var(--card-background-color))}.stock{font-size:48px;font-weight:700;line-height:1.2}.stock small{display:block;font-size:16px;font-weight:400;margin-top:6px}.quick-actions{display:grid;gap:10px;min-width:220px}.value{font-size:23px}.activity,.entity{padding:16px 0;border-bottom:1px solid var(--divider-color)}.activity:last-child,.entity:last-child{border-bottom:0}.activity-icon{font-size:24px;background:#ef9f1920;padding:8px 14px;border-radius:12px}.two-columns,.season-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.section-title{margin-top:28px}.season-grid section{margin:0}.subtabs{margin:20px 0}.comparison-mode{max-width:450px}.pagination{margin-top:18px}.filters{align-items:end}.filters label{flex:1;min-width:160px}.filters .check{min-width:180px}.code{font-family:monospace;min-height:320px}.entity code{overflow-wrap:anywhere}.footer{margin-top:24px}.entity-list strong{font-weight:500}li{margin-bottom:10px}@media(max-width:700px){.hero{align-items:stretch;flex-direction:column;padding:20px}.two-columns,.season-grid{grid-template-columns:1fr}.entity{align-items:flex-start}.entity>div{width:100%}.tabs{margin:0 -12px;padding-left:12px}.stock{font-size:42px}.page-heading h2{font-size:23px}}
 dialog{color:var(--primary-text-color);background:var(--card-background-color);border:1px solid var(--divider-color);border-radius:18px;padding:24px;width:min(720px,calc(100vw - 32px));max-height:calc(100dvh - 32px);overflow:auto;box-shadow:0 20px 70px #0008}dialog::backdrop{background:#0009}dialog .dialog-heading{margin-bottom:16px}dialog h2{margin:0}dialog form{margin-top:16px}dialog .dialog-heading button{padding:8px 12px}dialog #dialogNotice:empty{display:none}@media(max-width:600px){dialog{padding:18px;width:calc(100vw - 20px);max-height:calc(100dvh - 20px)}dialog form{grid-template-columns:1fr}}
-      </style><header><ha-menu-button></ha-menu-button><span>🔥</span><h1>${this.t("Suivi Granulés")}</h1><span class="badge">${this.t("Bêta 0.8")}</span><span class="spacer"></span><select id="journal" aria-label="${this.t("Poêle")}"></select></header><main><div id="notice" role="status"></div><div id="content">${this.t("Chargement…")}</div></main>`;
+      </style><header><ha-menu-button></ha-menu-button><span>🔥</span><h1>${this.t("Suivi Granulés")}</h1><span class="badge">${this.t("Bêta 0.9")}</span><span class="spacer"></span><select id="journal" aria-label="${this.t("Poêle")}"></select></header><main><div id="notice" role="status"></div><div id="content">${this.t("Chargement…")}</div></main>`;
     this.shadowRoot
       .querySelector("ha-menu-button")
       .addEventListener("click", () =>
@@ -132,6 +132,35 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
         ),
         "Unsupported language": this.t("Vérifiez les réglages saisis."),
         "Journal not found": this.t("Journal introuvable."),
+        "Invalid backup format": this.t("Format de sauvegarde non reconnu."),
+        "Backup currency differs from this tracker": this.t(
+          "La devise de la sauvegarde est différente de celle du suivi.",
+        ),
+        "Backup season month differs from this tracker": this.t(
+          "Le mois de début de saison de la sauvegarde est différent de celui du suivi.",
+        ),
+        "Backup requires 1 to 10000 operations": this.t(
+          "La sauvegarde doit contenir de 1 à 10 000 opérations.",
+        ),
+        "Backup exceeds 10 MB": this.t("La sauvegarde dépasse 10 Mo."),
+        "Invalid backup operation": this.t(
+          "Une opération de la sauvegarde est invalide.",
+        ),
+        "Invalid backup operation ID": this.t(
+          "Un identifiant d’opération est invalide.",
+        ),
+        "Duplicate operation IDs in backup": this.t(
+          "La sauvegarde contient des identifiants d’opération en double.",
+        ),
+        "Backup changed. Preview again before restoring.": this.t(
+          "La sauvegarde a changé. Vérifiez-la à nouveau avant de restaurer.",
+        ),
+        "Invalid archive ID": this.t(
+          "Identifiant de copie de récupération invalide.",
+        ),
+        "Recovery archive not found": this.t(
+          "Copie de récupération introuvable.",
+        ),
       });
       message = shortage
         ? `${this.t("Stock insuffisant au ")}${shortage[1].split("-").reverse().join("/")}${this.t(". Vérifie la quantité et les mouvements précédents.")}`
@@ -240,7 +269,7 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
     this.view = views[this.view] ? this.view : "overview";
     const root = this.shadowRoot;
     root.querySelector("h1").textContent = this.t("Suivi Granulés");
-    root.querySelector("header .badge").textContent = this.t("Bêta 0.8");
+    root.querySelector("header .badge").textContent = this.t("Bêta 0.9");
     root.querySelector("#journal").setAttribute("aria-label", this.t("Poêle"));
     root.host?.setAttribute("lang", this.language);
     let content;
@@ -258,13 +287,14 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
       case "journal":
         content =
           this.journalView() +
+          this.backupMarkup() +
           `<details><summary>${this.t("Importer un historique")}</summary><section><h2>${this.t("Import de l’historique")}</h2><p class="muted">${this.t("Import JSON version 1, avec identifiants stables. Les identifiants déjà présents sont ignorés. L’import est validé entièrement avant enregistrement.")}</p><input id="file" type="file" accept="application/json,.json" aria-label="${this.t("Fichier historique JSON")}"><details><summary>${this.t("Coller un import JSON")}</summary><textarea id="json" aria-label="Import JSON" placeholder="${this.t("Coller le contenu JSON")}"></textarea><button id="previewJson">${this.t("Prévisualiser")}</button></details><div id="preview"></div><button id="import" disabled>${this.t("Importer les opérations")}</button></section></details>`;
         break;
       case "dashboards":
         content = this.dashboardsView();
         break;
       case "settings":
-        content = this.settingsForm();
+        content = this.settingsForm() + this.backupMarkup();
         break;
       default:
         content = this.overviewView();
@@ -279,7 +309,7 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
         )
         .join("")}</nav>
       <div class="page-heading row"><div><p class="eyebrow">${escapeHTML(d.name)} · ${escapeHTML(s.season)}</p><h2 id="viewTitle" tabindex="-1">${views[this.view]}</h2></div><span class="spacer"></span><button id="refresh" aria-label="${this.t("Actualiser les données")}">${this.t("↻ Actualiser")}</button></div>
-      ${this.undoMarkup()}${content}<p class="muted footer">${this.t("Journal local · révision ")}${d.revision}${this.t(" · les prix manquants restent inconnus.")}</p>`;
+      ${this.undoMarkup()}${this.costWarning(this.view === "stats" ? s.seasons[this.statsSeason || s.season] : this.view === "seasons" && this.seasonPage === "report" ? s.seasons[this.reportSeason || s.season] : this.view === "overview" ? s.seasons[s.season] : null)}${content}<p class="muted footer">${this.t("Journal local · révision ")}${d.revision}${this.t(" · les prix manquants restent inconnus.")}</p>`;
     root
       .querySelectorAll("[data-view]")
       .forEach((b) => (b.onclick = () => this.navigate(b.dataset.view)));
@@ -313,27 +343,11 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
           this.navigate("stats");
         }),
     );
+    if (["journal", "settings"].includes(this.view)) this.bindBackups();
     if (this.view === "stats") this.bindStatisticsView();
     if (this.view === "journal") {
       this.bindJournal();
-      root.querySelector("#export").onclick = () => {
-        const backup = { ...d };
-        delete backup.notification_choices;
-        delete backup.notification_error;
-        delete backup.entities;
-        delete backup.mushroom_card;
-        delete backup.stove_sources;
-        const url = URL.createObjectURL(
-          new Blob([JSON.stringify(backup, null, 2)], {
-            type: "application/json",
-          }),
-        );
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "pellet-tracker-journal.json";
-        a.click();
-        setTimeout(() => URL.revokeObjectURL(url), 1000);
-      };
+      root.querySelector("#export").onclick = () => this.downloadBackup();
       root.querySelector("#csv").onclick = () => {
         const rows = [
           [
@@ -1084,7 +1098,7 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
         .reverse()
         .map(
           ([season, x]) =>
-            `<section><div class="row"><h2>${escapeHTML(season)}</h2>${season === s.season ? this.t('<span class="badge">En cours</span>') : ""}</div><div class="value">${this.number(x.used)} <small>${this.t("sacs utilisés")}</small></div><p>${this.t("Dépenses")} : <strong>${this.money(x.spend)}</strong><br>${this.t("Prix moyen d’achat : ")}${this.money(x.average_price)}</p><p class="muted">${this.t("Premier allumage")} : ${this.formatDate(x.first_start)}</p><button data-season="${escapeHTML(season)}">${this.t("Voir les statistiques →")}</button></section>`,
+            `<section><div class="row"><h2>${escapeHTML(season)}</h2>${season === s.season ? this.t('<span class="badge">En cours</span>') : ""}</div><div class="value">${this.number(x.used)} <small>${this.t("sacs utilisés")}</small></div>${this.costWarning(x)}<p>${this.t("Dépenses")} : <strong>${this.money(x.spend)}</strong><br>${this.t("Prix moyen d’achat : ")}${this.money(x.average_price)}</p><p class="muted">${this.t("Premier allumage")} : ${this.formatDate(x.first_start)}</p><button data-season="${escapeHTML(season)}">${this.t("Voir les statistiques →")}</button></section>`,
         )
         .join("")}</div>`;
   }
@@ -1813,7 +1827,142 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
       .join(" ");
     return `<svg viewBox="0 0 1000 150" role="img" aria-label="${this.t("Stock de ")}${escapeHTML(points[0].date)}${this.t(" à ")}${escapeHTML(points.at(-1).date)}"><line x1="20" y1="130" x2="980" y2="130" stroke="currentColor" opacity=".2"/><polyline points="${xy}" fill="none" stroke="var(--primary-color,#03a9f4)" stroke-width="3"/><text x="20" y="148" fill="currentColor" font-size="12">${escapeHTML(points[0].date)}</text><text x="980" y="148" text-anchor="end" fill="currentColor" font-size="12">${escapeHTML(points.at(-1).date)}</text><text x="20" y="15" fill="currentColor" font-size="12">${max}${this.t(" sacs (max.)")}</text></svg>`;
   }
-  async mutate(operation, payload) {
+  downloadBackup() {
+    const {
+      schema_version,
+      events,
+      audit,
+      revision,
+      name,
+      season_month,
+      currency,
+      settings,
+    } = this.data;
+    this.download(
+      JSON.stringify(
+        {
+          schema_version,
+          events,
+          audit,
+          revision,
+          name,
+          season_month,
+          currency,
+          settings,
+        },
+        null,
+        2,
+      ),
+      "pellet-tracker-journal.json",
+      "application/json",
+    );
+  }
+  backupMarkup() {
+    return `<section><h2>${this.t("Sauvegarde et restauration")}</h2><p>${this.t("Le journal est conservé indépendamment de Recorder. Avant de supprimer un poêle, téléchargez sa sauvegarde. Une copie de récupération locale est aussi conservée automatiquement lors de la suppression ou avant une restauration.")}</p><button id="backupDownload">${this.t("Télécharger la sauvegarde JSON")}</button><details><summary>${this.t("Restaurer une sauvegarde")}</summary><p class="warning">${this.t("La restauration remplace toutes les opérations de ce poêle, y compris leurs corrections et annulations. Les réglages actuels restent inchangés. Choisissez la même devise et le même mois de début de saison que la sauvegarde.")}</p><label>${this.t("Fichier de sauvegarde JSON")}<input id="restoreFile" type="file" accept="application/json,.json"></label><details><summary>${this.t("Coller une sauvegarde JSON")}</summary><textarea id="restoreJson" aria-label="${this.t("Sauvegarde JSON à restaurer")}"></textarea><button id="restorePreview">${this.t("Vérifier la sauvegarde")}</button></details><p><button id="recoveryList">${this.t("Rechercher les copies de récupération")}</button></p><div id="recoveryArchives"></div><div id="restoreSummary" role="status" aria-live="polite"></div><label class="check"><input id="restoreConfirm" type="checkbox" disabled>${this.t("Je confirme le remplacement du journal de ce poêle.")}</label><button id="restoreApply" disabled>${this.t("Restaurer le journal")}</button></details></section>`;
+  }
+  bindBackups() {
+    const root = this.shadowRoot,
+      entry = this.entry;
+    let generation = 0,
+      pending = null;
+    const active = () =>
+      this.entry === entry && root.querySelector("#restoreApply") === apply;
+    const apply = root.querySelector("#restoreApply"),
+      confirm = root.querySelector("#restoreConfirm"),
+      summary = root.querySelector("#restoreSummary");
+    const invalidate = () => {
+      generation++;
+      pending = null;
+      apply.disabled = true;
+      confirm.checked = false;
+      confirm.disabled = true;
+      summary.textContent = "";
+    };
+    const preview = async (read) => {
+      invalidate();
+      const request = generation;
+      try {
+        const backup = await read();
+        if (!active() || request !== generation) return;
+        const result = await this._hass.callWS({
+          type: "pellet_tracker/backup_preview",
+          entry_id: entry,
+          backup,
+        });
+        if (!active() || request !== generation) return;
+        pending = { backup, ...result };
+        summary.textContent = `${result.operations} ${this.t("opérations")} · ${this.t("Saisons")} : ${result.seasons.join(", ")} · ${this.t("Identifiants déjà présents")} : ${result.existing_ids} · ${this.t("Nouveaux identifiants")} : ${result.new_ids} · ${this.t("Opérations actuelles absentes de la sauvegarde")} : ${result.removed_ids} · ${this.t("Opérations annulées")} : ${result.voided} · ${this.t("Stock après restauration")} : ${this.number(result.stock)}`;
+        confirm.disabled = false;
+      } catch (error) {
+        if (active() && request === generation) {
+          invalidate();
+          this.notice(this.t(error.message || String(error)), true);
+        }
+      }
+    };
+    root.querySelector("#backupDownload").onclick = () => this.downloadBackup();
+    root.querySelector("#restoreJson").oninput = invalidate;
+    root.querySelector("#restorePreview").onclick = () =>
+      preview(async () => JSON.parse(root.querySelector("#restoreJson").value));
+    root.querySelector("#restoreFile").onchange = (event) => {
+      const file = event.target.files[0];
+      if (!file) {
+        invalidate();
+        return;
+      }
+      preview(async () => {
+        if (file.size > 10000000)
+          throw Error(this.t("Fichier trop volumineux (10 Mo maximum)."));
+        return JSON.parse(await file.text());
+      });
+    };
+    confirm.onchange = () => {
+      apply.disabled = !pending || !confirm.checked;
+    };
+    apply.onclick = () => {
+      if (!pending || !confirm.checked || this.busy) return;
+      const selected = pending;
+      invalidate();
+      this.mutate(
+        "restore_backup",
+        { backup: selected.backup, digest: selected.digest },
+        selected.revision,
+      );
+    };
+    root.querySelector("#recoveryList").onclick = async () => {
+      try {
+        const result = await this._hass.callWS({
+          type: "pellet_tracker/recovery",
+        });
+        if (!active()) return;
+        const target = root.querySelector("#recoveryArchives");
+        target.replaceChildren();
+        if (!result.archives.length)
+          target.textContent = this.t(
+            "Aucune copie de récupération disponible.",
+          );
+        for (const archive of result.archives) {
+          const button = document.createElement("button");
+          button.textContent = `${archive.name} · ${archive.operations} ${this.t("opérations")} · ${this.t(archive.reason === "deleted_tracker" ? "Poêle supprimé" : "Avant restauration")}`;
+          button.onclick = () =>
+            preview(async () =>
+              this._hass.callWS({
+                type: "pellet_tracker/recovery",
+                archive_id: archive.id,
+              }),
+            );
+          target.append(button);
+        }
+      } catch (error) {
+        if (active()) this.notice(error.message || String(error), true);
+      }
+    };
+  }
+  costWarning(season) {
+    if (!season || (season.spend != null && season.cost != null)) return "";
+    return `<p class="warning" role="note">${this.t("Coût partiel — certains achats ou sacs consommés n’ont pas de prix. Les montants manquants ne sont pas comptés comme zéro.")}</p>`;
+  }
+  async mutate(operation, payload, revision = this.data.revision) {
     if (this.busy) return;
     this.busy = true;
     const controls = [
@@ -1827,7 +1976,7 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
         entry_id: this.entry,
         operation,
         payload,
-        revision: this.data.revision,
+        revision,
       });
       this.editing = null;
       this.closeEditor(true);
