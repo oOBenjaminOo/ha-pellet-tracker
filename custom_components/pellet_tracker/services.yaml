@@ -28,7 +28,7 @@ record:
         number:
           min: -1000000
           max: 1000000
-          step: 0.0001
+          step: any
           mode: box
     date:
       name: Date (jour courant si absent)
@@ -40,7 +40,7 @@ record:
         number:
           min: 0
           max: 1000000
-          step: 0.0001
+          step: any
           mode: box
     comment:
       name: Commentaire

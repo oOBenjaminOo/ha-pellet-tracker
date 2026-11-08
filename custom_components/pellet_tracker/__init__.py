@@ -10,6 +10,7 @@ from homeassistant.components import (
 )
 from homeassistant.components.http import StaticPathConfig
 from homeassistant.exceptions import ConfigEntryNotReady
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.event import async_track_time_change
 
 from .const import DOMAIN, PLATFORMS, VERSION
@@ -17,6 +18,8 @@ from .ledger import Ledger
 from .notifications import Notifications
 from .services import async_register_services
 from .settings import notification_choices, validate_settings
+
+CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 
 async def async_setup(hass, config):
