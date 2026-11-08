@@ -3,7 +3,7 @@
 Local Home Assistant custom integration for pellet stock, seasonal usage,
 cleaning and purchase costs. Original project by Benjamin (@oOBenjaminOo).
 
-**0.4.1b1 is a feature-complete beta for real-world testing.** No HACS default-catalog submission has
+**0.4.2b1 is a feature-complete beta for real-world testing.** No HACS default-catalog submission has
 been made. No cloud account, stove connection or runtime Python dependency.
 
 ## Fonctionnement
@@ -11,7 +11,8 @@ been made. No cloud account, stove connection or runtime Python dependency.
 - Interface française avec six vues distinctes : **Accueil, Statistiques,
   Saisons, Historique, Dashboards et Réglages**. Seule la vue choisie est affichée.
 - Saisies et modifications dans des fenêtres modales, avec champs contextuels.
-- Consommation, réapprovisionnement et nettoyage depuis l’accueil, sans changer de page.
+- Un seul bouton **Ajouter une action** sur l’accueil : choisir consommation,
+  réapprovisionnement, nettoyage ou autre opération dans le formulaire.
 - Accès direct **Modifier mes seuils** sur l’accueil ; seuil de stock et rappels
   d’entretien par sacs/jours personnalisables. Les options complètes restent dans Réglages.
 - Historique filtrable et paginé.
@@ -124,6 +125,14 @@ indépendant de la période comptable, et ne consomme aucun sac.
 
 Chaque journal expose **19 capteurs, 3 alertes binaires et 2 boutons**, utilisables
 dans les dashboards et les automatisations habituels de Home Assistant.
+La vue **Dashboards → Ajouter à un dashboard** propose un assistant : choisir le
+tableau de bord, la vue et, pour une vue Sections, une section existante ou nouvelle,
+puis **Ajouter la carte**. La carte entière est ajoutée via les API Home Assistant ;
+les autres cartes et options sont conservées. Les dashboards YAML, les vues générées
+automatiquement et les vues Panneau déjà occupées ne sont pas modifiés. La configuration
+est relue avant l’écriture ; si elle a changé depuis le choix, il faut revérifier la destination.
+La copie YAML reste disponible pour les usages avancés.
+
 La vue **Dashboards** propose aussi la **carte Mushroom prête à copier**, avec
 le visuel de poêle fourni localement (`frontend/pellet-stove.jpg`). Installer Mushroom
 depuis HACS pour cette variante ; la carte native reste disponible sans dépendance.

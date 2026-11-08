@@ -40,7 +40,7 @@ class PelletTrackerPanel extends HTMLElement {
 
       [hidden]{display:none!important}.tabs{display:flex;gap:6px;overflow-x:auto;padding:8px 0 14px;border-bottom:1px solid var(--divider-color)}.tabs button{white-space:nowrap;background:transparent;border-color:transparent}.tabs button[aria-current],.subtabs button[aria-current]{background:var(--primary-color);color:var(--text-primary-color,#fff)}.page-heading{margin:24px 0 8px}.page-heading h2{font-size:26px;margin:0}.eyebrow{text-transform:uppercase;letter-spacing:.08em;font-size:11px;color:var(--secondary-text-color);margin:0 0 8px}.hero{display:flex;justify-content:space-between;align-items:center;gap:24px;padding:28px;background:linear-gradient(120deg,#ef9f1914,var(--card-background-color))}.stock{font-size:48px;font-weight:700;line-height:1.2}.stock small{display:block;font-size:16px;font-weight:400;margin-top:6px}.quick-actions{display:grid;gap:10px;min-width:220px}.value{font-size:23px}.activity,.entity{padding:16px 0;border-bottom:1px solid var(--divider-color)}.activity:last-child,.entity:last-child{border-bottom:0}.activity-icon{font-size:24px;background:#ef9f1920;padding:8px 14px;border-radius:12px}.two-columns,.season-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.section-title{margin-top:28px}.season-grid section{margin:0}.subtabs{margin:20px 0}.comparison-mode{max-width:450px}.pagination{margin-top:18px}.filters{align-items:end}.filters label{flex:1;min-width:160px}.filters .check{min-width:180px}.code{font-family:monospace;min-height:320px}.entity code{overflow-wrap:anywhere}.footer{margin-top:24px}.entity-list strong{font-weight:500}li{margin-bottom:10px}@media(max-width:700px){.hero{align-items:stretch;flex-direction:column;padding:20px}.two-columns,.season-grid{grid-template-columns:1fr}.entity{align-items:flex-start}.entity>div{width:100%}.tabs{margin:0 -12px;padding-left:12px}.stock{font-size:42px}.page-heading h2{font-size:23px}}
 dialog{color:var(--primary-text-color);background:var(--card-background-color);border:1px solid var(--divider-color);border-radius:18px;padding:24px;width:min(720px,calc(100vw - 32px));max-height:calc(100dvh - 32px);overflow:auto;box-shadow:0 20px 70px #0008}dialog::backdrop{background:#0009}dialog .dialog-heading{margin-bottom:16px}dialog h2{margin:0}dialog form{margin-top:16px}dialog .dialog-heading button{padding:8px 12px}dialog #dialogNotice:empty{display:none}@media(max-width:600px){dialog{padding:18px;width:calc(100vw - 20px);max-height:calc(100dvh - 20px)}dialog form{grid-template-columns:1fr}}
-      </style><header><ha-menu-button></ha-menu-button><span>🔥</span><h1>Suivi Granulés</h1><span class="badge">Bêta 0.4.1</span><span class="spacer"></span><select id="journal" aria-label="Poêle"></select></header><main><div id="notice" role="status"></div><div id="content">Chargement…</div></main>`;
+      </style><header><ha-menu-button></ha-menu-button><span>🔥</span><h1>Suivi Granulés</h1><span class="badge">Bêta 0.4.2</span><span class="spacer"></span><select id="journal" aria-label="Poêle"></select></header><main><div id="notice" role="status"></div><div id="content">Chargement…</div></main>`;
     this.shadowRoot
       .querySelector("ha-menu-button")
       .addEventListener("click", () =>
@@ -391,6 +391,8 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
       .querySelector("#undoLast")
       ?.addEventListener("click", () => this.mutate("undo", {}));
     if (this.view === "dashboards") {
+      root.querySelector("#addMushroom").onclick = () =>
+        this.openAddDashboard();
       root.querySelector("#copyMushroom").onclick = () =>
         this.copyText(JSON.stringify(d.mushroom_card, null, 2));
       root.querySelector("#copyCard").onclick = () =>
@@ -409,6 +411,226 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
               }),
             )),
       );
+    }
+  }
+  buildDashboardConfig(config, viewIndex, sectionIndex, card) {
+    if (!config || "strategy" in config || !Array.isArray(config.views))
+      throw Error(
+        "Ce dashboard est généré automatiquement. Choisissez un dashboard modifiable depuis l’interface.",
+      );
+    if (!Number.isInteger(viewIndex) || !config.views[viewIndex])
+      throw Error("Vue introuvable.");
+    const next = JSON.parse(JSON.stringify(config)),
+      view = next.views[viewIndex];
+    if ("strategy" in view)
+      throw Error("Cette vue est générée automatiquement.");
+    const incoming = JSON.parse(JSON.stringify(card));
+    if (view.type === "sections") incoming.grid_options ||= { columns: "full" };
+    const existing = [
+      ...(view.cards || []),
+      ...(view.sections || []).flatMap((section) => section.cards || []),
+    ];
+    if (
+      existing.some((item) => JSON.stringify(item) === JSON.stringify(incoming))
+    )
+      throw Error("Cette carte est déjà présente dans cette vue.");
+    if (view.type === "sections") {
+      if (view.sections != null && !Array.isArray(view.sections))
+        throw Error("Sections non reconnues.");
+      view.sections ||= [];
+      if (sectionIndex === "new")
+        view.sections.push({ type: "grid", cards: [incoming] });
+      else {
+        const section =
+          Number.isInteger(sectionIndex) && view.sections[sectionIndex];
+        if (
+          !section ||
+          section.strategy ||
+          (section.type && section.type !== "grid")
+        )
+          throw Error("Section non modifiable.");
+        if (section.cards != null && !Array.isArray(section.cards))
+          throw Error("Section non reconnue.");
+        (section.cards ||= []).push(incoming);
+      }
+    } else {
+      if (view.cards != null && !Array.isArray(view.cards))
+        throw Error("Cartes non reconnues.");
+      if ((view.type === "panel" || view.panel) && view.cards?.length)
+        throw Error(
+          "Une vue panneau contient une seule carte. Choisissez une autre vue.",
+        );
+      (view.cards ||= []).push(incoming);
+    }
+    return next;
+  }
+  async openAddDashboard() {
+    if (this.busy) return;
+    const card = JSON.parse(JSON.stringify(this.data.mushroom_card));
+    const dialog = this.showEditor(
+      "Ajouter la carte Mushroom",
+      `<p>Ajoutez la carte complète du poêle, avec son image et ses capteurs, dans le tableau de bord de votre choix.</p><form id="dashboardForm"><label class="wide">Tableau de bord<select id="targetDashboard" required disabled><option>Chargement…</option></select></label><label class="wide">Vue<select id="targetView" required disabled></select></label><label class="wide" id="targetSectionLabel" hidden>Section<select id="targetSection"></select></label><p class="muted wide" id="destinationHelp" role="status"></p><div class="wide row"><button type="button" id="cancelDashboard">Annuler</button><span class="spacer"></span><button class="primary" type="submit" id="installDashboard" disabled>Ajouter la carte</button></div></form>`,
+    );
+    if (!dialog) return;
+    const flow = { dialog, card, config: null, generation: 0 };
+    dialog.querySelector("#cancelDashboard").onclick = () => this.closeEditor();
+    dialog.querySelector("#targetDashboard").onchange = () =>
+      this.loadDashboardTarget(flow);
+    dialog.querySelector("#targetView").onchange = () =>
+      this.updateDashboardSections(flow);
+    dialog.querySelector("#dashboardForm").onsubmit = (event) => {
+      event.preventDefault();
+      this.installDashboardCard(flow);
+    };
+    try {
+      const dashboards = await this._hass.callWS({
+        type: "lovelace/dashboards/list",
+      });
+      if (!dialog.isConnected) return;
+      const choices = [
+        {
+          url_path: "lovelace",
+          title: this._hass.panels?.lovelace?.title || "Aperçu",
+          mode: this._hass.panels?.lovelace?.config?.mode || "storage",
+        },
+        ...dashboards.filter((d) => d.url_path !== "lovelace"),
+      ];
+      const select = dialog.querySelector("#targetDashboard");
+      select.innerHTML = choices
+        .map(
+          (d) =>
+            `<option value="${escapeHTML(d.url_path)}" ${d.mode !== "storage" ? "disabled" : ""}>${escapeHTML(d.title)}${d.mode !== "storage" ? " · non modifiable" : ""}</option>`,
+        )
+        .join("");
+      select.disabled = false;
+      const first = choices.find((d) => d.mode === "storage");
+      if (!first)
+        throw Error(
+          "Aucun dashboard modifiable disponible. Créez un tableau de bord dans Home Assistant.",
+        );
+      select.value = first.url_path;
+      await this.loadDashboardTarget(flow);
+    } catch (error) {
+      if (dialog.isConnected) this.notice(error.message || String(error), true);
+    }
+  }
+  async loadDashboardTarget(flow) {
+    const dialog = flow.dialog,
+      generation = ++flow.generation;
+    flow.config = null;
+    const viewSelect = dialog.querySelector("#targetView"),
+      install = dialog.querySelector("#installDashboard");
+    viewSelect.disabled = install.disabled = true;
+    dialog.querySelector("#targetSectionLabel").hidden = true;
+    dialog.querySelector("#destinationHelp").textContent =
+      "Chargement des vues…";
+    const path = dialog.querySelector("#targetDashboard").value;
+    try {
+      const config = await this._hass.callWS({
+        type: "lovelace/config",
+        url_path: path === "lovelace" ? null : path,
+        force: false,
+      });
+      if (!dialog.isConnected || generation !== flow.generation) return;
+      if ("strategy" in config || !Array.isArray(config.views))
+        throw Error(
+          "Ce dashboard est généré automatiquement. Choisissez un dashboard modifiable depuis l’interface.",
+        );
+      flow.config = config;
+      flow.path = path;
+      flow.original = JSON.stringify(config);
+      const editable = (v) =>
+        !v.strategy && !((v.type === "panel" || v.panel) && v.cards?.length);
+      viewSelect.innerHTML = config.views
+        .map(
+          (v, index) =>
+            `<option value="${index}" ${editable(v) ? "" : "disabled"}>${escapeHTML(v.title || `Vue ${index + 1}`)}${editable(v) ? "" : " · non modifiable"}</option>`,
+        )
+        .join("");
+      const first = config.views.findIndex(editable);
+      if (first === -1)
+        throw Error(
+          "Aucune vue modifiable dans ce dashboard. Ajoutez une vue manuelle ou choisissez un autre dashboard.",
+        );
+      viewSelect.value = String(first);
+      viewSelect.disabled = false;
+      this.updateDashboardSections(flow);
+    } catch (error) {
+      if (!dialog.isConnected || generation !== flow.generation) return;
+      flow.config = null;
+      viewSelect.innerHTML = "";
+      dialog.querySelector("#destinationHelp").textContent =
+        error.message || String(error);
+    }
+  }
+  updateDashboardSections(flow) {
+    const dialog = flow.dialog,
+      view =
+        flow.config?.views[Number(dialog.querySelector("#targetView").value)];
+    const label = dialog.querySelector("#targetSectionLabel"),
+      select = dialog.querySelector("#targetSection");
+    label.hidden = view?.type !== "sections";
+    if (view?.type === "sections")
+      select.innerHTML = `<option value="new">Nouvelle section</option>${(view.sections || []).map((section, index) => `<option value="${index}" ${section.strategy || (section.type && section.type !== "grid") ? "disabled" : ""}>${escapeHTML(section.title || `Section ${index + 1}`)}</option>`).join("")}`;
+    dialog.querySelector("#installDashboard").disabled = !view;
+    dialog.querySelector("#destinationHelp").textContent =
+      "La carte entière sera ajoutée à la destination choisie. Mushroom doit être installé. Les autres cartes sont conservées.";
+  }
+  async installDashboardCard(flow) {
+    if (this.busy || !flow.config || !flow.dialog.isConnected) return;
+    const dialog = flow.dialog,
+      index = Number(dialog.querySelector("#targetView").value);
+    const section = dialog.querySelector("#targetSection").value;
+    const sectionIndex = section === "new" ? "new" : Number(section);
+    this.busy = true;
+    const controls = [
+      ...this.shadowRoot.querySelectorAll("button,input,select,textarea"),
+    ].map((el) => [el, el.disabled]);
+    controls.forEach(([el]) => (el.disabled = true));
+    this.notice("Ajout de la carte…");
+    try {
+      const current = await this._hass.callWS({
+        type: "lovelace/config",
+        url_path: flow.path === "lovelace" ? null : flow.path,
+        force: false,
+      });
+      if (JSON.stringify(current) !== flow.original) {
+        await this.loadDashboardTarget(flow);
+        throw Error(
+          "Le dashboard a changé. Vérifiez à nouveau la vue et la section avant d’ajouter la carte.",
+        );
+      }
+      const config = this.buildDashboardConfig(
+        current,
+        index,
+        sectionIndex,
+        flow.card,
+      );
+      await this._hass.callWS({
+        type: "lovelace/config/save",
+        url_path: flow.path === "lovelace" ? null : flow.path,
+        config,
+      });
+      const view = config.views[index];
+      this.dashboardAddedUrl = `/${flow.path}/${view.path || index}`;
+      this.closeEditor(true);
+      this.render();
+      this.notice("Carte Mushroom ajoutée au dashboard.");
+    } catch (error) {
+      this.notice(
+        error.message ||
+          "Impossible de confirmer l’ajout. Vérifiez le dashboard avant de recommencer.",
+        true,
+      );
+    } finally {
+      controls.forEach(([el, disabled]) => {
+        if (el.isConnected) el.disabled = disabled;
+      });
+      if (!flow.config && dialog.isConnected) {
+        dialog.querySelector("#targetView").disabled = true;
+        dialog.querySelector("#installDashboard").disabled = true;
+      }
+      this.busy = false;
     }
   }
   showEditor(title, content) {
@@ -449,13 +671,7 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
     };
     const d = this.data;
     const dialog = this.showEditor(
-      this.editing
-        ? "Modifier une opération"
-        : {
-            use: "Ajouter une consommation",
-            purchase: "Réapprovisionner le stock",
-            clean: "Enregistrer un nettoyage",
-          }[e.kind] || labels[e.kind],
+      this.editing ? "Modifier une opération" : "Ajouter une action",
       `<p id="entryHelp" class="muted"></p><form id="operation">
       <label>Opération<select name="kind">${Object.entries(labels)
         .map(
@@ -696,10 +912,10 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
         s.last_clean ? this.formatDate(s.last_clean) : "À renseigner",
       ],
     ];
-    return `<section class="hero"><div><p class="eyebrow">Votre réserve</p><div class="stock">${this.number(s.stock)} <small>sacs disponibles</small></div><p>${s.stock <= this.data.settings.low_stock ? "Le stock est bas. Pensez au prochain réapprovisionnement." : "Votre stock est à jour avec les dernières saisies."}</p></div><div class="quick-actions"><button class="primary" data-kind="use">− Ajouter une consommation</button><button data-kind="purchase">＋ Réapprovisionner</button><button data-kind="clean">✓ Noter un nettoyage</button></div></section>
+    return `<section class="hero"><div><p class="eyebrow">Votre réserve</p><div class="stock">${this.number(s.stock)} <small>sacs disponibles</small></div><p>${s.stock <= this.data.settings.low_stock ? "Le stock est bas. Pensez au prochain réapprovisionnement." : "Votre stock est à jour avec les dernières saisies."}</p></div><div class="quick-actions"><button class="primary" data-kind="use">＋ Ajouter une action</button></div></section>
       <div class="grid">${metrics.map(([label, value]) => `<div class="card"><div class="muted">${label}</div><div class="value">${escapeHTML(value)}</div></div>`).join("")}</div>
       <p class="muted">${s.autonomy_days == null ? "L’autonomie apparaîtra après au moins 7 jours de recul et 3 dates de consommation récentes." : `Estimation basée sur ${s.estimate_sample_days} dates de saisie, sur ${s.estimate_window} jours. ${s.estimate_status === "limited" ? "Recul encore limité." : ""} Elle ne prévoit pas la météo.`}</p>
-      <section><div class="row"><h2>Mes seuils d’alerte</h2><span class="spacer"></span><button id="editThresholds">Modifier mes seuils</button></div><p>Stock faible à <strong>${this.number(this.data.settings.low_stock)} sacs ou moins</strong>.</p><p>Entretien : ${this.cleaningRule()}.</p><p class="muted">Vous choisissez vos seuils. Les badges et les notifications suivent automatiquement vos réglages.</p><button data-kind="note">Autre opération</button></section>
+      <section><div class="row"><h2>Mes seuils d’alerte</h2><span class="spacer"></span><button id="editThresholds">Modifier mes seuils</button></div><p>Stock faible à <strong>${this.number(this.data.settings.low_stock)} sacs ou moins</strong>.</p><p>Entretien : ${this.cleaningRule()}.</p><p class="muted">Vous choisissez vos seuils. Les badges et les notifications suivent automatiquement vos réglages.</p></section>
       <section><div class="row"><h2>Dernières opérations</h2><span class="spacer"></span><button data-view="journal">Tout l’historique →</button></div>${
         this.recentEvents()
           .slice(0, 3)
@@ -960,7 +1176,7 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
   }
   dashboardsView() {
     const entities = this.data.entities || [];
-    return `<section><h2>Carte Mushroom</h2><p>Le visuel de poêle fourni avec l’intégration, le stock, l’autonomie, les dépenses, le nettoyage et les actions avec confirmation. Nécessite Mushroom installé depuis HACS.</p><button id="copyMushroom" class="primary">Copier la carte Mushroom</button><p class="muted">Collez ce contenu dans une carte Manuelle. Le format JSON fourni est également du YAML valide. Stock OK : plus de ${this.data.settings.low_stock} sacs. Entretien : ${this.cleaningRule()}. Les seuils se règlent dans Réglages.</p><details><summary>Afficher la configuration Mushroom</summary><textarea class="code" readonly aria-label="Carte Mushroom YAML">${escapeHTML(JSON.stringify(this.data.mushroom_card, null, 2))}</textarea></details></section><section><h2>Votre suivi dans vos tableaux de bord</h2><p>Les données sont disponibles sous forme d’entités Home Assistant : capteurs, alertes et boutons. Vous pouvez les utiliser dans vos cartes et automatisations, indépendamment de cette interface.</p><div class="row"><span class="badge">${entities.length} entités pour ce poêle</span><span class="badge">Cartes natives · aucune carte supplémentaire à installer</span></div></section>
+    return `<section><h2>Carte Mushroom</h2><p>Le visuel de poêle fourni avec l’intégration, le stock, l’autonomie, les dépenses, le nettoyage et les actions avec confirmation. Nécessite Mushroom installé depuis HACS.</p><div class="row"><button id="addMushroom" class="primary">Ajouter à un dashboard</button><button id="copyMushroom">Copier la carte Mushroom</button>${this.dashboardAddedUrl ? `<a href="${escapeHTML(this.dashboardAddedUrl)}">Ouvrir le dashboard →</a>` : ""}</div><p class="muted">Collez ce contenu dans une carte Manuelle. Le format JSON fourni est également du YAML valide. Stock OK : plus de ${this.data.settings.low_stock} sacs. Entretien : ${this.cleaningRule()}. Les seuils se règlent dans Réglages.</p><details><summary>Afficher la configuration Mushroom</summary><textarea class="code" readonly aria-label="Carte Mushroom YAML">${escapeHTML(JSON.stringify(this.data.mushroom_card, null, 2))}</textarea></details></section><section><h2>Votre suivi dans vos tableaux de bord</h2><p>Les données sont disponibles sous forme d’entités Home Assistant : capteurs, alertes et boutons. Vous pouvez les utiliser dans vos cartes et automatisations, indépendamment de cette interface.</p><div class="row"><span class="badge">${entities.length} entités pour ce poêle</span><span class="badge">Cartes natives · aucune carte supplémentaire à installer</span></div></section>
       <section><div class="row"><h2>Carte prête à ajouter</h2><span class="spacer"></span><button id="copyCard" class="primary">Copier la carte YAML</button></div><ol><li>Ouvrez votre dashboard et choisissez « Modifier le tableau de bord ».</li><li>Ajoutez une carte « Manuelle ».</li><li>Collez ce YAML et enregistrez.</li></ol><p class="muted">La carte inclut le stock, la consommation, les dépenses, l’autonomie, le nettoyage et le prix moyen. Les boutons demandent confirmation avant d’enregistrer une opération.</p><details><summary>Afficher le YAML</summary><textarea class="code" readonly aria-label="Carte dashboard YAML">${escapeHTML(this.dashboardYaml())}</textarea></details></section>
       ${[
         ["sensor", "Capteurs"],

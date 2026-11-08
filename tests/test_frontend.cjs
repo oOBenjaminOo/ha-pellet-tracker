@@ -226,3 +226,43 @@ test("successful popup saving closes it and retains the original page", async ()
   await p.mutate("add",{});
   assert.equal(closed,1);
 });
+
+test("dashboard card insertion preserves existing config and never mutates the input", () => {
+  const p=panel(), original={title:"Home",custom:{keep:true},views:[{title:"Main",path:"home",background:"red",cards:[{type:"clock"}]},{title:"Other",cards:[]}]};
+  const before=JSON.stringify(original), card={type:"vertical-stack",cards:[{type:"custom:mushroom-title-card",title:"Pellets"}]};
+  const next=p.buildDashboardConfig(original,0,"new",card);
+  assert.equal(JSON.stringify(original),before);
+  assert.equal(next.views[0].cards.length,2);
+  assert.equal(JSON.stringify(next.views[0].cards[1]),JSON.stringify(card));
+  assert.equal(next.views[0].background,"red");
+  assert.equal(next.custom.keep,true);
+  assert.equal(next.views[1].cards.length,0);
+  assert.throws(()=>p.buildDashboardConfig(next,0,"new",card),/déjà présente/);
+});
+
+test("dashboard insertion handles sections and refuses strategies and occupied panel views", () => {
+  const p=panel(), card={type:"vertical-stack",cards:[]};
+  const config={views:[{type:"sections",sections:[{type:"grid",cards:[{type:"clock"}]}]}]};
+  const next=p.buildDashboardConfig(config,0,"new",card);
+  assert.equal(next.views[0].sections.length,2);
+  assert.equal(next.views[0].sections[0].cards.length,1);
+  assert.equal(next.views[0].sections[1].cards[0].grid_options.columns,"full");
+  assert.equal(p.buildDashboardConfig(config,0,0,card).views[0].sections[0].cards.length,2);
+  assert.throws(()=>p.buildDashboardConfig({strategy:{type:"original-states"}},0,"new",card),/automatiquement/);
+  assert.throws(()=>p.buildDashboardConfig({views:[{type:"panel",cards:[{type:"clock"}]}]},0,"new",card),/seule carte/);
+  assert.throws(()=>p.buildDashboardConfig(config,0,99,card),/Section/);
+});
+
+test("dashboard changes between selection and submission prevent a write", async () => {
+  const p=panel(), controls=[{disabled:false,isConnected:true}];
+  const original={views:[{cards:[]}]}, current={views:[{cards:[{type:"clock"}]}]};
+  const flow={config:original,original:JSON.stringify(original),path:"lovelace",card:{type:"vertical-stack",cards:[]},dialog:{isConnected:true,querySelector:()=>({value:"0"})}};
+  p.shadowRoot={querySelectorAll:()=>controls};
+  p.loadDashboardTarget=async()=>{flow.config=current;};
+  const calls=[];p._hass={callWS:async args=>{calls.push(args.type);return current;}};
+  await p.installDashboardCard(flow);
+  assert.deepEqual(calls,["lovelace/config"]);
+  assert.equal(p.messages.some(m=>m.includes("dashboard a changé")),true);
+  assert.equal(p.busy,false);
+  assert.equal(controls[0].disabled,false);
+});

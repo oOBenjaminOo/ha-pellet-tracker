@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.2b1
+
+- One overview action button with operation selection in the modal.
+- Guided installation of the complete Mushroom card into a chosen dashboard/view/section.
+- Preserve existing configuration, recheck it before saving and reject duplicate cards.
+- Keep YAML copying as an advanced option.
+
 ## 0.4.1b1
 
 - Replace the entry page with accessible modal forms for consumption, purchases, cleaning and edits.
