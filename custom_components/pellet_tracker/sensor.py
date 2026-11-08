@@ -65,8 +65,11 @@ class PelletSensor(CoordinatorEntity, SensorEntity):
     @property
     def native_unit_of_measurement(self):
         unit = self._attr_native_unit_of_measurement
-        if unit == "d" and self.coordinator.settings.get("language", "fr") == "fr":
-            return "j"
+        if unit == "d":
+            singular = self.native_value == 1
+            if self.coordinator.settings.get("language", "fr") == "fr":
+                return "jour" if singular else "jours"
+            return "day" if singular else "days"
         return unit
 
     @property

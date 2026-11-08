@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.7.1b1
+
+- Spell out day units: jour/jours in French and day/days in English.
+- Preserve numeric values and update existing cards through the live sensor unit.
+
 ## 0.7.0b1
 
 - French day display uses lowercase j; English retains d.

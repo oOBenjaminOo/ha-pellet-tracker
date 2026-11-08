@@ -45,7 +45,13 @@ class DayUnitTests(unittest.TestCase):
         sensor.coordinator = types.SimpleNamespace(
             settings={}, data={"autonomy_days": 12.5}
         )
-        for language, unit in (("fr", "j"), ("en", "d")):
+        for language, unit in (("fr", "jours"), ("en", "days")):
             sensor.coordinator.settings["language"] = language
             self.assertEqual(sensor.native_unit_of_measurement, unit)
             self.assertEqual(sensor.native_value, 12.5)
+
+        sensor.coordinator.data["autonomy_days"] = 1
+        for language, unit in (("fr", "jour"), ("en", "day")):
+            sensor.coordinator.settings["language"] = language
+            self.assertEqual(sensor.native_unit_of_measurement, unit)
+            self.assertEqual(sensor.native_value, 1)
