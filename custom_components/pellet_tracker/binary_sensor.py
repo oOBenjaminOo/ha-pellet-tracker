@@ -1,11 +1,16 @@
 """Threshold entities usable by notification automations."""
+
 from homeassistant.components.binary_sensor import BinarySensorEntity
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
+
 from .const import DOMAIN
 
 
 async def async_setup_entry(hass, entry, async_add_entities):
-    async_add_entities(PelletAlert(hass.data[DOMAIN][entry.entry_id], key) for key in ("low_stock", "cleaning_due"))
+    async_add_entities(
+        PelletAlert(hass.data[DOMAIN][entry.entry_id], key)
+        for key in ("low_stock", "cleaning_due")
+    )
 
 
 class PelletAlert(CoordinatorEntity, BinarySensorEntity):
@@ -22,5 +27,9 @@ class PelletAlert(CoordinatorEntity, BinarySensorEntity):
     @property
     def is_on(self):
         if self.key == "low_stock":
-            return self.coordinator.data["stock"] <= self.coordinator.entry.data.get("low_stock", 10)
-        return self.coordinator.data["bags_since_clean"] >= self.coordinator.entry.data.get("cleaning_bags", 5)
+            return self.coordinator.data["stock"] <= self.coordinator.entry.data.get(
+                "low_stock", 10
+            )
+        return self.coordinator.data[
+            "bags_since_clean"
+        ] >= self.coordinator.entry.data.get("cleaning_bags", 5)

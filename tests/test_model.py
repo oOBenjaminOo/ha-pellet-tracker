@@ -1,25 +1,47 @@
 """Independent examples for valuation, dates, corrections and validation."""
-import importlib.util
-from pathlib import Path
-import unittest
 
-spec = importlib.util.spec_from_file_location("model", Path(__file__).parents[1] / "custom_components/pellet_tracker/model.py")
+import importlib.util
+import unittest
+from pathlib import Path
+
+spec = importlib.util.spec_from_file_location(
+    "model", Path(__file__).parents[1] / "custom_components/pellet_tracker/model.py"
+)
 model = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(model)
 TODAY = "2018-11-07"
 
 
 def event(kind, quantity=0, price=None, day=TODAY, **extra):
-    return model.validate({"kind": kind, "quantity": quantity, "unit_price": price, "date": day, **extra}, TODAY)
+    return model.validate(
+        {"kind": kind, "quantity": quantity, "unit_price": price, "date": day, **extra},
+        TODAY,
+    )
 
 
 def replay(*events):
-    return model.calculate([{**e, "id": str(i), "order": i} for i, e in enumerate(events)], TODAY)
+    return model.calculate(
+        [{**e, "id": str(i), "order": i} for i, e in enumerate(events)], TODAY
+    )
 
 
 class LedgerModelTests(unittest.TestCase):
+    def test_missing_purchase_history_and_stock_history(self):
+        data = replay(
+            event("note", day="2013-10-07", purchases_unknown=True),
+            event("use", 2, day="2013-10-08", untracked=True),
+            event("adjust", 10),
+        )
+        self.assertIsNone(data["seasons"]["2013/2014"]["spend"])
+        self.assertIsNone(data["seasons"]["2013/2014"]["purchased"])
+        self.assertEqual(data["stock_history"], [{"date": TODAY, "stock": 10}])
+
     def test_fifo_cross_season(self):
-        data = replay(event("purchase", 10, "5.10", "2018-06-01"), event("purchase", 10, "7.20"), event("use", 12))
+        data = replay(
+            event("purchase", 10, "5.10", "2018-06-01"),
+            event("purchase", 10, "7.20"),
+            event("use", 12),
+        )
         self.assertEqual(data["stock"], 8)
         self.assertEqual(data["stock_value"], 57.6)
         self.assertEqual(data["seasons"]["2018/2019"]["cost"], 65.4)
@@ -49,15 +71,26 @@ class LedgerModelTests(unittest.TestCase):
         data = replay(event("purchase", 10, 5), event("loss", 1), event("use", 2))
         self.assertEqual(data["stock"], 7)
         s = data["seasons"]["2018/2019"]
-        self.assertEqual((s["used"], s["lost"], s["cost"], s["loss_cost_known"]), (2, 1, 10, 5))
+        self.assertEqual(
+            (s["used"], s["lost"], s["cost"], s["loss_cost_known"]), (2, 1, 10, 5)
+        )
 
     def test_negative_stock_rejected_even_if_later_purchase(self):
         with self.assertRaises(ValueError):
             replay(event("use", 1, day="2018-10-01"), event("purchase", 10))
 
     def test_cleaning_and_historical_untracked(self):
-        data = replay(event("use", 62, day="2013-05-02", untracked=True), event("adjust", 10), event("use", 1), event("clean"), event("use", 2))
-        self.assertEqual((data["stock"], data["bags_since_clean"], data["days_since_clean"]), (7, 2, 0))
+        data = replay(
+            event("use", 62, day="2013-05-02", untracked=True),
+            event("adjust", 10),
+            event("use", 1),
+            event("clean"),
+            event("use", 2),
+        )
+        self.assertEqual(
+            (data["stock"], data["bags_since_clean"], data["days_since_clean"]),
+            (7, 2, 0),
+        )
         self.assertEqual(data["seasons"]["2012/2013"]["use_unpriced"], 62)
 
     def test_backdate_sorting_and_void(self):
@@ -84,7 +117,12 @@ class LedgerModelTests(unittest.TestCase):
             event("note", season="2017/2019")
 
     def test_adjustment_and_start_date(self):
-        data = replay(event("adjust", 20, 5), event("adjust", -2), event("start", day="2018-10-20"), event("start", day="2018-10-23"))
+        data = replay(
+            event("adjust", 20, 5),
+            event("adjust", -2),
+            event("start", day="2018-10-20"),
+            event("start", day="2018-10-23"),
+        )
         self.assertEqual((data["stock"], data["stock_value"]), (18, 90))
         self.assertEqual(data["seasons"]["2018/2019"]["first_start"], "2018-10-20")
 

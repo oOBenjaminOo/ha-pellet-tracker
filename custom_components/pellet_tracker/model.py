@@ -1,10 +1,11 @@
 """Pure ledger and FIFO valuation. No Home Assistant or network dependency."""
+
 from __future__ import annotations
 
+import re
 from collections import defaultdict, deque
 from datetime import date
 from decimal import Decimal, InvalidOperation
-import re
 
 KINDS = {"use", "purchase", "clean", "start", "adjust", "loss", "note"}
 
@@ -13,7 +14,7 @@ def decimal(value, minimum=None):
     """Reject NaN, infinity, booleans and unreasonable precision."""
     try:
         if isinstance(value, bool):
-            raise ValueError("Invalid number")
+            raise TypeError("Invalid number")
         result = Decimal(str(value))
         if not result.is_finite() or abs(result) > 1000000:
             raise ValueError("Number outside supported range")
@@ -50,36 +51,66 @@ def validate(raw: dict, today: str) -> dict:
     if price is not None and kind not in {"purchase", "adjust"}:
         raise ValueError("Only incoming lots can have a price")
     season = raw.get("season")
-    if season and (not re.fullmatch(r"\d{4}/\d{4}", str(season)) or int(season[5:]) != int(season[:4]) + 1):
+    if season and (
+        not re.fullmatch(r"\d{4}/\d{4}", str(season))
+        or int(season[5:]) != int(season[:4]) + 1
+    ):
         raise ValueError("Invalid season")
-    out = {"kind": kind, "date": day, "quantity": str(qty), "unit_price": price,
-           "comment": str(raw.get("comment", ""))[:2000],
-           "supplier": str(raw.get("supplier", ""))[:200],
-           "brand": str(raw.get("brand", ""))[:200]}
+    out = {
+        "kind": kind,
+        "date": day,
+        "quantity": str(qty),
+        "unit_price": price,
+        "comment": str(raw.get("comment", ""))[:2000],
+        "supplier": str(raw.get("supplier", ""))[:200],
+        "brand": str(raw.get("brand", ""))[:200],
+    }
     if season:
         out["season"] = season
     # Historical consumption before the first inventory remains unvalued.
     if raw.get("untracked") is True and kind in {"use", "loss"}:
         out["untracked"] = True
+    if raw.get("purchases_unknown") is True and kind in {"start", "note"}:
+        out["purchases_unknown"] = True
     return out
 
 
 def calculate(events: list[dict], today: str, month: int = 7) -> dict:
     """Replay the journal, preserving unknown prices and rejecting shortages."""
-    seasons = defaultdict(lambda: {"used": Decimal(0), "purchased": Decimal(0),
-        "lost": Decimal(0), "cleanings": 0, "spend_known": Decimal(0),
-        "purchase_unpriced": Decimal(0), "cost_known": Decimal(0),
-        "use_unpriced": Decimal(0), "loss_cost_known": Decimal(0),
-        "loss_unpriced": Decimal(0), "first_start": None, "prices": []})
+    seasons = defaultdict(
+        lambda: {
+            "used": Decimal(0),
+            "purchased": Decimal(0),
+            "lost": Decimal(0),
+            "cleanings": 0,
+            "spend_known": Decimal(0),
+            "purchase_unpriced": Decimal(0),
+            "cost_known": Decimal(0),
+            "use_unpriced": Decimal(0),
+            "loss_cost_known": Decimal(0),
+            "loss_unpriced": Decimal(0),
+            "first_start": None,
+            "prices": [],
+            "purchases_complete": True,
+        }
+    )
     lots = deque()
     stock = Decimal(0)
     last_clean = None
     since_clean = Decimal(0)
     points = []
-    for event in sorted((e for e in events if not e.get("voided")), key=lambda e: (e["date"], e["order"])):
+    inventory_started = False
+    for event in sorted(
+        (e for e in events if not e.get("voided")),
+        key=lambda e: (e["date"], e["order"]),
+    ):
         s = seasons[event.get("season") or season_for(event["date"], month)]
         kind, qty = event["kind"], Decimal(event["quantity"])
         price = None if event["unit_price"] is None else Decimal(event["unit_price"])
+        if event.get("purchases_unknown"):
+            s["purchases_complete"] = False
+        if kind in {"purchase", "adjust"}:
+            inventory_started = True
         if kind in {"purchase", "adjust"} and qty > 0:
             lots.append([qty, price])
             stock += qty
@@ -95,14 +126,22 @@ def calculate(events: list[dict], today: str, month: int = 7) -> dict:
             since_clean += qty
         if kind == "loss":
             s["lost"] += qty
-        outgoing = qty if kind in {"use", "loss"} else -qty if kind == "adjust" and qty < 0 else Decimal(0)
+        outgoing = (
+            qty
+            if kind in {"use", "loss"}
+            else -qty
+            if kind == "adjust" and qty < 0
+            else Decimal(0)
+        )
         if outgoing:
             cost, unknown = Decimal(0), Decimal(0)
             if event.get("untracked"):
                 unknown = outgoing
             else:
                 if outgoing > stock:
-                    raise ValueError(f"Insufficient stock on {event['date']} ({event['id']})")
+                    raise ValueError(
+                        f"Insufficient stock on {event['date']} ({event['id']})"
+                    )
                 stock -= outgoing
                 remaining = outgoing
                 while remaining:
@@ -124,7 +163,10 @@ def calculate(events: list[dict], today: str, month: int = 7) -> dict:
             last_clean, since_clean = event["date"], Decimal(0)
         if kind == "start":
             s["first_start"] = min(s["first_start"] or event["date"], event["date"])
-        points.append({"date": event["date"], "stock": float(stock)})
+        if inventory_started and (
+            not points or stock != Decimal(str(points[-1]["stock"]))
+        ):
+            points.append({"date": event["date"], "stock": float(stock)})
     current = season_for(today, month)
     seasons[current]  # Ensure sensors exist even with an empty journal.
     output = {}
@@ -132,15 +174,36 @@ def calculate(events: list[dict], today: str, month: int = 7) -> dict:
         prices = s.pop("prices")
         priced = s["purchased"] - s["purchase_unpriced"]
         s["average_price"] = s["spend_known"] / priced if priced else None
-        s["min_price"], s["max_price"] = (min(prices), max(prices)) if prices else (None, None)
+        s["min_price"], s["max_price"] = (
+            (min(prices), max(prices)) if prices else (None, None)
+        )
         s["spend"] = s["spend_known"] if not s["purchase_unpriced"] else None
+        s["purchased_recorded"] = s["purchased"]
+        if not s["purchases_complete"]:
+            s["purchased"], s["spend"] = None, None
         s["cost"] = s["cost_known"] if not s["use_unpriced"] else None
-        output[key] = {k: float(v) if isinstance(v, Decimal) else v for k, v in s.items()}
+        output[key] = {
+            k: float(v) if isinstance(v, Decimal) else v for k, v in s.items()
+        }
     unknown_stock = sum((q for q, p in lots if p is None), Decimal(0))
     known_value = sum((q * p for q, p in lots if p is not None), Decimal(0))
-    return {"stock": float(stock), "stock_value": None if unknown_stock else float(known_value),
-            "stock_value_known": float(known_value), "stock_unpriced": float(unknown_stock),
-            "season": current, "seasons": output, "last_clean": last_clean,
-            "days_since_clean": (date.fromisoformat(today) - date.fromisoformat(last_clean)).days if last_clean else None,
-            "bags_since_clean": float(since_clean), "stock_history": points,
-            "lots": [{"quantity": float(q), "unit_price": None if p is None else str(p)} for q, p in lots]}
+    return {
+        "stock": float(stock),
+        "stock_value": None if unknown_stock else float(known_value),
+        "stock_value_known": float(known_value),
+        "stock_unpriced": float(unknown_stock),
+        "season": current,
+        "seasons": output,
+        "last_clean": last_clean,
+        "days_since_clean": (
+            date.fromisoformat(today) - date.fromisoformat(last_clean)
+        ).days
+        if last_clean
+        else None,
+        "bags_since_clean": float(since_clean),
+        "stock_history": points,
+        "lots": [
+            {"quantity": float(q), "unit_price": None if p is None else str(p)}
+            for q, p in lots
+        ],
+    }

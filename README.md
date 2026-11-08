@@ -81,7 +81,8 @@ python tools/convert_xlsx.py source.xlsx private-import.json
 
 Il nécessite `openpyxl` sur la machine de conversion seulement. Vérifier le
 JSON avant de l’importer. Les sorties antérieures au premier inventaire sont
-marquées comme historiques sans suivi de stock. Les commentaires et le type
+marquées comme historiques sans suivi de stock. Les saisons sans suivi des achats
+restent inconnues pour les dépenses et quantités achetées. Les commentaires et le type
 des mouvements sources sont conservés ; une anomalie métier doit être revue
 avant de reclasser une sortie en perte. Aucun historique personnel n’est fourni
 dans le dépôt.

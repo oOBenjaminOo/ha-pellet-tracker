@@ -1,6 +1,8 @@
 """Small state entities; full history stays outside entity attributes."""
-from homeassistant.components.sensor import SensorEntity, SensorDeviceClass
+
+from homeassistant.components.sensor import SensorDeviceClass, SensorEntity
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
+
 from .const import DOMAIN
 
 FIELDS = {
@@ -19,7 +21,9 @@ FIELDS = {
 
 
 async def async_setup_entry(hass, entry, async_add_entities):
-    async_add_entities(PelletSensor(hass.data[DOMAIN][entry.entry_id], key) for key in FIELDS)
+    async_add_entities(
+        PelletSensor(hass.data[DOMAIN][entry.entry_id], key) for key in FIELDS
+    )
 
 
 class PelletSensor(CoordinatorEntity, SensorEntity):
@@ -32,14 +36,19 @@ class PelletSensor(CoordinatorEntity, SensorEntity):
         self._attr_translation_key = key
         unit, icon, _ = FIELDS[key]
         self._attr_icon = icon
-        self._attr_native_unit_of_measurement = ledger.entry.data.get("currency", "EUR") if unit == "money" else unit
+        self._attr_native_unit_of_measurement = (
+            ledger.entry.data.get("currency", "EUR") if unit == "money" else unit
+        )
         if unit == "money":
             self._attr_device_class = SensorDeviceClass.MONETARY
             self._attr_suggested_display_precision = 2
         if key == "last_clean":
             self._attr_device_class = SensorDeviceClass.DATE
-        self._attr_device_info = {"identifiers": {(DOMAIN, ledger.entry.entry_id)},
-                                  "name": ledger.entry.title, "manufacturer": "Pellet Tracker"}
+        self._attr_device_info = {
+            "identifiers": {(DOMAIN, ledger.entry.entry_id)},
+            "name": ledger.entry.title,
+            "manufacturer": "Pellet Tracker",
+        }
 
     @property
     def native_value(self):
@@ -49,5 +58,6 @@ class PelletSensor(CoordinatorEntity, SensorEntity):
         value = data.get(self.key)
         if self.key == "last_clean" and value:
             from datetime import date
+
             return date.fromisoformat(value)
         return value
