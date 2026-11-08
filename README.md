@@ -100,6 +100,7 @@ Les notifications peuvent être construites avec les automatisations natives.
 ```bash
 python -m unittest discover -s tests -v
 node --check custom_components/pellet_tracker/frontend/panel.js
+node --test tests/test_frontend.cjs
 ```
 
 Le moteur est indépendant de Home Assistant. Les tests couvrent les coûts FIFO,

@@ -22,6 +22,7 @@ class PelletTrackerPanel extends HTMLElement {
     super();
     this.attachShadow({ mode: "open" });
     this.busy = false;
+    this.loadGeneration = 0;
     this.editing = null;
     this.shadowRoot.innerHTML = `<style>
       :host{display:block;height:100%;overflow:auto;background:var(--primary-background-color);color:var(--primary-text-color);font:14px var(--paper-font-body1_-_font-family,Roboto,sans-serif)}
@@ -79,18 +80,44 @@ class PelletTrackerPanel extends HTMLElement {
     }
   }
   notice(message, error = false) {
+    if (error) {
+      const shortage = String(message).match(
+        /Insufficient stock on (\d{4}-\d{2}-\d{2})/,
+      );
+      const translations = {
+        "Journal changed. Refresh before saving.":
+          "Le journal a changé. Actualise la page avant d’enregistrer.",
+        "Quantity must be positive": "La quantité doit être supérieure à zéro.",
+        "Future operations are not supported":
+          "Choisis une date passée ou la date du jour.",
+        "Operation not found":
+          "Cette opération n’est plus disponible. Actualise le journal.",
+        "Invalid number": "Vérifie les nombres saisis.",
+        "At most four decimal places":
+          "Les nombres acceptent au maximum quatre décimales.",
+      };
+      message = shortage
+        ? `Stock insuffisant au ${shortage[1].split("-").reverse().join("/")}. Vérifie la quantité et les mouvements précédents.`
+        : translations[message] || message;
+    }
     const box = this.shadowRoot.querySelector("#notice");
     box.className = error ? "error" : "success";
     box.textContent = message;
   }
   async load() {
+    const entry = this.entry;
+    const generation = ++this.loadGeneration;
     try {
-      this.data = await this._hass.callWS({
+      const data = await this._hass.callWS({
         type: "pellet_tracker/journal",
-        entry_id: this.entry,
+        entry_id: entry,
       });
+      if (entry !== this.entry || generation !== this.loadGeneration) return;
+      this.data = data;
+      this.notice("");
       this.render();
     } catch (e) {
+      if (entry !== this.entry || generation !== this.loadGeneration) return;
       this.notice(e.message || String(e), true);
     }
   }
@@ -334,9 +361,10 @@ class PelletTrackerPanel extends HTMLElement {
   async mutate(operation, payload) {
     if (this.busy) return;
     this.busy = true;
-    this.shadowRoot
-      .querySelectorAll("button")
-      .forEach((b) => (b.disabled = true));
+    const controls = [
+      ...this.shadowRoot.querySelectorAll("button,input,select,textarea"),
+    ].map((element) => [element, element.disabled]);
+    controls.forEach(([element]) => (element.disabled = true));
     this.notice("Enregistrement…");
     try {
       this.data = await this._hass.callWS({
@@ -351,10 +379,8 @@ class PelletTrackerPanel extends HTMLElement {
       this.notice("Journal enregistré.");
     } catch (e) {
       this.notice(e.message || String(e), true);
-      this.shadowRoot
-        .querySelectorAll("button")
-        .forEach((b) => (b.disabled = false));
     } finally {
+      controls.forEach(([element, disabled]) => (element.disabled = disabled));
       this.busy = false;
     }
   }
