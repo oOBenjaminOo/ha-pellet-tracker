@@ -49,6 +49,18 @@
       },
       "bags_since_clean": {
         "name": "Sacs depuis le nettoyage"
+      },
+      "autonomy_days": {
+        "name": "Autonomie estimée"
+      },
+      "exhaustion_date": {
+        "name": "Épuisement estimé du stock"
+      },
+      "daily_rate": {
+        "name": "Consommation moyenne récente"
+      },
+      "usage_change_percent": {
+        "name": "Évolution de consommation à date équivalente"
       }
     },
     "binary_sensor": {
@@ -57,7 +69,42 @@
       },
       "cleaning_due": {
         "name": "Nettoyage à prévoir"
+      },
+      "low_autonomy": {
+        "name": "Autonomie courte"
       }
+    },
+    "button": {
+      "add_bag": {
+        "name": "Ajouter un sac au poêle"
+      },
+      "clean": {
+        "name": "Enregistrer un nettoyage"
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Paramètres du suivi",
+        "description": "Les changements s’appliquent sans redémarrage.",
+        "data": {
+          "name": "Nom du poêle",
+          "low_stock": "Stock faible (sacs)",
+          "cleaning_bags": "Nettoyage après (sacs)",
+          "cleaning_days": "Nettoyage après (jours, 0 = désactivé)",
+          "estimate_window": "Fenêtre de consommation (jours)",
+          "low_autonomy_days": "Autonomie courte (jours, 0 = désactivé)",
+          "notify_enabled": "Notifications automatiques",
+          "notification_action": "Destination supplémentaire",
+          "repeat_days": "Rappeler après (jours, 0 = sans rappel)",
+          "notify_hour": "Heure des rappels quotidiens",
+          "notify_recovery": "Notifier le retour à la normale"
+        }
+      }
+    },
+    "error": {
+      "invalid_settings": "Vérifie les paramètres et la destination de notification."
     }
   }
 }

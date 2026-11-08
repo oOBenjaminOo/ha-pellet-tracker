@@ -49,6 +49,18 @@
       },
       "bags_since_clean": {
         "name": "Bags since cleaning"
+      },
+      "autonomy_days": {
+        "name": "Estimated autonomy"
+      },
+      "exhaustion_date": {
+        "name": "Estimated stock exhaustion"
+      },
+      "daily_rate": {
+        "name": "Recent average usage"
+      },
+      "usage_change_percent": {
+        "name": "Usage change at the same date"
       }
     },
     "binary_sensor": {
@@ -57,7 +69,42 @@
       },
       "cleaning_due": {
         "name": "Cleaning due"
+      },
+      "low_autonomy": {
+        "name": "Low autonomy"
       }
+    },
+    "button": {
+      "add_bag": {
+        "name": "Add one bag to stove"
+      },
+      "clean": {
+        "name": "Record cleaning"
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Tracker settings",
+        "description": "Changes apply without restarting.",
+        "data": {
+          "name": "Stove name",
+          "low_stock": "Low stock (bags)",
+          "cleaning_bags": "Cleaning after (bags)",
+          "cleaning_days": "Cleaning after (days, 0 = disabled)",
+          "estimate_window": "Usage window (days)",
+          "low_autonomy_days": "Low autonomy (days, 0 = disabled)",
+          "notify_enabled": "Automatic notifications",
+          "notification_action": "Additional destination",
+          "repeat_days": "Remind after (days, 0 = no reminders)",
+          "notify_hour": "Daily reminder hour",
+          "notify_recovery": "Notify recovery"
+        }
+      }
+    },
+    "error": {
+      "invalid_settings": "Check the settings and notification destination."
     }
   }
 }

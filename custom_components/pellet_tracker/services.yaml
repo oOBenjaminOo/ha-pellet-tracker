@@ -1,0 +1,123 @@
+record:
+  name: Enregistrer une opération
+  description: Ajoute une opération au journal et recalcule le stock et les coûts.
+  fields:
+    entry_id: &id001
+      name: Journal
+      description: Journal Pellet Tracker à utiliser.
+      required: true
+      selector:
+        config_entry:
+          integration: pellet_tracker
+    kind:
+      name: Opération
+      required: true
+      selector: &id002
+        select:
+          options:
+          - use
+          - purchase
+          - clean
+          - start
+          - adjust
+          - loss
+          - note
+    quantity:
+      name: Quantité de sacs
+      selector: &id003
+        number:
+          min: -1000000
+          max: 1000000
+          step: 0.0001
+          mode: box
+    date:
+      name: Date (jour courant si absent)
+      selector: &id004
+        date: {}
+    unit_price:
+      name: Prix par sac (absent = inconnu)
+      selector: &id005
+        number:
+          min: 0
+          max: 1000000
+          step: 0.0001
+          mode: box
+    comment:
+      name: Commentaire
+      selector: &id006
+        text: {}
+    supplier:
+      name: Fournisseur
+      selector: &id007
+        text: {}
+    brand:
+      name: Marque
+      selector: &id008
+        text: {}
+    cleaned:
+      name: Enregistrer aussi un nettoyage
+      selector:
+        boolean: {}
+    request_id:
+      name: Identifiant de requête facultatif
+      description: Une même requête ne sera pas enregistrée deux fois.
+      selector:
+        text: {}
+edit:
+  name: Modifier une opération
+  description: Modifie les champs fournis, puis recalcule tous les mouvements suivants.
+  fields:
+    entry_id: *id001
+    operation_id: &id009
+      name: Identifiant de l’opération
+      description: Disponible dans l’export JSON.
+      required: true
+      selector:
+        text: {}
+    kind:
+      name: Opération
+      selector: *id002
+    quantity:
+      name: Quantité de sacs
+      selector: *id003
+    date:
+      name: Date (jour courant si absent)
+      selector: *id004
+    unit_price:
+      name: Prix par sac (absent = inconnu)
+      selector: *id005
+    comment:
+      name: Commentaire
+      selector: *id006
+    supplier:
+      name: Fournisseur
+      selector: *id007
+    brand:
+      name: Marque
+      selector: *id008
+cancel:
+  name: Annuler une opération
+  description: Annulation réversible, conservée dans l’audit.
+  fields:
+    entry_id: *id001
+    operation_id: *id009
+restore:
+  name: Rétablir une opération
+  description: Rétablit une opération annulée si le stock reste cohérent.
+  fields:
+    entry_id: *id001
+    operation_id: *id009
+export:
+  name: Exporter le journal
+  description: Retourne le journal, les statistiques et l’audit. Réponse obligatoire.
+  fields: &id010
+    entry_id: *id001
+test_notification:
+  name: Tester les notifications
+  description: Envoie un test local et vers la destination supplémentaire enregistrée,
+    si présente.
+  fields: *id010
+check_notifications:
+  name: Vérifier les alertes
+  description: Vérifie les seuils et les rappels sans contourner les délais de déduplication.
+  fields: *id010

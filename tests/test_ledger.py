@@ -67,6 +67,60 @@ Ledger = load_ledger()
 
 
 class LedgerTransactionTests(unittest.IsolatedAsyncioTestCase):
+    async def test_partial_automation_edits_preserve_concurrent_fields(self):
+        await self.add("purchase", 10, unit_price="5")
+        identifier = self.ledger.journal["events"][0]["id"]
+        await asyncio.gather(
+            self.ledger.transact(
+                "patch", {"id": identifier, "quantity": 20}, None, "a"
+            ),
+            self.ledger.transact(
+                "patch", {"id": identifier, "comment": "Updated"}, None, "b"
+            ),
+        )
+        self.assertEqual(self.ledger.data["stock"], 20)
+        self.assertEqual(self.ledger.journal["events"][0]["comment"], "Updated")
+
+    async def test_compound_record_and_idempotency(self):
+        payload = {
+            "kind": "purchase",
+            "quantity": 20,
+            "unit_price": "6.50",
+            "cleaned": True,
+            "request_id": "delivery-1",
+        }
+        await self.ledger.transact("add", payload, None, "test")
+        await self.ledger.transact("add", payload, None, "test")
+        self.assertEqual(len(self.ledger.journal["events"]), 2)
+        self.assertEqual(self.ledger.data["stock"], 20)
+        self.assertEqual(self.ledger.data["seasons"]["2018/2019"]["cleanings"], 1)
+        with self.assertRaises(ValueError):
+            await self.ledger.transact("add", {**payload, "quantity": 21}, None, "test")
+        with self.assertRaises(ValueError):
+            await self.ledger.transact(
+                "add", {**payload, "cleaned": False}, None, "test"
+            )
+
+    async def test_cancel_and_restore_replay_fifo(self):
+        await self.add("purchase", 10, unit_price="5")
+        await self.add("use", 2)
+        identifier = self.ledger.journal["events"][-1]["id"]
+        await self.ledger.transact("void", {"id": identifier}, None, "test")
+        self.assertEqual(self.ledger.data["stock"], 10)
+        await self.ledger.transact("restore", {"id": identifier}, None, "test")
+        self.assertEqual(self.ledger.data["stock"], 8)
+
+    async def test_native_concurrent_appends_are_serialized(self):
+        await asyncio.gather(
+            *[
+                self.ledger.transact(
+                    "add", {"kind": "purchase", "quantity": 10}, None, "test"
+                )
+                for _ in range(2)
+            ]
+        )
+        self.assertEqual(self.ledger.data["stock"], 20)
+
     async def asyncSetUp(self):
         self.ledger = Ledger(
             None, types.SimpleNamespace(entry_id="test", title="Test", data={})

@@ -26,6 +26,75 @@ def replay(*events):
 
 
 class LedgerModelTests(unittest.TestCase):
+    def test_monthly_fifo_uses_original_purchase_lots(self):
+        data = replay(
+            event("purchase", 10, 5, "2018-09-01"),
+            event("purchase", 10, 7, "2018-10-01"),
+            event("use", 12, day="2018-11-01"),
+        )
+        month = next(x for x in data["monthly"]["2018/2019"] if x["month"] == "2018-11")
+        self.assertEqual((month["used"], month["cost"], month["spend"]), (12, 64, 0))
+        self.assertEqual(sum(x["cost"] for x in data["monthly"]["2018/2019"]), 64)
+        self.assertEqual(len(data["monthly"]["2018/2019"]), 12)
+        self.assertTrue(data["monthly"]["2018/2019"][-1]["future"])
+
+    def test_same_date_excludes_later_usage_and_handles_zero_baseline(self):
+        data = replay(
+            event("use", 4, day="2017-11-07", untracked=True),
+            event("use", 9, day="2017-12-01", untracked=True),
+            event("use", 2, untracked=True),
+        )
+        self.assertEqual(data["same_date"][-2]["used"], 4)
+        self.assertEqual(data["usage_change_percent"], -50)
+
+    def test_autonomy_requires_observation_and_expires_when_stale(self):
+        data = replay(
+            event("purchase", 43, 6.37, "2018-10-23"),
+            event("start", day="2018-10-23"),
+            event("use", 1, day="2018-10-25"),
+            event("use", 1, day="2018-10-31"),
+            event("use", 1, day="2018-11-04"),
+            event("use", 1),
+        )
+        self.assertEqual((data["daily_rate"], data["autonomy_days"]), (0.25, 156))
+        self.assertEqual(data["estimate_status"], "limited")
+        events = [
+            {**event("purchase", 30, 5, "2018-10-01"), "id": "p", "order": 0},
+            *[
+                {**event("use", 1, day=d), "id": d, "order": i + 1}
+                for i, d in enumerate(["2018-10-02", "2018-10-04", "2018-10-07"])
+            ],
+        ]
+        self.assertIsNone(model.calculate(events, TODAY)["autonomy_days"])
+        self.assertIsNone(
+            replay(event("purchase", 10), event("use", 1))["autonomy_days"]
+        )
+
+    def test_leap_day_same_date_and_january_boundary(self):
+        raw = [
+            {
+                "id": "old",
+                "order": 0,
+                "kind": "use",
+                "date": "2019-02-28",
+                "quantity": "3",
+                "unit_price": None,
+                "untracked": True,
+            },
+            {
+                "id": "new",
+                "order": 1,
+                "kind": "use",
+                "date": "2020-02-29",
+                "quantity": "2",
+                "unit_price": None,
+                "untracked": True,
+            },
+        ]
+        data = model.calculate(raw, "2020-02-29")
+        self.assertEqual(data["same_date"][0]["cutoff"], "2019-02-28")
+        self.assertEqual(model.season_for("2018-01-01", 1), "2018/2019")
+
     def test_missing_purchase_history_and_stock_history(self):
         data = replay(
             event("note", day="2013-10-07", purchases_unknown=True),

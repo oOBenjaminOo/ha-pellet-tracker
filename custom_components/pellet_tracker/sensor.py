@@ -17,6 +17,10 @@ FIELDS = {
     "last_clean": (None, "mdi:broom", False),
     "days_since_clean": ("d", "mdi:calendar", False),
     "bags_since_clean": ("sacs", "mdi:fire", False),
+    "autonomy_days": ("d", "mdi:calendar-clock", False),
+    "exhaustion_date": (None, "mdi:calendar-end", False),
+    "daily_rate": ("sacs/d", "mdi:chart-line", False),
+    "usage_change_percent": ("%", "mdi:compare", False),
 }
 
 
@@ -42,7 +46,7 @@ class PelletSensor(CoordinatorEntity, SensorEntity):
         if unit == "money":
             self._attr_device_class = SensorDeviceClass.MONETARY
             self._attr_suggested_display_precision = 2
-        if key == "last_clean":
+        if key in {"last_clean", "exhaustion_date"}:
             self._attr_device_class = SensorDeviceClass.DATE
         self._attr_device_info = {
             "identifiers": {(DOMAIN, ledger.entry.entry_id)},
@@ -56,7 +60,7 @@ class PelletSensor(CoordinatorEntity, SensorEntity):
         if FIELDS[self.key][2]:
             data = data["seasons"][data["season"]]
         value = data.get(self.key)
-        if self.key == "last_clean" and value:
+        if self.key in {"last_clean", "exhaustion_date"} and value:
             from datetime import date
 
             return date.fromisoformat(value)

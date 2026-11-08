@@ -6,8 +6,8 @@ const { test } = require("node:test");
 const assert = require("node:assert/strict");
 
 let Panel;
-vm.runInNewContext(
-  readFileSync(join(__dirname, "../custom_components/pellet_tracker/frontend/panel.js"), "utf8"),
+const encodeCsv = vm.runInNewContext(
+  readFileSync(join(__dirname, "../custom_components/pellet_tracker/frontend/panel.js"), "utf8") + "\n csvCell;",
   { HTMLElement: class {}, customElements: { define(_name, value) { Panel = value; } }, Intl, Date, Set, console },
 );
 
@@ -77,4 +77,24 @@ test("stock error displays a readable date without internal operation IDs", () =
   Panel.prototype.notice.call(p, "Insufficient stock on 2018-11-07 (internal-id)", true);
   assert.match(box.textContent, /Stock insuffisant au 07\/11\/2018/);
   assert.equal(box.textContent.includes("internal-id"), false);
+});
+
+test("CSV neutralizes spreadsheet formulas and escapes quotes while keeping numbers numeric",()=>{
+  assert.equal(encodeCsv('=1+1'),'"\'=1+1"');
+  assert.equal(encodeCsv('A"B'),'"A""B"');
+  assert.equal(encodeCsv(-2),'"-2"');
+  assert.equal(encodeCsv(null),'""');
+});
+
+test("monthly chart distinguishes unknown prices from future months",()=>{
+  const p=panel();p.statsSeason='2018/2019';p.statsMetric='cost';
+  p.data={currency:'EUR',summary:{monthly:{'2018/2019':[
+    {month:'2018-10',used:2,purchased:10,spend:null,cost:null,average_price:null,future:false},
+    {month:'2018-11',used:0,purchased:0,spend:0,cost:0,average_price:null,future:true}
+  ]}}};
+  const html=p.monthlyContent();
+  assert.match(html,/Non renseigné/);
+  assert.match(html,/À venir/);
+  assert.equal(html.includes('NaN'),false);
+  assert.equal(html.includes('Infinity'),false);
 });

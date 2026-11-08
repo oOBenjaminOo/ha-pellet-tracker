@@ -3,7 +3,7 @@
 Local Home Assistant custom integration for pellet stock, seasonal usage,
 cleaning and purchase costs. Original project by Benjamin (@oOBenjaminOo).
 
-**0.1.0b1 is an early test release.** No HACS default-catalog submission has
+**0.2.0b1 is a feature-complete beta for real-world testing.** No HACS default-catalog submission has
 been made. No cloud account, stove connection or runtime Python dependency.
 
 ## Fonctionnement
@@ -24,6 +24,12 @@ been made. No cloud account, stove connection or runtime Python dependency.
 - Piste d’audit des corrections et annulations ; aucune suppression physique
   d’opérations depuis l’interface.
 - Plusieurs journaux indépendants, capteurs traduits en français et anglais.
+- Autonomie estimée, date d’épuisement et rythme récent, sans inventer de données.
+- Graphiques mensuels des quantités, coûts et prix, avec export CSV.
+- Comparaison des saisons complètes et à date équivalente.
+- Notifications regroupées intégrées, rappels et destination supplémentaire facultative.
+- Paramètres modifiables sans redémarrage, boutons rapides et actions d’automatisation.
+- Une saisie peut enregistrer les sacs et un nettoyage dans la même transaction.
 
 ## Installation de test
 
@@ -91,9 +97,97 @@ dans le dépôt.
 
 Stock, sacs utilisés et achetés cette saison, nettoyages, dépenses, coût utilisé,
 prix moyen, valeur du stock, date du dernier nettoyage, jours et sacs depuis
-nettoyage. Deux capteurs binaires : stock faible et nettoyage à prévoir.
+nettoyage, autonomie, date d’épuisement estimée, consommation récente et évolution
+à date équivalente. Trois capteurs binaires : stock faible, nettoyage à prévoir
+et autonomie courte. Deux boutons : ajouter un sac au poêle et enregistrer un nettoyage.
 Les valeurs saisonnières corrigibles n’utilisent pas `total_increasing`.
-Les notifications peuvent être construites avec les automatisations natives.
+Les boutons et capteurs fonctionnent dans les cartes natives Home Assistant.
+La page Suivi Granulés fournit l’interface complète sans carte externe à installer.
+
+## Autonomie et comparaisons
+
+La fenêtre de consommation est configurable de 7 à 180 jours (30 par défaut).
+Le rythme est calculé sur les jours calendaires de la fenêtre, ou depuis le
+premier allumage connu lorsqu’il est plus récent. Il faut au moins 7 jours de
+recul, 3 dates de consommation distinctes et une utilisation dans les 14 derniers
+jours. Une estimation issue de peu de saisies est signalée comme limitée.
+Le stock nul donne 0 jour ; une absence de consommation récente donne une
+estimation inconnue, jamais une autonomie infinie. Il ne s’agit pas d’une
+prévision météo ni d’une mesure du réservoir du poêle.
+
+Les graphiques affichent 12 mois par saison. Les mois futurs sont distingués des
+mois sans opération. Les coûts mensuels utilisent les mêmes allocations FIFO que
+le journal, y compris pour les sacs achetés les saisons précédentes. Les prix
+moyens sont pondérés par le nombre de sacs dont le prix est connu.
+
+La comparaison à date équivalente s’arrête au même jour et au même mois de
+chaque saison. Le 29 février devient le 28 février pour les années non bissextiles.
+Un pourcentage n’est calculé que si la saison précédente existe avec une
+consommation non nulle. Les exports CSV sont compatibles avec Excel (UTF-8,
+séparateur point-virgule) ; les formules dans les champs texte sont neutralisées.
+
+## Notifications prêtes à l’emploi
+
+Les notifications automatiques sont actives par défaut dans Home Assistant :
+stock faible (10 sacs), nettoyage (5 sacs ou 7 jours après le dernier nettoyage,
+avec consommation depuis celui-ci), autonomie courte (7 jours si calculable).
+Une seule notification regroupe les alertes du poêle. Elle est actualisée et
+retirée quand les conditions disparaissent. Aucun rappel de nettoyage en période
+d’inactivité après un nettoyage de fin de saison.
+
+Une nouvelle condition déclenche une alerte après la saisie. Les rappels sont
+vérifiés à l’heure configurée (08h par défaut), après le délai choisi (3 jours par
+défaut ; 0 désactive les rappels). La déduplication est conservée après redémarrage.
+Le retour à la normale est facultatif pour les destinations supplémentaires.
+
+Dans **Paramètres et notifications**, choisir éventuellement un service notify,
+une entité notify ou un script existant. Aucune destination privée n’est devinée.
+Un script reçoit les variables `title`, `message`, `kind` (`alert`, `recovery`,
+`test`) et `entry_id` : il peut relayer vers Telegram ou AWTRIX avec les actions
+habituelles du propriétaire. Le bouton de test utilise la destination enregistrée.
+Une erreur de livraison conserve l’opération du journal ; elle est affichée
+séparément et la destination en échec est réessayée après un délai minimal d’une
+heure lors de la prochaine vérification. L’événement `pellet_tracker_alert` est
+également émis lors d’un changement des conditions pour des automatisations avancées.
+
+## Actions natives
+
+Toutes les actions nécessitent `entry_id`, sélectionnable dans l’éditeur visuel.
+Elles sont réservées aux administrateurs et aux automatisations locales.
+
+| Action | Fonction |
+| --- | --- |
+| `pellet_tracker.record` | Ajout : use, purchase, clean, start, adjust, loss ou note |
+| `pellet_tracker.edit` | Modification partielle d’une opération existante |
+| `pellet_tracker.cancel` | Annulation réversible par `operation_id` |
+| `pellet_tracker.restore` | Rétablissement avec contrôle du stock |
+| `pellet_tracker.export` | Retour du journal et des statistiques (réponse obligatoire) |
+| `pellet_tracker.test_notification` | Envoi d’un test vers les destinations enregistrées |
+| `pellet_tracker.check_notifications` | Vérification des alertes en respectant la déduplication |
+
+Exemple de réapprovisionnement (remplacer `IDENTIFIANT_DU_JOURNAL`) :
+
+```yaml
+action: pellet_tracker.record
+data:
+  entry_id: IDENTIFIANT_DU_JOURNAL
+  kind: purchase
+  quantity: 20
+  unit_price: 6.50
+  comment: Livraison
+  request_id: livraison-unique-001
+```
+
+`request_id` est facultatif : répéter une requête identique ne duplique pas la
+saisie. Réutiliser l’identifiant avec un autre contenu est refusé. Pour les
+boutons physiques, chaque nouvelle utilisation doit avoir un identifiant
+nouveau, ou ne pas transmettre ce champ. `cleaned: true` ajoute atomiquement
+un nettoyage avec une consommation ou un achat. Les dates sont facultatives
+(jour courant par défaut). Une édition conserve les champs non fournis.
+Les corrections peuvent être antidatées ; les écritures sont sérialisées.
+Les paramètres de seuils et de notification sont aussi accessibles dans le
+flux d’options de l’intégration. Devise et premier mois de saison restent fixés
+par journal pour préserver la signification de l’historique.
 
 ## Développement et limites actuelles
 
@@ -107,11 +201,11 @@ Le moteur est indépendant de Home Assistant. Les tests couvrent les coûts FIFO
 les frontières de saisons, les prix inconnus, les pertes, les corrections,
 la concurrence, la persistance et le rejet atomique d’un import invalide.
 
-Cette bêta ne fournit pas encore de prévision d’autonomie, de comparaison à
-date équivalente, de graphique mensuel, de services d’automatisation de saisie,
-de carte Lovelace dédiée ou d’éditeur de paramètres après création du journal.
-La page de gestion est française ; les entités et le formulaire de configuration
-ont des traductions FR/EN. Les ajouts futurs seront versionnés et migrés.
+La page de gestion est française ; les entités et les formulaires de configuration
+et d’options ont des traductions FR/EN. Cette bêta doit encore être évaluée en
+usage quotidien avant une version stable. Les diagnostics excluent le contenu
+du journal, les destinataires et les commentaires. Le fonctionnement est local ;
+les destinations de notification choisies peuvent utiliser leurs propres services.
 
 ## English
 
@@ -120,7 +214,9 @@ prices, log bag usage and cleaning, and compare heating seasons. FIFO costs
 carry across seasons. Unknown prices remain unknown. Administration uses the
 French built-in panel; configuration and entities are available in English.
 Install the custom component, restart Home Assistant and add Pellet Tracker
-from Devices & services. This beta is intended for a test instance first.
+from Devices & services. Monthly charts, same-date comparisons, guarded autonomy
+estimates, native actions, quick buttons and configurable grouped notifications
+are included. This beta is intended for a test instance first.
 
 ## License
 
