@@ -130,6 +130,7 @@ test("dashboard YAML uses renamed live entities and confirms write actions", () 
   assert.match(p.dashboardYaml(),/^# Aucun capteur/);
 });
 
+// Fictional fixed examples only: never copy a real Home Assistant journal here.
 function fixture() {
   const p = panel();
   const season = {used:9,purchased:47,cleanings:3,spend:298.45,cost:null,average_price:6.35,first_start:"2018-10-23"};

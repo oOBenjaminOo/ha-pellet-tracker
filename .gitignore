@@ -6,3 +6,11 @@ __pycache__/
 private-*
 *.xlsx
 *.zip
+
+# Local Home Assistant storage and database backups contain private data.
+.storage/
+*.db
+*.sqlite
+*.sqlite3
+*.tar
+*.tar.gz

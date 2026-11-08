@@ -407,3 +407,17 @@ Dans **Dashboards**, ajoutez la carte automatique Pellet Tracker. Une seule migr
 des anciennes cartes est nécessaire. La flèche d’annulation apparaît pour la dernière
 saisie annulable. Le bilan PDF se télécharge dans **Saisons → Bilan et budget**.
 L’assistant se trouve dans **Réglages → Poêle connecté** et n’actionne aucun appareil.
+
+## Data privacy and backups / Confidentialité et sauvegardes
+
+Journal data stays in Home Assistant, in `/config/.storage/pellet_tracker.<entry_id>`.
+Recorder history purges do not remove it. Home Assistant backups that include the
+configuration preserve this storage; the journal JSON export provides an extra
+portable copy. Removing a stove integration entry explicitly deletes its journal.
+Repository test examples are fictional and must never be copied from a real journal.
+
+Le journal reste dans Home Assistant, dans `/config/.storage/pellet_tracker.<entry_id>`.
+La purge de Recorder ne le supprime pas. Les sauvegardes Home Assistant incluant
+la configuration conservent ce stockage ; l’export JSON fournit une copie
+supplémentaire. La suppression du poêle dans les intégrations efface son journal.
+Les exemples des tests sont fictifs : ne jamais y recopier un journal réel.
