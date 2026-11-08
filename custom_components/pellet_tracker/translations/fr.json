@@ -8,7 +8,7 @@
         "data": {
           "name": "Nom du poêle",
           "currency": "Devise",
-          "season_month": "Premier mois de la saison (1 à 12)",
+          "season_month": "Premier mois de la saison",
           "low_stock": "Seuil de stock faible (sacs)",
           "cleaning_bags": "Rappel nettoyage après (sacs)"
         }
@@ -130,6 +130,24 @@
     },
     "error": {
       "invalid_settings": "Vérifie les paramètres et la destination de notification."
+    }
+  },
+  "selector": {
+    "season_month": {
+      "options": {
+        "1": "Janvier",
+        "2": "Février",
+        "3": "Mars",
+        "4": "Avril",
+        "5": "Mai",
+        "6": "Juin",
+        "7": "Juillet",
+        "8": "Août",
+        "9": "Septembre",
+        "10": "Octobre",
+        "11": "Novembre",
+        "12": "Décembre"
+      }
     }
   }
 }

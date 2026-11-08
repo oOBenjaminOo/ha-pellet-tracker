@@ -51,20 +51,6 @@ def mushroom_card(name, entities):
                 }
             )
     status_entity = by_key.get("stove_status")
-    if status_entity:
-        elements.append(
-            {
-                "type": "state-label",
-                "entity": status_entity,
-                "prefix": "Poêle : ",
-                "style": {
-                    "left": "25%",
-                    "top": "84%",
-                    "color": "#ddd",
-                    "font-size": "12px",
-                },
-            }
-        )
 
     def header(image):
         return {
@@ -127,17 +113,6 @@ def mushroom_card(name, entities):
         }
     )
     chips = []
-    if status_entity:
-        chips.append(
-            {
-                "type": "template",
-                "entity": status_entity,
-                "icon": "mdi:fire",
-                "icon_color": "{{ 'orange' if is_state(entity, 'on') else 'grey' }}",
-                "content": "{{ 'Poêle allumé' if is_state(entity, 'on') else 'Poêle éteint' if is_state(entity, 'off') else 'État non renseigné' if is_state(entity, 'unconfigured') else 'État indisponible' }}",
-                "tap_action": {"action": "more-info"},
-            }
-        )
     for key, icon, ok, due in (
         ("low_stock", "mdi:package-variant", "Stock OK", "Stock faible"),
         ("cleaning_due", "mdi:broom", "Entretien OK", "À nettoyer"),

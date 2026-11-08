@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.5.0b2
+
+- Carte Mushroom : état du poêle indiqué uniquement par l’image, sans libellé ni badge redondant.
+- Création du suivi : menu déroulant des mois de saison avec noms traduits.
+
 ## 0.5.0b1
 
 - Explicit confirmations for a bag consumed today and cleaning performed today.

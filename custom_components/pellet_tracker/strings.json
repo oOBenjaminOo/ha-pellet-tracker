@@ -8,7 +8,7 @@
         "data": {
           "name": "Stove name",
           "currency": "Currency",
-          "season_month": "Season start month (1 to 12)",
+          "season_month": "Season start month",
           "low_stock": "Low stock threshold (bags)",
           "cleaning_bags": "Cleaning reminder after (bags)"
         }
@@ -130,6 +130,24 @@
     },
     "error": {
       "invalid_settings": "Check the settings and notification destination."
+    }
+  },
+  "selector": {
+    "season_month": {
+      "options": {
+        "1": "January",
+        "2": "February",
+        "3": "March",
+        "4": "April",
+        "5": "May",
+        "6": "June",
+        "7": "July",
+        "8": "August",
+        "9": "September",
+        "10": "October",
+        "11": "November",
+        "12": "December"
+      }
     }
   }
 }

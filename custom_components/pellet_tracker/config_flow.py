@@ -3,6 +3,7 @@
 import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.core import callback
+from homeassistant.helpers import selector
 
 from .const import DOMAIN
 from .settings import RANGES, merged_settings, notification_choices, validate_settings
@@ -21,6 +22,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def async_step_user(self, user_input=None):
         if user_input is not None:
+            user_input = {**user_input, "season_month": int(user_input["season_month"])}
             return self.async_create_entry(title=user_input["name"], data=user_input)
         return self.async_show_form(
             step_id="user",
@@ -30,8 +32,12 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     vol.Required("currency", default="EUR"): vol.In(
                         ["EUR", "CHF", "GBP", "USD", "CAD"]
                     ),
-                    vol.Required("season_month", default=7): vol.All(
-                        vol.Coerce(int), vol.Range(min=1, max=12)
+                    vol.Required("season_month", default="7"): selector.SelectSelector(
+                        selector.SelectSelectorConfig(
+                            options=[str(month) for month in range(1, 13)],
+                            mode=selector.SelectSelectorMode.DROPDOWN,
+                            translation_key="season_month",
+                        )
                     ),
                     vol.Required("low_stock", default=10): vol.All(
                         vol.Coerce(int), vol.Range(min=0, max=10000)
