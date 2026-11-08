@@ -61,6 +61,18 @@
       },
       "usage_change_percent": {
         "name": "Évolution de consommation à date équivalente"
+      },
+      "budget": {
+        "name": "Budget de la saison"
+      },
+      "budget_remaining": {
+        "name": "Budget restant"
+      },
+      "budget_percent": {
+        "name": "Budget utilisé"
+      },
+      "last_end": {
+        "name": "Fin de chauffe de la saison"
       }
     },
     "binary_sensor": {
@@ -99,7 +111,8 @@
           "notification_action": "Destination supplémentaire",
           "repeat_days": "Rappeler après (jours, 0 = sans rappel)",
           "notify_hour": "Heure des rappels quotidiens",
-          "notify_recovery": "Notifier le retour à la normale"
+          "notify_recovery": "Notifier le retour à la normale",
+          "notify_actions": "Boutons dans les notifications Companion"
         }
       }
     },

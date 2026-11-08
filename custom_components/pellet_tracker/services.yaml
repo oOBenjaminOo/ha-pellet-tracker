@@ -19,6 +19,7 @@ record:
           - purchase
           - clean
           - start
+          - end
           - adjust
           - loss
           - note
@@ -63,6 +64,22 @@ record:
       description: Une même requête ne sera pas enregistrée deux fois.
       selector:
         text: {}
+    shipping:
+      name: Livraison totale de cet achat
+      selector:
+        number:
+          min: 0
+          max: 1000000
+          step: any
+          mode: box
+    discount:
+      name: Remise totale de cet achat
+      selector:
+        number:
+          min: 0
+          max: 1000000
+          step: any
+          mode: box
 edit:
   name: Modifier une opération
   description: Modifie les champs fournis, puis recalcule tous les mouvements suivants.
@@ -95,6 +112,22 @@ edit:
     brand:
       name: Marque
       selector: *id008
+    shipping:
+      name: Livraison totale de cet achat
+      selector:
+        number:
+          min: 0
+          max: 1000000
+          step: any
+          mode: box
+    discount:
+      name: Remise totale de cet achat
+      selector:
+        number:
+          min: 0
+          max: 1000000
+          step: any
+          mode: box
 cancel:
   name: Annuler une opération
   description: Annulation réversible, conservée dans l’audit.

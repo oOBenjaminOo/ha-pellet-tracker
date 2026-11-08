@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.4.0b1
+
+- Atomic undo of the latest compound entry, protected by journal revision.
+- Heating end dates and inclusive period reports, distinct from accounting seasons.
+- Optional per-season budgets and budget/date sensors.
+- Weighted supplier/brand comparisons with unknown-price coverage.
+- Delivery charges and discounts included in actual purchase and FIFO costs.
+- Scoped, expiring Companion notification actions and persisted 24-hour snooze.
+- Configurable bag/day cleaning thresholds with independent disable options.
+- Ready-to-copy Mushroom card with bundled stove image and live alert states.
+
 ## 0.3.0b1
 
 - Separate overview, entry, statistics, seasons, history, dashboards and settings views.

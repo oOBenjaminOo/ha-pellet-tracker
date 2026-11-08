@@ -25,6 +25,7 @@ class NotificationDeliveryTests(unittest.IsolatedAsyncioTestCase):
             "cleaning_days": 7,
             "low_autonomy_days": 7,
             "notify_enabled": True,
+            "notify_actions": False,
             "notification_action": "notify.mobile_app_test",
             "repeat_days": 3,
             "notify_recovery": False,
@@ -95,6 +96,62 @@ class NotificationDeliveryTests(unittest.IsolatedAsyncioTestCase):
         )
         self.manager = module.Notifications(self.hass, self.ledger)
         await self.manager.async_load()
+
+    async def test_mobile_actions_are_scoped_single_use_and_revision_bound(self):
+        self.cfg["notify_actions"] = True
+        self.ledger.journal = {"revision": 4}
+        calls = []
+
+        async def transact(operation, payload, revision, actor):
+            if revision != self.ledger.journal["revision"]:
+                raise ValueError("stale")
+            calls.append((operation, payload, revision, actor))
+            self.ledger.journal["revision"] += 1
+
+        self.ledger.transact = transact
+        await self.manager.external(
+            "notify.mobile_app_test", "Title", "Message", "alert"
+        )
+        buttons = self.calls[-1][2]["data"]["actions"]
+        event = types.SimpleNamespace(
+            data={"action": buttons[0]["action"]},
+            context=types.SimpleNamespace(user_id="user"),
+        )
+        foreign = types.SimpleNamespace(
+            data={"action": "PELLET_foreign_clean"}, context=event.context
+        )
+        await self.manager.async_action(foreign)
+        self.assertEqual(calls, [])
+        await self.manager.async_action(event)
+        await self.manager.async_action(event)
+        self.assertEqual(len(calls), 1)
+        self.assertEqual(calls[0][1]["kind"], "clean")
+        await self.manager.external(
+            "notify.mobile_app_test", "Title", "Message", "alert"
+        )
+        old = self.calls[-1][2]["data"]["actions"][1]["action"]
+        self.ledger.journal["revision"] += 1
+        await self.manager.async_action(
+            types.SimpleNamespace(data={"action": old}, context=event.context)
+        )
+        self.assertEqual(len(calls), 1)
+
+    async def test_snooze_suppresses_external_alerts_for_24_hours(self):
+        self.cfg["notify_actions"] = True
+        self.ledger.journal = {"revision": 1}
+        await self.manager.async_check()
+        button = self.calls[-1][2]["data"]["actions"][2]["action"]
+        await self.manager.async_action(
+            types.SimpleNamespace(
+                data={"action": button}, context=types.SimpleNamespace(user_id="user")
+            )
+        )
+        self.clock += timedelta(hours=12)
+        await self.manager.async_check(reminders=True)
+        self.assertEqual(len(self.calls), 1)
+        self.clock += timedelta(days=4)
+        await self.manager.async_check(reminders=True)
+        self.assertEqual(len(self.calls), 2)
 
     async def test_deduplication_survives_reload_and_repeats_only_when_due(self):
         await self.manager.async_check()

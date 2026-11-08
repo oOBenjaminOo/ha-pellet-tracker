@@ -6,6 +6,10 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from .const import DOMAIN
 
 FIELDS = {
+    "budget": ("money", "mdi:wallet", True),
+    "budget_remaining": ("money", "mdi:wallet-outline", True),
+    "budget_percent": ("%", "mdi:percent", True),
+    "last_end": (None, "mdi:fire-off", True),
     "stock": ("sacs", "mdi:package-variant-closed", False),
     "used": ("sacs", "mdi:fire", True),
     "purchased": ("sacs", "mdi:truck-delivery", True),
@@ -46,7 +50,7 @@ class PelletSensor(CoordinatorEntity, SensorEntity):
         if unit == "money":
             self._attr_device_class = SensorDeviceClass.MONETARY
             self._attr_suggested_display_precision = 2
-        if key in {"last_clean", "exhaustion_date"}:
+        if key in {"last_clean", "exhaustion_date", "last_end"}:
             self._attr_device_class = SensorDeviceClass.DATE
         self._attr_device_info = {
             "identifiers": {(DOMAIN, ledger.entry.entry_id)},
@@ -60,7 +64,7 @@ class PelletSensor(CoordinatorEntity, SensorEntity):
         if FIELDS[self.key][2]:
             data = data["seasons"][data["season"]]
         value = data.get(self.key)
-        if self.key in {"last_clean", "exhaustion_date"} and value:
+        if self.key in {"last_clean", "exhaustion_date", "last_end"} and value:
             from datetime import date
 
             return date.fromisoformat(value)

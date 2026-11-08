@@ -9,7 +9,8 @@ def active_alerts(summary: dict, settings: dict) -> dict:
         alerts["low_stock"] = f"Stock faible : {summary['stock']:g} sacs restants."
     days = summary["days_since_clean"]
     if (
-        summary["bags_since_clean"] >= settings["cleaning_bags"]
+        settings["cleaning_bags"]
+        and summary["bags_since_clean"] >= settings["cleaning_bags"]
         or settings["cleaning_days"]
         and summary["bags_since_clean"] > 0
         and days is not None

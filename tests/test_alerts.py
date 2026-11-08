@@ -56,6 +56,52 @@ class AlertTests(unittest.TestCase):
         )
         self.assertEqual(result, {})
 
+    def test_cleaning_thresholds_can_be_disabled_independently(self):
+        summary = {
+            "stock": 20,
+            "bags_since_clean": 100,
+            "days_since_clean": 100,
+            "autonomy_days": None,
+        }
+        self.assertNotIn(
+            "cleaning_due",
+            alerts.active_alerts(
+                summary, {**settings.DEFAULTS, "cleaning_bags": 0, "cleaning_days": 0}
+            ),
+        )
+        self.assertIn(
+            "cleaning_due",
+            alerts.active_alerts(
+                summary, {**settings.DEFAULTS, "cleaning_bags": 0, "cleaning_days": 7}
+            ),
+        )
+        summary["bags_since_clean"] = 0
+        self.assertNotIn(
+            "cleaning_due",
+            alerts.active_alerts(
+                summary, {**settings.DEFAULTS, "cleaning_bags": 0, "cleaning_days": 7}
+            ),
+        )
+
+    def test_optional_budgets_validate_amounts_and_seasons(self):
+        current = {**settings.DEFAULTS, "name": "Test"}
+        self.assertEqual(
+            settings.validate_settings({"season_budgets": {}}, current, {"": "Local"})[
+                "season_budgets"
+            ],
+            {},
+        )
+        for value in [
+            {"2018/2019": "NaN"},
+            {"2018/2019": "-1"},
+            {"2018/2020": "10"},
+            {"2018/2019": True},
+        ]:
+            with self.assertRaises(ValueError):
+                settings.validate_settings(
+                    {"season_budgets": value}, current, {"": "Local"}
+                )
+
     def test_persisted_deduplication_and_scheduled_reminders(self):
         previous = {"signature": "low_stock", "at": "2018-11-01T08:00:00+00:00"}
         self.assertFalse(

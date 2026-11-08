@@ -67,6 +67,23 @@ Ledger = load_ledger()
 
 
 class LedgerTransactionTests(unittest.IsolatedAsyncioTestCase):
+    async def test_undo_compound_entry_is_atomic_and_cannot_repeat_or_ignore_revision(
+        self,
+    ):
+        await self.add("purchase", 10, unit_price="5", cleaned=True)
+        await self.ledger.transact("undo", {}, self.ledger.journal["revision"], "user")
+        self.assertEqual(self.ledger.data["stock"], 0)
+        self.assertEqual(self.ledger.data["seasons"]["2018/2019"]["cleanings"], 0)
+        self.assertTrue(all(e["voided"] for e in self.ledger.journal["events"]))
+        with self.assertRaises(ValueError):
+            await self.ledger.transact("undo", {}, None, "user")
+        await self.add("purchase", 2)
+        revision = self.ledger.journal["revision"]
+        await self.add("use", 1)
+        with self.assertRaises(ValueError):
+            await self.ledger.transact("undo", {}, revision, "user")
+        self.assertEqual(self.ledger.data["stock"], 1)
+
     async def test_partial_automation_edits_preserve_concurrent_fields(self):
         await self.add("purchase", 10, unit_price="5")
         identifier = self.ledger.journal["events"][0]["id"]

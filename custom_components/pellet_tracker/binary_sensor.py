@@ -30,3 +30,25 @@ class PelletAlert(CoordinatorEntity, BinarySensorEntity):
         return self.key in active_alerts(
             self.coordinator.data, self.coordinator.settings
         )
+
+    @property
+    def extra_state_attributes(self):
+        settings = self.coordinator.settings
+        if self.key == "low_stock":
+            return {
+                "threshold_bags": settings["low_stock"],
+                "comparison": "stock <= threshold",
+            }
+        if self.key == "cleaning_due":
+            return {
+                "threshold_bags": settings["cleaning_bags"],
+                "threshold_days": settings["cleaning_days"],
+                "enabled": bool(settings["cleaning_bags"] or settings["cleaning_days"]),
+                "bags_since_clean": self.coordinator.data["bags_since_clean"],
+                "days_since_clean": self.coordinator.data["days_since_clean"],
+                "combination": "OR",
+            }
+        return {
+            "threshold_days": settings["low_autonomy_days"],
+            "enabled": bool(settings["low_autonomy_days"]),
+        }

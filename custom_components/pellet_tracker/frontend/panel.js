@@ -12,6 +12,7 @@ const labels = {
   purchase: "Réapprovisionnement",
   clean: "Nettoyage",
   start: "Premier allumage",
+  end: "Fin de chauffe",
   adjust: "Correction de stock (+/-)",
   loss: "Perte de sacs",
   note: "Note",
@@ -38,7 +39,7 @@ class PelletTrackerPanel extends HTMLElement {
       .check{flex-direction:row;align-items:center}.check input{width:18px;height:18px}.warning{color:var(--warning-color,#ffa726)}.chart-large{overflow:auto}.chart-large svg{height:230px;min-width:640px}.nav{margin-top:12px}.value small{font-size:13px;font-weight:400}button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--primary-color);outline-offset:2px}
 
       [hidden]{display:none!important}.tabs{display:flex;gap:6px;overflow-x:auto;padding:8px 0 14px;border-bottom:1px solid var(--divider-color)}.tabs button{white-space:nowrap;background:transparent;border-color:transparent}.tabs button[aria-current],.subtabs button[aria-current]{background:var(--primary-color);color:var(--text-primary-color,#fff)}.page-heading{margin:24px 0 8px}.page-heading h2{font-size:26px;margin:0}.eyebrow{text-transform:uppercase;letter-spacing:.08em;font-size:11px;color:var(--secondary-text-color);margin:0 0 8px}.hero{display:flex;justify-content:space-between;align-items:center;gap:24px;padding:28px;background:linear-gradient(120deg,#ef9f1914,var(--card-background-color))}.stock{font-size:48px;font-weight:700;line-height:1.2}.stock small{display:block;font-size:16px;font-weight:400;margin-top:6px}.quick-actions{display:grid;gap:10px;min-width:220px}.value{font-size:23px}.activity,.entity{padding:16px 0;border-bottom:1px solid var(--divider-color)}.activity:last-child,.entity:last-child{border-bottom:0}.activity-icon{font-size:24px;background:#ef9f1920;padding:8px 14px;border-radius:12px}.two-columns,.season-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.section-title{margin-top:28px}.season-grid section{margin:0}.subtabs{margin:20px 0}.comparison-mode{max-width:450px}.pagination{margin-top:18px}.filters{align-items:end}.filters label{flex:1;min-width:160px}.filters .check{min-width:180px}.code{font-family:monospace;min-height:320px}.entity code{overflow-wrap:anywhere}.footer{margin-top:24px}.entity-list strong{font-weight:500}li{margin-bottom:10px}@media(max-width:700px){.hero{align-items:stretch;flex-direction:column;padding:20px}.two-columns,.season-grid{grid-template-columns:1fr}.entity{align-items:flex-start}.entity>div{width:100%}.tabs{margin:0 -12px;padding-left:12px}.stock{font-size:42px}.page-heading h2{font-size:23px}}
-      </style><header><ha-menu-button></ha-menu-button><span>🔥</span><h1>Suivi Granulés</h1><span class="badge">Bêta 0.3</span><span class="spacer"></span><select id="journal" aria-label="Poêle"></select></header><main><div id="notice" role="status"></div><div id="content">Chargement…</div></main>`;
+      </style><header><ha-menu-button></ha-menu-button><span>🔥</span><h1>Suivi Granulés</h1><span class="badge">Bêta 0.4</span><span class="spacer"></span><select id="journal" aria-label="Poêle"></select></header><main><div id="notice" role="status"></div><div id="content">Chargement…</div></main>`;
     this.shadowRoot
       .querySelector("ha-menu-button")
       .addEventListener("click", () =>
@@ -162,7 +163,7 @@ class PelletTrackerPanel extends HTMLElement {
     const settings = this.shadowRoot.querySelector("#settingsForm");
     if (settings) {
       this.settingsDraft = Object.fromEntries(new FormData(settings));
-      for (const key of ["notify_enabled", "notify_recovery"])
+      for (const key of ["notify_enabled", "notify_recovery", "notify_actions"])
         this.settingsDraft[key] = settings.elements[key].checked;
     }
     this.view = view;
@@ -208,6 +209,7 @@ class PelletTrackerPanel extends HTMLElement {
       <label>Date<input name="date" type="date" value="${escapeHTML(e.date)}" max="${this.localDate()}" required></label>
       <label>Quantité (sacs)<input name="quantity" type="number" step="0.0001" value="${escapeHTML(e.quantity)}" required></label>
       <label>Prix unitaire (${escapeHTML(d.currency)}/sac)<input name="unit_price" type="number" min="0" step="0.0001" value="${escapeHTML(e.unit_price)}" placeholder="Facultatif"></label>
+      <label>Livraison (${escapeHTML(d.currency)})<input name="shipping" type="number" min="0" step="0.0001" value="${escapeHTML(e.shipping || 0)}"></label><label>Remise totale (${escapeHTML(d.currency)})<input name="discount" type="number" min="0" step="0.0001" value="${escapeHTML(e.discount || 0)}"></label>
       <label>Fournisseur<input name="supplier" maxlength="200" value="${escapeHTML(e.supplier)}"></label><label>Marque<input name="brand" maxlength="200" value="${escapeHTML(e.brand)}"></label>
       <label class="wide">Commentaire<textarea name="comment" maxlength="2000">${escapeHTML(e.comment)}</textarea></label>
       ${this.editing ? "" : '<label class="check wide"><input type="checkbox" name="cleaned">Enregistrer aussi un nettoyage</label>'}
@@ -217,7 +219,11 @@ class PelletTrackerPanel extends HTMLElement {
         content = this.statisticsView();
         break;
       case "seasons":
-        content = this.seasonsView();
+        content =
+          `<div class="row subtabs"><button data-seasonpage="manage" ${this.seasonPage !== "report" ? 'aria-current="page"' : ""}>Gestion des saisons</button><button data-seasonpage="report" ${this.seasonPage === "report" ? 'aria-current="page"' : ""}>Bilan et budget</button></div>` +
+          (this.seasonPage === "report"
+            ? this.seasonReport()
+            : this.seasonsView());
         break;
       case "journal":
         content =
@@ -241,7 +247,7 @@ class PelletTrackerPanel extends HTMLElement {
         )
         .join("")}</nav>
       <div class="page-heading row"><div><p class="eyebrow">${escapeHTML(d.name)} · ${escapeHTML(s.season)}</p><h2 id="viewTitle" tabindex="-1">${views[this.view]}</h2></div><span class="spacer"></span><button id="refresh" aria-label="Actualiser les données">↻ Actualiser</button></div>
-      ${content}<p class="muted footer">Journal local · révision ${d.revision} · les prix manquants restent inconnus.</p>`;
+      ${this.undoMarkup()}${content}<p class="muted footer">Journal local · révision ${d.revision} · les prix manquants restent inconnus.</p>`;
     root
       .querySelectorAll("[data-view]")
       .forEach((b) => (b.onclick = () => this.navigate(b.dataset.view)));
@@ -284,9 +290,12 @@ class PelletTrackerPanel extends HTMLElement {
         const kind = form.elements.kind.value,
           paid = ["purchase", "adjust"].includes(kind);
         form.elements.unit_price.disabled = !paid;
-        form.elements.quantity.disabled = ["clean", "start", "note"].includes(
-          kind,
-        );
+        form.elements.quantity.disabled = [
+          "clean",
+          "start",
+          "note",
+          "end",
+        ].includes(kind);
         for (const name of ["unit_price", "supplier", "brand"]) {
           form.elements[name].closest("label").hidden = !paid;
           form.elements[name].disabled = !paid;
@@ -300,6 +309,10 @@ class PelletTrackerPanel extends HTMLElement {
           ].includes(kind);
           form.elements.cleaned.disabled = !["use", "purchase"].includes(kind);
         }
+        for (const name of ["shipping", "discount"]) {
+          form.elements[name].closest("label").hidden = kind !== "purchase";
+          form.elements[name].disabled = kind !== "purchase";
+        }
         root.querySelector("#entryHelp").textContent = {
           use: "Sacs versés au poêle : ils sont retirés du stock.",
           purchase:
@@ -308,6 +321,7 @@ class PelletTrackerPanel extends HTMLElement {
             "Enregistrez un nettoyage : le compteur d’entretien repart de zéro.",
           start:
             "Date du premier allumage de cette saison. Le stock reste identique.",
+          end: "Dernier jour de chauffe : permet de calculer le bilan, sans modifier le stock.",
           adjust:
             "Correction positive ou négative du stock. Précisez la raison en commentaire.",
           loss: "Sacs abîmés ou perdus : ils sont retirés du stock, sans compter comme consommation.",
@@ -318,7 +332,11 @@ class PelletTrackerPanel extends HTMLElement {
             ? "Montant : " +
               this.money(
                 Number(form.elements.quantity.value) *
-                  Number(form.elements.unit_price.value),
+                  Number(form.elements.unit_price.value) +
+                  (kind === "purchase"
+                    ? Number(form.elements.shipping.value || 0) -
+                      Number(form.elements.discount.value || 0)
+                    : 0),
               )
             : "";
       };
@@ -355,6 +373,7 @@ class PelletTrackerPanel extends HTMLElement {
         delete backup.notification_choices;
         delete backup.notification_error;
         delete backup.entities;
+        delete backup.mushroom_card;
         const url = URL.createObjectURL(
           new Blob([JSON.stringify(backup, null, 2)], {
             type: "application/json",
@@ -374,6 +393,8 @@ class PelletTrackerPanel extends HTMLElement {
             "Opération",
             "Sacs",
             "Prix unitaire",
+            "Livraison",
+            "Remise",
             "Devise",
             "Fournisseur",
             "Marque",
@@ -388,6 +409,8 @@ class PelletTrackerPanel extends HTMLElement {
               labels[x.kind],
               Number(x.quantity),
               x.unit_price === null ? "" : Number(x.unit_price),
+              Number(x.shipping || 0),
+              Number(x.discount || 0),
               d.currency,
               x.supplier,
               x.brand,
@@ -441,22 +464,33 @@ class PelletTrackerPanel extends HTMLElement {
         this.pendingImport &&
         this.mutate("import", { events: this.pendingImport.events });
     }
-    if (this.view === "seasons")
-      root.querySelector("#firstStart").onclick = () => {
-        const first = d.events
-          .filter(
-            (x) =>
-              !x.voided &&
-              x.kind === "start" &&
-              (x.season || this.seasonFor(x.date)) === s.season,
-          )
-          .sort((a, b) => a.date.localeCompare(b.date))[0];
-        this.editing = first || null;
-        this.entryDraft = first
-          ? null
-          : { kind: "start", date: this.localDate(), quantity: 0 };
-        this.navigate("entry");
-      };
+    if (this.view === "seasons") {
+      root.querySelectorAll("[data-seasonpage]").forEach(
+        (b) =>
+          (b.onclick = () => {
+            this.seasonPage = b.dataset.seasonpage;
+            this.render();
+          }),
+      );
+      if (this.seasonPage === "report") this.bindSeasonReport();
+      else {
+        root.querySelector("#firstStart").onclick = () => {
+          const first = d.events
+            .filter(
+              (x) =>
+                !x.voided &&
+                x.kind === "start" &&
+                (x.season || this.seasonFor(x.date)) === s.season,
+            )
+            .sort((a, b) => a.date.localeCompare(b.date))[0];
+          this.editing = first || null;
+          this.entryDraft = first
+            ? null
+            : { kind: "start", date: this.localDate(), quantity: 0 };
+          this.navigate("entry");
+        };
+      }
+    }
     if (this.view === "settings") {
       const form = root.querySelector("#settingsForm");
       for (const [key, value] of Object.entries(this.settingsDraft || {})) {
@@ -468,7 +502,12 @@ class PelletTrackerPanel extends HTMLElement {
       }
       this.bindSettings();
     }
+    root
+      .querySelector("#undoLast")
+      ?.addEventListener("click", () => this.mutate("undo", {}));
     if (this.view === "dashboards") {
+      root.querySelector("#copyMushroom").onclick = () =>
+        this.copyText(JSON.stringify(d.mushroom_card, null, 2));
       root.querySelector("#copyCard").onclick = () =>
         this.copyText(this.dashboardYaml());
       root
@@ -486,6 +525,105 @@ class PelletTrackerPanel extends HTMLElement {
             )),
       );
     }
+  }
+  undoMarkup() {
+    const last = this.data.audit?.at(-1);
+    return last?.action === "add" && last.revision === this.data.revision
+      ? `<section class="row"><span>Dernière saisie : ${last.after.length} opération(s).</span><span class="spacer"></span><button id="undoLast">Annuler la dernière saisie</button></section>`
+      : "";
+  }
+  priceComparison() {
+    const s = this.data.summary;
+    this.priceSeason ??= s.season;
+    this.priceDimension ||= "supplier";
+    const rows = (s.price_comparisons || []).filter(
+      (x) =>
+        (!this.priceSeason || x.season === this.priceSeason) &&
+        x.dimension === this.priceDimension,
+    );
+    return `<div class="row subtabs"><button data-stats="monthly">← Statistiques mensuelles</button></div><section><h2>Comparer les prix d’achat</h2><div class="row"><label>Saison<select id="priceSeason"><option value="">Toutes les saisons</option>${Object.keys(
+      s.seasons,
+    )
+      .reverse()
+      .map(
+        (k) =>
+          `<option ${this.priceSeason === k ? "selected" : ""}>${escapeHTML(k)}</option>`,
+      )
+      .join(
+        "",
+      )}</select></label><label>Comparer par<select id="priceDimension"><option value="supplier" ${this.priceDimension === "supplier" ? "selected" : ""}>Fournisseur</option><option value="brand" ${this.priceDimension === "brand" ? "selected" : ""}>Marque</option></select></label></div><p class="muted">Prix moyen pondéré par le nombre de sacs, livraison et remise incluses. Les achats sans prix restent inconnus. Les prix ne constituent pas une mesure de qualité ou de rendement.</p><div class="scroll"><table><thead><tr><th>Saison</th><th>Nom</th><th>Sacs</th><th>Dépenses</th><th>Prix moyen / sac</th><th>Min / max</th><th>Sacs sans prix</th></tr></thead><tbody>${rows.map((x) => `<tr><td>${escapeHTML(x.season)}</td><td>${escapeHTML(x.name)}</td><td>${this.number(x.quantity)}</td><td>${this.money(x.spend)}</td><td>${this.money(x.average_price)}</td><td>${this.money(x.min_price)} / ${this.money(x.max_price)}</td><td>${this.number(x.unknown_quantity)}</td></tr>`).join("") || '<tr><td colspan="7">Aucun achat pour cette sélection.</td></tr>'}</tbody></table></div></section>`;
+  }
+  seasonReport() {
+    const d = this.data,
+      s = d.summary;
+    this.reportSeason = s.seasons[this.reportSeason]
+      ? this.reportSeason
+      : s.season;
+    const r = s.seasons[this.reportSeason];
+    return `<section><h2>Bilan de chauffe et budget</h2><label>Saison du bilan<select id="reportSeason">${Object.keys(
+      s.seasons,
+    )
+      .reverse()
+      .map(
+        (k) =>
+          `<option ${this.reportSeason === k ? "selected" : ""}>${escapeHTML(k)}</option>`,
+      )
+      .join(
+        "",
+      )}</select></label><div class="grid"><div class="card"><div class="muted">Premier allumage</div><div class="value">${this.formatDate(r.first_start)}</div></div><div class="card"><div class="muted">Fin de chauffe</div><div class="value">${this.formatDate(r.last_end)}</div></div><div class="card"><div class="muted">Durée de chauffe</div><div class="value">${r.heating_days == null ? "À compléter" : r.heating_days + " jours"}</div></div><div class="card"><div class="muted">Sacs sur la période de chauffe</div><div class="value">${this.number(r.heating_used)}</div></div></div><p>Saison comptable : ${this.number(r.used)} sacs utilisés · dépenses ${this.money(r.spend)} · coût des sacs utilisés ${this.money(r.cost)}.</p><p class="muted">${r.heating_days == null ? "Renseignez le premier allumage et la fin de chauffe pour calculer la durée et la consommation sur cette période." : `Moyenne sur la période : ${this.number(r.heating_daily_rate)} sacs/jour. ${this.number(r.outside_heating_used)} sacs enregistrés en dehors de cette période restent comptabilisés dans la saison.`} Les dates de chauffe ne ferment pas le journal et ne remettent jamais le stock à zéro.</p><form id="endForm"><label>Dernier jour de chauffe<input name="date" type="date" required max="${this.localDate() < this.seasonDates(this.reportSeason).end ? this.localDate() : this.seasonDates(this.reportSeason).end}" min="${r.first_start || this.seasonDates(this.reportSeason).start}" value="${r.last_end || ""}"></label><div class="row"><button type="submit">${r.last_end ? "Modifier la fin de chauffe" : "Enregistrer la fin de chauffe"}</button><button id="reportExport" type="button">Exporter le bilan JSON</button></div></form><hr><h2>Budget facultatif · ${escapeHTML(this.reportSeason)}</h2><p>Budget : <strong>${this.money(r.budget)}</strong> · restant : <strong>${this.money(r.budget_remaining)}</strong>${r.budget_percent == null ? "" : ` · ${this.number(r.budget_percent)} % utilisé`}.</p><form id="budgetForm"><label>Budget (${escapeHTML(d.currency)})<input name="budget" type="number" min="0" max="1000000" step="0.01" placeholder="Laisser vide pour désactiver" value="${escapeHTML(d.settings.season_budgets?.[this.reportSeason] ?? "")}"></label><button type="submit">Enregistrer le budget</button></form><p class="muted">Aucun budget n’est requis. Une valeur vide le désactive pour cette saison. Le restant n’est pas calculé si les dépenses sont incomplètes. Un dépassement apparaît comme un restant négatif.</p></section>`;
+  }
+  bindSeasonReport() {
+    const root = this.shadowRoot;
+    root.querySelector("#reportSeason").onchange = (e) => {
+      this.reportSeason = e.target.value;
+      this.render();
+    };
+    root.querySelector("#budgetForm").onsubmit = async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      if (!form.reportValidity()) return;
+      const budgets = { ...(this.data.settings.season_budgets || {}) };
+      if (form.elements.budget.value === "") delete budgets[this.reportSeason];
+      else budgets[this.reportSeason] = form.elements.budget.value;
+      await this.settingsRequest("pellet_tracker/settings", {
+        settings: { season_budgets: budgets },
+        revision: this.data.settings.settings_revision || 0,
+      });
+    };
+    root.querySelector("#reportExport").onclick = () =>
+      this.download(
+        JSON.stringify(
+          {
+            season: this.reportSeason,
+            currency: this.data.currency,
+            ...this.data.summary.seasons[this.reportSeason],
+          },
+          null,
+          2,
+        ),
+        `bilan-granules-${this.reportSeason.replace("/", "-")}.json`,
+        "application/json",
+      );
+    root.querySelector("#endForm").onsubmit = async (e) => {
+      e.preventDefault();
+      if (!e.target.reportValidity()) return;
+      const date = e.target.elements.date.value;
+      const existing = this.data.events
+        .filter(
+          (x) =>
+            !x.voided &&
+            x.kind === "end" &&
+            (x.season || this.seasonFor(x.date)) === this.reportSeason,
+        )
+        .sort((a, b) => b.date.localeCompare(a.date))[0];
+      await this.mutate(existing ? "edit" : "add", {
+        ...(existing || {}),
+        kind: "end",
+        date,
+        season: this.reportSeason,
+        quantity: 0,
+      });
+    };
   }
   async copyText(text) {
     try {
@@ -571,10 +709,12 @@ class PelletTrackerPanel extends HTMLElement {
   statisticsView() {
     const s = this.data.summary;
     this.statsTab ||= "monthly";
+    if (this.statsTab === "prices") return this.priceComparison();
     return `<div class="row subtabs" aria-label="Type de statistiques">${[
       ["monthly", "Par mois"],
       ["compare", "Comparer les saisons"],
       ["stock", "Évolution du stock"],
+      ["prices", "Fournisseurs et marques"],
     ]
       .map(
         ([key, label]) =>
@@ -610,6 +750,16 @@ class PelletTrackerPanel extends HTMLElement {
         }),
     );
     if (this.statsTab === "monthly") this.bindStatistics();
+    if (this.statsTab === "prices") {
+      root.querySelector("#priceSeason").onchange = (e) => {
+        this.priceSeason = e.target.value;
+        this.render();
+      };
+      root.querySelector("#priceDimension").onchange = (e) => {
+        this.priceDimension = e.target.value;
+        this.render();
+      };
+    }
     if (root.querySelector("#compareMode"))
       root.querySelector("#compareMode").onchange = (e) => {
         this.compareMode = e.target.value;
@@ -751,7 +901,7 @@ class PelletTrackerPanel extends HTMLElement {
   }
   dashboardsView() {
     const entities = this.data.entities || [];
-    return `<section><h2>Votre suivi dans vos tableaux de bord</h2><p>Les données sont disponibles sous forme d’entités Home Assistant : capteurs, alertes et boutons. Vous pouvez les utiliser dans vos cartes et automatisations, indépendamment de cette interface.</p><div class="row"><span class="badge">${entities.length} entités pour ce poêle</span><span class="badge">Cartes natives · aucune carte supplémentaire à installer</span></div></section>
+    return `<section><h2>Carte Mushroom</h2><p>Le visuel de poêle fourni avec l’intégration, le stock, l’autonomie, les dépenses, le nettoyage et les actions avec confirmation. Nécessite Mushroom installé depuis HACS.</p><button id="copyMushroom" class="primary">Copier la carte Mushroom</button><p class="muted">Collez ce contenu dans une carte Manuelle. Le format JSON fourni est également du YAML valide. Stock OK : plus de ${this.data.settings.low_stock} sacs. Entretien : alerte après ${this.data.settings.cleaning_bags} sacs utilisés${this.data.settings.cleaning_days ? ` ou ${this.data.settings.cleaning_days} jours avec consommation depuis le dernier nettoyage` : " ; seuil en jours désactivé"}. Les seuils se règlent dans Réglages.</p><details><summary>Afficher la configuration Mushroom</summary><textarea class="code" readonly aria-label="Carte Mushroom YAML">${escapeHTML(JSON.stringify(this.data.mushroom_card, null, 2))}</textarea></details></section><section><h2>Votre suivi dans vos tableaux de bord</h2><p>Les données sont disponibles sous forme d’entités Home Assistant : capteurs, alertes et boutons. Vous pouvez les utiliser dans vos cartes et automatisations, indépendamment de cette interface.</p><div class="row"><span class="badge">${entities.length} entités pour ce poêle</span><span class="badge">Cartes natives · aucune carte supplémentaire à installer</span></div></section>
       <section><div class="row"><h2>Carte prête à ajouter</h2><span class="spacer"></span><button id="copyCard" class="primary">Copier la carte YAML</button></div><ol><li>Ouvrez votre dashboard et choisissez « Modifier le tableau de bord ».</li><li>Ajoutez une carte « Manuelle ».</li><li>Collez ce YAML et enregistrez.</li></ol><p class="muted">La carte inclut le stock, la consommation, les dépenses, l’autonomie, le nettoyage et le prix moyen. Les boutons demandent confirmation avant d’enregistrer une opération.</p><details><summary>Afficher le YAML</summary><textarea class="code" readonly aria-label="Carte dashboard YAML">${escapeHTML(this.dashboardYaml())}</textarea></details></section>
       ${[
         ["sensor", "Capteurs"],
@@ -917,7 +1067,7 @@ class PelletTrackerPanel extends HTMLElement {
       ["low_stock", "Stock faible (sacs)", 0, 10000],
       ["low_autonomy_days", "Autonomie courte (jours, 0 = désactivé)", 0, 365],
       ["estimate_window", "Fenêtre de consommation (jours)", 7, 180],
-      ["cleaning_bags", "Nettoyage après (sacs)", 1, 10000],
+      ["cleaning_bags", "Nettoyage après (sacs, 0 = désactivé)", 0, 10000],
       ["cleaning_days", "Nettoyage après (jours, 0 = désactivé)", 0, 365],
       ["repeat_days", "Rappeler après (jours, 0 = sans rappel)", 0, 365],
       ["notify_hour", "Heure des rappels quotidiens", 0, 23],
@@ -930,7 +1080,7 @@ class PelletTrackerPanel extends HTMLElement {
     if (!(cfg.notification_action in choices))
       choices[cfg.notification_action] =
         "Destination indisponible - en choisir une autre";
-    return `<section id="settingsSection"><h2>Paramètres et notifications</h2><p class="muted">Les alertes regroupées apparaissent dans Home Assistant. Une destination supplémentaire peut être choisie parmi tes services de notification et tes scripts existants. Les scripts reçoivent title, message, kind et entry_id. Devise : ${escapeHTML(this.data.currency)} · début de saison : 1er ${this.seasonDates().label}.</p>${this.data.notification_error ? `<p class="error">Dernier échec de notification : ${escapeHTML(this.data.notification_error)}</p>` : ""}<form id="settingsForm"><label>Nom du poêle<input name="name" value="${escapeHTML(cfg.name)}" maxlength="80" required></label>${numbers.map(([key, label, min, max]) => `<label>${label}<input type="number" name="${key}" min="${min}" max="${max}" step="1" value="${cfg[key]}" required></label>`).join("")}<label class="wide">Destination supplémentaire<select name="notification_action">${Object.entries(
+    return `<section id="settingsSection"><h2>Paramètres et notifications</h2><p class="muted">Les alertes regroupées apparaissent dans Home Assistant. Une destination supplémentaire peut être choisie parmi tes services de notification et tes scripts existants. Les scripts reçoivent title, message, kind et entry_id. Devise : ${escapeHTML(this.data.currency)} · début de saison : 1er ${this.seasonDates().label}.</p>${this.data.notification_error ? `<p class="error">Dernier échec de notification : ${escapeHTML(this.data.notification_error)}</p>` : ""}<p class="muted">Stock faible : stock inférieur ou égal au seuil. Nettoyage : seuil de sacs OU seuil de jours atteint, avec au moins un sac utilisé depuis le nettoyage. Un réapprovisionnement ne déclenche pas le compteur de nettoyage. Un seuil de jours à 0 le désactive.</p><form id="settingsForm"><label>Nom du poêle<input name="name" value="${escapeHTML(cfg.name)}" maxlength="80" required></label>${numbers.map(([key, label, min, max]) => `<label>${label}<input type="number" name="${key}" min="${min}" max="${max}" step="1" value="${cfg[key]}" required></label>`).join("")}<label class="wide">Destination supplémentaire<select name="notification_action">${Object.entries(
       choices,
     )
       .map(
@@ -939,7 +1089,7 @@ class PelletTrackerPanel extends HTMLElement {
       )
       .join(
         "",
-      )}</select></label><label class="check"><input name="notify_enabled" type="checkbox" ${cfg.notify_enabled ? "checked" : ""}>Notifications automatiques</label><label class="check"><input name="notify_recovery" type="checkbox" ${cfg.notify_recovery ? "checked" : ""}>Notifier aussi le retour à la normale</label><div class="row wide"><button type="button" id="testNotification">Tester la notification enregistrée</button><span class="spacer"></span><button type="submit" class="primary">Enregistrer les paramètres</button></div></form><p class="muted">Nouvelle alerte après une saisie : immédiate. Rappels : à l’heure choisie, seulement après le délai configuré. Le choix d’une nouvelle destination s’applique après enregistrement des paramètres.</p></section>`;
+      )}</select></label><label class="check"><input name="notify_enabled" type="checkbox" ${cfg.notify_enabled ? "checked" : ""}>Notifications automatiques</label><label class="check"><input name="notify_recovery" type="checkbox" ${cfg.notify_recovery ? "checked" : ""}>Notifier aussi le retour à la normale</label><label class="check wide"><input name="notify_actions" type="checkbox" ${cfg.notify_actions !== false ? "checked" : ""}>Boutons sur les notifications Companion : nettoyage fait, +1 sac utilisé, rappel dans 24 h</label><div class="row wide"><button type="button" id="testNotification">Tester la notification enregistrée</button><span class="spacer"></span><button type="submit" class="primary">Enregistrer les paramètres</button></div></form><p class="muted">Nouvelle alerte après une saisie : immédiate. Rappels : à l’heure choisie, seulement après le délai configuré. Le choix d’une nouvelle destination s’applique après enregistrement des paramètres.</p></section>`;
   }
   bindSettings() {
     const form = this.shadowRoot.getElementById("settingsForm");
@@ -947,7 +1097,7 @@ class PelletTrackerPanel extends HTMLElement {
       e.preventDefault();
       if (this.busy || !form.reportValidity()) return;
       const settings = Object.fromEntries(new FormData(form));
-      for (const key of ["notify_enabled", "notify_recovery"])
+      for (const key of ["notify_enabled", "notify_recovery", "notify_actions"])
         settings[key] = form.elements[key].checked;
       await this.settingsRequest("pellet_tracker/settings", {
         settings,

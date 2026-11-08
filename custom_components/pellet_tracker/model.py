@@ -8,7 +8,7 @@ from collections import defaultdict, deque
 from datetime import date, timedelta
 from decimal import Decimal, InvalidOperation
 
-KINDS = {"use", "purchase", "clean", "start", "adjust", "loss", "note"}
+KINDS = {"use", "purchase", "clean", "start", "adjust", "loss", "note", "end"}
 
 
 def decimal(value, minimum=None):
@@ -45,7 +45,7 @@ def validate(raw: dict, today: str) -> dict:
     qty = decimal(raw.get("quantity", 0))
     if kind in {"use", "purchase", "loss"} and qty <= 0:
         raise ValueError("Quantity must be positive")
-    if kind in {"clean", "start", "note"}:
+    if kind in {"clean", "start", "note", "end"}:
         qty = Decimal(0)
     price = raw.get("unit_price")
     price = None if price in (None, "") else str(decimal(price, Decimal(0)))
@@ -53,6 +53,16 @@ def validate(raw: dict, today: str) -> dict:
         kind not in {"purchase", "adjust"} or kind == "adjust" and qty <= 0
     ):
         raise ValueError("Only incoming lots can have a price")
+    shipping = decimal(raw.get("shipping", 0), Decimal(0))
+    discount = decimal(raw.get("discount", 0), Decimal(0))
+    if (shipping or discount) and (kind != "purchase" or price is None):
+        raise ValueError("Fees and discounts require a priced purchase")
+    if (
+        kind == "purchase"
+        and price is not None
+        and qty * Decimal(price) + shipping - discount < 0
+    ):
+        raise ValueError("Discount exceeds purchase total")
     season = raw.get("season")
     if season and (
         not re.fullmatch(r"\d{4}/\d{4}", str(season))
@@ -68,6 +78,10 @@ def validate(raw: dict, today: str) -> dict:
         "supplier": str(raw.get("supplier", ""))[:200],
         "brand": str(raw.get("brand", ""))[:200],
     }
+    if shipping:
+        out["shipping"] = str(shipping)
+    if discount:
+        out["discount"] = str(discount)
     if season:
         out["season"] = season
     # Historical consumption before the first inventory remains unvalued.
@@ -76,6 +90,18 @@ def validate(raw: dict, today: str) -> dict:
     if raw.get("purchases_unknown") is True and kind in {"start", "note"}:
         out["purchases_unknown"] = True
     return out
+
+
+def purchase_price(event):
+    """Actual cost per bag, including purchase-level delivery and discounts."""
+    if event["unit_price"] is None:
+        return None
+    price = Decimal(event["unit_price"])
+    if event["kind"] == "purchase":
+        price += (
+            Decimal(event.get("shipping", "0")) - Decimal(event.get("discount", "0"))
+        ) / Decimal(event["quantity"])
+    return price
 
 
 def calculate(events: list[dict], today: str, month: int = 7, window: int = 30) -> dict:
@@ -93,6 +119,7 @@ def calculate(events: list[dict], today: str, month: int = 7, window: int = 30) 
             "loss_cost_known": Decimal(0),
             "loss_unpriced": Decimal(0),
             "first_start": None,
+            "last_end": None,
             "prices": [],
             "purchases_complete": True,
         }
@@ -110,7 +137,7 @@ def calculate(events: list[dict], today: str, month: int = 7, window: int = 30) 
     ):
         s = seasons[event.get("season") or season_for(event["date"], month)]
         kind, qty = event["kind"], Decimal(event["quantity"])
-        price = None if event["unit_price"] is None else Decimal(event["unit_price"])
+        price = purchase_price(event)
         if event.get("purchases_unknown"):
             s["purchases_complete"] = False
         if kind in {"purchase", "adjust"}:
@@ -168,6 +195,14 @@ def calculate(events: list[dict], today: str, month: int = 7, window: int = 30) 
             last_clean, since_clean = event["date"], Decimal(0)
         if kind == "start":
             s["first_start"] = min(s["first_start"] or event["date"], event["date"])
+        if (
+            kind == "end"
+            and event.get("season")
+            and event["season"] != season_for(event["date"], month)
+        ):
+            raise ValueError("Heating end must belong to its accounting season")
+        if kind == "end":
+            s["last_end"] = max(s["last_end"] or event["date"], event["date"])
         if inventory_started and (
             not points or stock != Decimal(str(points[-1]["stock"]))
         ):
@@ -176,6 +211,8 @@ def calculate(events: list[dict], today: str, month: int = 7, window: int = 30) 
     seasons[current]  # Ensure sensors exist even with an empty journal.
     output = {}
     for key, s in sorted(seasons.items()):
+        if s["last_end"] and s["first_start"] and s["last_end"] < s["first_start"]:
+            raise ValueError("Heating end precedes first ignition")
         prices = s.pop("prices")
         priced = s["purchased"] - s["purchase_unpriced"]
         s["average_price"] = s["spend_known"] / priced if priced else None
@@ -235,7 +272,7 @@ def period_summary(
             if event["unit_price"] is None:
                 unknown_purchase += quantity
             else:
-                price = Decimal(event["unit_price"])
+                price = purchase_price(event)
                 prices.append(price)
                 spend += quantity * price
         elif event["kind"] == "clean":

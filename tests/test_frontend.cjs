@@ -135,9 +135,10 @@ function fixture() {
   p.data = {name:"Test",currency:"EUR",season_month:7,revision:4,events:[],audit:[],settings:{low_stock:10},entities:[],summary:{season:"2018/2019",seasons:{"2018/2019":season},monthly:{"2018/2019":[]},same_date:[],stock:38,autonomy_days:null,stock_history:[]}};
   const nodes = new Map();
   p.shadowRoot = {
-    querySelector: id => { if(!nodes.has(id)) nodes.set(id,{}); return nodes.get(id); },
+    querySelector: id => { if(!nodes.has(id)) nodes.set(id,{addEventListener(){}}); return nodes.get(id); },
     querySelectorAll: () => []
   };
+  p.bindSeasonReport = () => {};
   p.localDate = () => "2018-11-08";
   p.bindStatistics = () => {};
   return {p,nodes};

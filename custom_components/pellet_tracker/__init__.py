@@ -15,6 +15,7 @@ from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.event import async_track_time_change
 
 from .const import DOMAIN, PLATFORMS, VERSION
+from .dashboard import mushroom_card
 from .ledger import Ledger
 from .notifications import Notifications
 from .services import async_register_services
@@ -39,12 +40,14 @@ def ui_export(hass, ledger):
                 "entity_id": entity.entity_id,
                 "name": state.name if state else entity.name or entity.entity_id,
                 "available": state is not None and state.state != "unavailable",
+                "enabled": entity.disabled_by is None,
             }
         )
     return {
         **ledger.export(),
         "notification_choices": notification_choices(hass),
         "entities": entities,
+        "mushroom_card": mushroom_card(ledger.entry.title, entities),
     }
 
 
@@ -84,6 +87,11 @@ async def async_setup_entry(hass, entry):
         raise ConfigEntryNotReady(f"Unable to load pellet journal: {err}") from err
     hass.data[DOMAIN][entry.entry_id] = ledger
     ledger.notifier = Notifications(hass, ledger)
+    entry.async_on_unload(
+        hass.bus.async_listen(
+            "mobile_app_notification_action", ledger.notifier.async_action
+        )
+    )
     await ledger.notifier.async_load()
     entry.async_on_unload(entry.add_update_listener(async_options_updated))
     entry.async_on_unload(
@@ -135,7 +143,9 @@ async def ws_journal(hass, connection, msg):
     {
         vol.Required("type"): "pellet_tracker/mutate",
         vol.Required("entry_id"): str,
-        vol.Required("operation"): vol.In(["add", "edit", "void", "restore", "import"]),
+        vol.Required("operation"): vol.In(
+            ["add", "edit", "void", "restore", "import", "undo"]
+        ),
         vol.Required("payload"): dict,
         vol.Required("revision"): vol.All(int, vol.Range(min=0)),
     }

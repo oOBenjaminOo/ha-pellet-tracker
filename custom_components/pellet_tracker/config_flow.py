@@ -36,7 +36,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         vol.Coerce(int), vol.Range(min=0, max=10000)
                     ),
                     vol.Required("cleaning_bags", default=5): vol.All(
-                        vol.Coerce(int), vol.Range(min=1, max=10000)
+                        vol.Coerce(int), vol.Range(min=0, max=10000)
                     ),
                 }
             ),
@@ -64,7 +64,7 @@ class OptionsFlow(config_entries.OptionsFlow):
             fields[vol.Required(key, default=current[key])] = vol.All(
                 vol.Coerce(int), vol.Range(min=minimum, max=maximum)
             )
-        for key in ("notify_enabled", "notify_recovery"):
+        for key in ("notify_enabled", "notify_recovery", "notify_actions"):
             fields[vol.Required(key, default=current[key])] = bool
         fields[
             vol.Required("notification_action", default=current["notification_action"])

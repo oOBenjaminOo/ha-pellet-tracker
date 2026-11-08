@@ -2,6 +2,8 @@
 
 import asyncio
 import logging
+from datetime import datetime, timedelta
+from uuid import uuid4
 
 from homeassistant.components import persistent_notification
 from homeassistant.helpers.storage import Store
@@ -29,6 +31,79 @@ class Notifications:
     async def async_load(self):
         self.state = await self.store.async_load() or {}
 
+    async def action_buttons(self, kind):
+        """Persist scoped, revision-bound, short-lived action capabilities before sending."""
+        if kind != "alert" or not self.ledger.settings.get("notify_actions", True):
+            return []
+        token = uuid4().hex
+        self.state["buttons"] = {
+            "token": token,
+            "revision": self.ledger.journal["revision"],
+            "at": dt_util.utcnow().isoformat(),
+            "destination": self.ledger.settings["notification_action"],
+        }
+        await self.store.async_save(self.state)
+        return [
+            {"action": f"PELLET_{token}_{key}", "title": title}
+            for key, title in (
+                ("clean", "Nettoyage fait"),
+                ("use", "+1 sac utilisé"),
+                ("snooze", "Rappeler dans 24 h"),
+            )
+        ]
+
+    async def async_action(self, event):
+        """Ignore foreign, expired, replayed and stale notification buttons."""
+        async with self.lock:
+            buttons = self.state.get("buttons", {})
+            action = event.data.get("action", "")
+            prefix = f"PELLET_{buttons.get('token', '')}_"
+            if (
+                self.closed
+                or not buttons
+                or not isinstance(action, str)
+                or not action.startswith(prefix)
+            ):
+                return
+            kind = action[len(prefix) :]
+            if kind not in {"clean", "use", "snooze"}:
+                return
+            now = dt_util.utcnow()
+            if not active_alerts(self.ledger.data, self.ledger.settings):
+                return
+            if (
+                now - datetime.fromisoformat(buttons["at"]) > timedelta(days=1)
+                or buttons["destination"] != self.ledger.settings["notification_action"]
+                or not self.ledger.settings.get("notify_actions", True)
+                or not self.ledger.settings["notify_enabled"]
+            ):
+                return
+            try:
+                if kind == "snooze":
+                    self.state["snooze_until"] = (now + timedelta(days=1)).isoformat()
+                else:
+                    await self.ledger.transact(
+                        "add",
+                        {
+                            "kind": kind,
+                            "quantity": 1 if kind == "use" else 0,
+                            "request_id": f"notification:{buttons['token']}",
+                            "comment": "Action depuis une notification",
+                        },
+                        buttons["revision"],
+                        event.context.user_id or "notification",
+                    )
+                self.state.pop("buttons", None)
+                await self.store.async_save(self.state)
+            except (ValueError, TypeError, KeyError, OSError) as err:
+                persistent_notification.async_create(
+                    self.hass,
+                    "Cette action n’a pas été enregistrée. Le journal a peut-être changé ; vérifiez le suivi avant de recommencer.",
+                    self.ledger.entry.title,
+                    f"{self.notification_id}_action",
+                )
+                _LOGGER.warning("Pellet notification action refused: %s", err)
+
     async def external(self, action, title, message, kind):
         if action.startswith("entity:notify."):
             await self.hass.services.async_call(
@@ -42,10 +117,15 @@ class Notifications:
                 blocking=True,
             )
         elif action.startswith("notify."):
+            data = {"title": title, "message": message}
+            if action.startswith("notify.mobile_app_"):
+                buttons = await self.action_buttons(kind)
+                if buttons:
+                    data["data"] = {"actions": buttons, "tag": self.notification_id}
             await self.hass.services.async_call(
                 "notify",
                 action.split(".", 1)[1],
-                {"title": title, "message": message},
+                data,
                 blocking=True,
             )
         elif action.startswith("script."):
@@ -109,6 +189,12 @@ class Notifications:
                     self.hass, message, title, self.notification_id
                 )
             for channel in channels:
+                if (
+                    channel != "persistent"
+                    and alerts
+                    and self.state.get("snooze_until", "") > now
+                ):
+                    continue
                 previous = self.state.get(channel, {})
                 if not delivery_due(
                     previous, signature, now, settings["repeat_days"], reminders

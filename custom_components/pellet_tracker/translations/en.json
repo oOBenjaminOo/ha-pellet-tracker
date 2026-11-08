@@ -61,6 +61,18 @@
       },
       "usage_change_percent": {
         "name": "Usage change at the same date"
+      },
+      "budget": {
+        "name": "Season budget"
+      },
+      "budget_remaining": {
+        "name": "Remaining budget"
+      },
+      "budget_percent": {
+        "name": "Budget used"
+      },
+      "last_end": {
+        "name": "Season heating end"
       }
     },
     "binary_sensor": {
@@ -99,7 +111,8 @@
           "notification_action": "Additional destination",
           "repeat_days": "Remind after (days, 0 = no reminders)",
           "notify_hour": "Daily reminder hour",
-          "notify_recovery": "Notify recovery"
+          "notify_recovery": "Notify recovery",
+          "notify_actions": "Companion notification action buttons"
         }
       }
     },

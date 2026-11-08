@@ -2,7 +2,12 @@
 
 from __future__ import annotations
 
+import re
+from decimal import Decimal, InvalidOperation
+
 DEFAULTS = {
+    "season_budgets": {},
+    "notify_actions": True,
     "low_stock": 10,
     "cleaning_bags": 5,
     "cleaning_days": 7,
@@ -16,7 +21,7 @@ DEFAULTS = {
 }
 RANGES = {
     "low_stock": (0, 10000),
-    "cleaning_bags": (1, 10000),
+    "cleaning_bags": (0, 10000),
     "cleaning_days": (0, 365),
     "estimate_window": (7, 180),
     "low_autonomy_days": (0, 365),
@@ -53,9 +58,31 @@ def validate_settings(raw: dict, current: dict, choices: dict) -> dict:
         ):
             raise ValueError(f"Invalid setting: {key}")
         settings[key] = int(value)
-    for key in ("notify_enabled", "notify_recovery"):
+    for key in ("notify_enabled", "notify_recovery", "notify_actions"):
         if not isinstance(settings[key], bool):
             raise TypeError(f"Invalid setting: {key}")
+    budgets = settings["season_budgets"]
+    if not isinstance(budgets, dict) or len(budgets) > 200:
+        raise ValueError("Invalid season budgets")
+    if any(
+        not re.fullmatch(r"\d{4}/\d{4}", str(k)) or int(k[5:]) != int(k[:4]) + 1
+        for k in budgets
+    ):
+        raise ValueError("Invalid budget season")
+    normalized = {}
+    for key, value in budgets.items():
+        try:
+            amount = Decimal(str(value))
+        except InvalidOperation as err:
+            raise ValueError("Invalid budget amount") from err
+        if (
+            not amount.is_finite()
+            or not 0 <= amount <= 1000000
+            or amount.as_tuple().exponent < -4
+        ):
+            raise ValueError("Invalid budget amount")
+        normalized[key] = str(amount)
+    settings["season_budgets"] = normalized
     action = settings["notification_action"]
     if not isinstance(action, str) or action not in choices:
         raise ValueError("Choisis une destination de notification disponible.")

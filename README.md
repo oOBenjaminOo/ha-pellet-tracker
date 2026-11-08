@@ -3,7 +3,7 @@
 Local Home Assistant custom integration for pellet stock, seasonal usage,
 cleaning and purchase costs. Original project by Benjamin (@oOBenjaminOo).
 
-**0.3.0b1 is a feature-complete beta for real-world testing.** No HACS default-catalog submission has
+**0.4.0b1 is a feature-complete beta for real-world testing.** No HACS default-catalog submission has
 been made. No cloud account, stove connection or runtime Python dependency.
 
 ## Fonctionnement
@@ -66,6 +66,44 @@ Les sacs enregistrés comme utilisés représentent des sorties de stock vers le
 poêle, pas une mesure du combustible effectivement brûlé ni de chaleur produite.
 Les seuils d’entretien sont des rappels personnalisés, pas des prescriptions.
 
+## Nouveautés : saisie, bilan, budget et prix
+
+- **Annuler la dernière saisie** retire en une transaction les opérations du dernier
+  ajout, y compris un nettoyage associé. Une nouvelle modification rend cette
+  annulation rapide indisponible ; l’annulation détaillée reste dans l’historique.
+- **Saisons → Bilan et budget** : premier allumage, fin de chauffe, durée inclusive,
+  sacs sur cette période et moyenne quotidienne. Les opérations hors période restent
+  dans les totaux comptables. La fin de chauffe ne ferme pas la saison et ne vide pas le stock.
+- Budget facultatif **par saison** : laisser le champ vide pour le désactiver.
+  Le restant est inconnu si des achats n’ont pas de prix ; un dépassement reste négatif.
+- **Statistiques → Fournisseurs et marques** : prix moyen pondéré, min/max, sacs
+  sans prix et dépenses, regroupés par saison et nom (espaces et casse normalisés).
+- Les achats acceptent une livraison et une remise **totales pour l’achat**.
+  Le prix unitaire saisi reste le prix de base ; le coût réel réparti par sac inclut
+  livraison moins remise dans les dépenses, prix moyens et valorisation FIFO.
+  Les anciens achats sans ces champs conservent exactement leurs montants.
+
+## Seuils d’alerte
+
+Les seuils se modifient dans **Réglages**, ou via les options de l’intégration.
+Stock faible : stock **inférieur ou égal** au seuil (10 sacs par défaut).
+Entretien : **5 sacs utilisés OU 7 jours** depuis le nettoyage par défaut ; le
+critère en jours exige au moins une consommation depuis ce nettoyage.
+Un réapprovisionnement n’augmente pas le compteur d’entretien.
+Chaque critère d’entretien accepte `0` pour le désactiver ; les deux à zéro
+désactivent ce rappel. Les valeurs sont aussi visibles dans les attributs des alertes.
+
+## Notifications avec actions
+
+Avec une destination `notify.mobile_app_…` explicitement choisie, les alertes
+Companion proposent **Nettoyage fait**, **+1 sac utilisé**, **Rappeler dans 24 h**.
+L’option de boutons est désactivable. Les actions d’écriture sont limitées à la
+révision du journal au moment de l’envoi, expirent au bout de 24 h et ne peuvent
+être rejouées. Une notification ancienne ne crée pas silencieusement une nouvelle
+opération. Le report suspend les envois externes, sans masquer les capteurs ni
+l’alerte locale. Les destinations génériques et scripts restent des messages simples.
+Le bouton de test envoie uniquement un message, sans action d’écriture.
+
 ## Saisons automatiques
 
 Aucune création manuelle n’est nécessaire. Par défaut, la saison 2026/2027 couvre
@@ -80,8 +118,14 @@ indépendant de la période comptable, et ne consomme aucun sac.
 
 ## Intégration aux dashboards
 
-Chaque journal expose **15 capteurs, 3 alertes binaires et 2 boutons**, utilisables
+Chaque journal expose **19 capteurs, 3 alertes binaires et 2 boutons**, utilisables
 dans les dashboards et les automatisations habituels de Home Assistant.
+La vue **Dashboards** propose aussi la **carte Mushroom prête à copier**, avec
+le visuel de poêle fourni localement (`frontend/pellet-stove.jpg`). Installer Mushroom
+depuis HACS pour cette variante ; la carte native reste disponible sans dépendance.
+L’image est une illustration générique générée pour le projet, et ne représente pas
+un modèle commercial précis. Aucune valeur d’exemple n’est utilisée par la carte distribuée.
+
 La vue **Dashboards** affiche leurs identifiants réels, même après renommage,
 et propose une carte YAML native prête à copier : modifier un dashboard, ajouter
 une carte **Manuelle**, puis coller le YAML. Aucune carte personnalisée requise.

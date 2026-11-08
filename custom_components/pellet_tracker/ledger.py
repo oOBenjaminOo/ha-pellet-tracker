@@ -10,6 +10,7 @@ from homeassistant.util import dt as dt_util
 
 from .const import DOMAIN
 from .model import calculate, validate
+from .reports import enrich_summary
 from .settings import merged_settings
 
 
@@ -38,11 +39,17 @@ class Ledger(DataUpdateCoordinator):
 
     def snapshot(self, journal=None):
         journal = self.journal if journal is None else journal
-        return calculate(
+        summary = calculate(
             journal["events"],
             self.today,
             self.entry.data.get("season_month", 7),
             self.settings["estimate_window"],
+        )
+        return enrich_summary(
+            summary,
+            journal["events"],
+            self.settings.get("season_budgets", {}),
+            self.entry.data.get("season_month", 7),
         )
 
     async def async_load(self):
@@ -62,7 +69,19 @@ class Ledger(DataUpdateCoordinator):
                 raise ValueError("Journal changed. Refresh before saving.")
             candidate = deepcopy(self.journal)
             events = candidate["events"]
-            if operation in {"add", "edit", "patch"}:
+            if operation == "undo":
+                last = candidate["audit"][-1] if candidate["audit"] else None
+                if (
+                    not last
+                    or last["action"] != "add"
+                    or last["revision"] != candidate["revision"]
+                ):
+                    raise ValueError("Only the latest entry can be undone")
+                identifiers = {e["id"] for e in last["after"]}
+                for event in events:
+                    if event["id"] in identifiers:
+                        event["voided"] = True
+            elif operation in {"add", "edit", "patch"}:
                 if operation == "patch":
                     existing = next(
                         (
