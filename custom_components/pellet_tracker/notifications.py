@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from uuid import uuid4
 
 from homeassistant.components import persistent_notification
+from homeassistant.helpers.event import async_track_point_in_utc_time
 from homeassistant.helpers.storage import Store
 from homeassistant.util import dt as dt_util
 
@@ -23,6 +24,7 @@ class Notifications:
         self.lock = asyncio.Lock()
         self.last_error = None
         self.closed = False
+        self.cancel_snooze = None
 
     @property
     def notification_id(self):
@@ -30,6 +32,21 @@ class Notifications:
 
     async def async_load(self):
         self.state = await self.store.async_load() or {}
+        self.schedule_snooze()
+
+    def schedule_snooze(self):
+        if self.cancel_snooze:
+            self.cancel_snooze()
+            self.cancel_snooze = None
+        until = self.state.get("snooze_until")
+        if until and datetime.fromisoformat(until) > dt_util.utcnow():
+            self.cancel_snooze = async_track_point_in_utc_time(
+                self.hass, self.async_wake, datetime.fromisoformat(until)
+            )
+
+    async def async_wake(self, _now):
+        self.cancel_snooze = None
+        await self.async_check(reminders=True)
 
     async def action_buttons(self, kind):
         """Persist scoped, revision-bound, short-lived action capabilities before sending."""
@@ -81,6 +98,8 @@ class Notifications:
             try:
                 if kind == "snooze":
                     self.state["snooze_until"] = (now + timedelta(days=1)).isoformat()
+                    destination = self.ledger.settings["notification_action"]
+                    self.state.setdefault(destination, {})["signature"] = "snoozed"
                 else:
                     await self.ledger.transact(
                         "add",
@@ -95,6 +114,8 @@ class Notifications:
                     )
                 self.state.pop("buttons", None)
                 await self.store.async_save(self.state)
+                if kind == "snooze":
+                    self.schedule_snooze()
             except (ValueError, TypeError, KeyError, OSError) as err:
                 persistent_notification.async_create(
                     self.hass,

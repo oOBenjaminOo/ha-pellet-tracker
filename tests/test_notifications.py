@@ -38,12 +38,16 @@ class NotificationDeliveryTests(unittest.IsolatedAsyncioTestCase):
                 "homeassistant.components.persistent_notification",
                 "homeassistant.helpers",
                 "homeassistant.helpers.storage",
+                "homeassistant.helpers.event",
                 "homeassistant.util",
                 "homeassistant.util.dt",
                 "notifier_test",
             ]
         }
         modules["notifier_test"].__path__ = [str(ROOT)]
+        modules["homeassistant.helpers.event"].async_track_point_in_utc_time = (
+            lambda *args: lambda: None
+        )
         modules["homeassistant.components.persistent_notification"].async_create = (
             lambda hass, message, title, identifier: self.cards.update(
                 {identifier: message}
@@ -149,8 +153,8 @@ class NotificationDeliveryTests(unittest.IsolatedAsyncioTestCase):
         self.clock += timedelta(hours=12)
         await self.manager.async_check(reminders=True)
         self.assertEqual(len(self.calls), 1)
-        self.clock += timedelta(days=4)
-        await self.manager.async_check(reminders=True)
+        self.clock += timedelta(hours=12, seconds=1)
+        await self.manager.async_wake(self.clock)
         self.assertEqual(len(self.calls), 2)
 
     async def test_deduplication_survives_reload_and_repeats_only_when_due(self):

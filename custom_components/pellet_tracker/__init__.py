@@ -107,6 +107,8 @@ async def async_unload_entry(hass, entry):
         ledger = hass.data[DOMAIN].get(entry.entry_id)
         if ledger:
             ledger.notifier.closed = True
+            if ledger.notifier.cancel_snooze:
+                ledger.notifier.cancel_snooze()
             persistent_notification.async_dismiss(hass, ledger.notifier.notification_id)
         hass.data[DOMAIN].pop(entry.entry_id, None)
         return True
