@@ -1,0 +1,63 @@
+{
+  "title": "Pellet Tracker",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Suivi Granulés",
+        "description": "Crée un journal local. Le stock initial se saisit ensuite dans la page Suivi Granulés.",
+        "data": {
+          "name": "Nom du poêle",
+          "currency": "Devise",
+          "season_month": "Premier mois de la saison (1 à 12)",
+          "low_stock": "Seuil de stock faible (sacs)",
+          "cleaning_bags": "Rappel nettoyage après (sacs)"
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "stock": {
+        "name": "Stock restant"
+      },
+      "used": {
+        "name": "Sacs utilisés cette saison"
+      },
+      "purchased": {
+        "name": "Sacs achetés cette saison"
+      },
+      "cleanings": {
+        "name": "Nettoyages cette saison"
+      },
+      "spend": {
+        "name": "Dépenses de la saison"
+      },
+      "cost": {
+        "name": "Coût des sacs utilisés cette saison"
+      },
+      "average_price": {
+        "name": "Prix moyen des achats"
+      },
+      "stock_value": {
+        "name": "Valeur du stock"
+      },
+      "last_clean": {
+        "name": "Dernier nettoyage"
+      },
+      "days_since_clean": {
+        "name": "Jours depuis le nettoyage"
+      },
+      "bags_since_clean": {
+        "name": "Sacs depuis le nettoyage"
+      }
+    },
+    "binary_sensor": {
+      "low_stock": {
+        "name": "Stock faible"
+      },
+      "cleaning_due": {
+        "name": "Nettoyage à prévoir"
+      }
+    }
+  }
+}

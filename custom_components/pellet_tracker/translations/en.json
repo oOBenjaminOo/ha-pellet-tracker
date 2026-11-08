@@ -1,0 +1,63 @@
+{
+  "title": "Pellet Tracker",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Pellet Tracker",
+        "description": "Create a local journal. Enter initial stock in the Pellet Tracker panel.",
+        "data": {
+          "name": "Stove name",
+          "currency": "Currency",
+          "season_month": "Season start month (1 to 12)",
+          "low_stock": "Low stock threshold (bags)",
+          "cleaning_bags": "Cleaning reminder after (bags)"
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "stock": {
+        "name": "Remaining stock"
+      },
+      "used": {
+        "name": "Bags used this season"
+      },
+      "purchased": {
+        "name": "Bags purchased this season"
+      },
+      "cleanings": {
+        "name": "Cleanings this season"
+      },
+      "spend": {
+        "name": "Season purchases cost"
+      },
+      "cost": {
+        "name": "Season usage cost"
+      },
+      "average_price": {
+        "name": "Average purchase price"
+      },
+      "stock_value": {
+        "name": "Stock value"
+      },
+      "last_clean": {
+        "name": "Last cleaning"
+      },
+      "days_since_clean": {
+        "name": "Days since cleaning"
+      },
+      "bags_since_clean": {
+        "name": "Bags since cleaning"
+      }
+    },
+    "binary_sensor": {
+      "low_stock": {
+        "name": "Low stock"
+      },
+      "cleaning_due": {
+        "name": "Cleaning due"
+      }
+    }
+  }
+}
