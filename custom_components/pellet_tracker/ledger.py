@@ -12,6 +12,7 @@ from .const import DOMAIN
 from .model import calculate, validate
 from .reports import enrich_summary
 from .settings import merged_settings
+from .stove import stove_status
 
 
 class Ledger(DataUpdateCoordinator):
@@ -23,6 +24,7 @@ class Ledger(DataUpdateCoordinator):
         super().__init__(
             hass, logging.getLogger(__name__), name=entry.title, config_entry=entry
         )
+        self.hass = hass
         self.entry = entry
         self.store = Store(hass, 1, f"{DOMAIN}.{entry.entry_id}")
         self.journal = {"revision": 0, "events": [], "audit": []}
@@ -45,6 +47,7 @@ class Ledger(DataUpdateCoordinator):
             self.entry.data.get("season_month", 7),
             self.settings["estimate_window"],
         )
+        summary["stove_status"] = stove_status(self.hass, self.settings)
         return enrich_summary(
             summary,
             journal["events"],

@@ -3,7 +3,7 @@
 Local Home Assistant custom integration for pellet stock, seasonal usage,
 cleaning and purchase costs. Original project by Benjamin (@oOBenjaminOo).
 
-**0.4.2b1 is a feature-complete beta for real-world testing.** No HACS default-catalog submission has
+**0.5.0b1 is a feature-complete beta for real-world testing.** No HACS default-catalog submission has
 been made. No cloud account, stove connection or runtime Python dependency.
 
 ## Fonctionnement
@@ -88,6 +88,25 @@ Les seuils d’entretien sont des rappels personnalisés, pas des prescriptions.
   livraison moins remise dans les dépenses, prix moyens et valorisation FIFO.
   Les anciens achats sans ces champs conservent exactement leurs montants.
 
+## Image dynamique d’un poêle connecté (facultatif)
+
+Dans **Réglages → Poêle connecté**, choisir l’entité d’état et, si nécessaire,
+l’attribut à lire. Renseigner les valeurs exactes signifiant allumé et éteint,
+séparées par des virgules. Pour un thermostat, `hvac_action: heating/idle` peut
+être adapté s’il est disponible ; le mode `heat` seul ne prouve pas une chauffe.
+
+Le capteur **État de chauffe du poêle** suit les changements de l’entité et de
+ses attributs sans interrogation périodique. La carte Mushroom affiche l’image
+avec flamme seulement pour l’état reconnu `on`, l’image sans flamme pour `off`,
+et une indication distincte pour une source inconnue/indisponible ou non configurée.
+Les valeurs non reconnues restent inconnues. Aucune consommation, aucun nettoyage
+ni commande du poêle ne découle de cette association.
+
+Les anciennes cartes copiées avant cette version gardent leur configuration :
+remplacer leur YAML par la nouvelle carte proposée dans **Dashboards** pour activer
+le visuel dynamique et les nouvelles confirmations. Les changements ultérieurs
+d’association dans Réglages seront suivis automatiquement par cette nouvelle carte.
+
 ## Seuils d’alerte
 
 Les seuils se modifient dans **Réglages**, ou via les options de l’intégration.
@@ -123,7 +142,7 @@ indépendant de la période comptable, et ne consomme aucun sac.
 
 ## Intégration aux dashboards
 
-Chaque journal expose **19 capteurs, 3 alertes binaires et 2 boutons**, utilisables
+Chaque journal expose **20 capteurs, 3 alertes binaires et 2 boutons**, utilisables
 dans les dashboards et les automatisations habituels de Home Assistant.
 La vue **Dashboards → Ajouter à un dashboard** propose un assistant : choisir le
 tableau de bord, la vue et, pour une vue Sections, une section existante ou nouvelle,

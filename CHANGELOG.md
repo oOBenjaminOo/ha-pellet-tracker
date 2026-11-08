@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.0b1
+
+- Explicit confirmations for a bag consumed today and cleaning performed today.
+- Optional connected-stove source, attribute and explicit on/off state mappings.
+- Event-driven heating-state sensor with distinct unconfigured and unknown handling.
+- Matching flame/no-flame images in the Mushroom card, without inferring consumption.
+- Existing copied cards require replacement with the new generated card configuration.
+
 ## 0.4.2b1
 
 - One overview action button with operation selection in the modal.

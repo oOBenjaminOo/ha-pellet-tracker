@@ -6,6 +6,10 @@ import re
 from decimal import Decimal, InvalidOperation
 
 DEFAULTS = {
+    "stove_entity": "",
+    "stove_attribute": "",
+    "stove_on_states": "on,heating",
+    "stove_off_states": "off,idle",
     "season_budgets": {},
     "notify_actions": True,
     "low_stock": 10,
@@ -61,6 +65,36 @@ def validate_settings(raw: dict, current: dict, choices: dict) -> dict:
     for key in ("notify_enabled", "notify_recovery", "notify_actions"):
         if not isinstance(settings[key], bool):
             raise TypeError(f"Invalid setting: {key}")
+    for key in (
+        "stove_entity",
+        "stove_attribute",
+        "stove_on_states",
+        "stove_off_states",
+    ):
+        if not isinstance(settings[key], str):
+            raise TypeError("Invalid stove setting")
+        settings[key] = settings[key].strip()
+    if settings["stove_entity"] and not re.fullmatch(
+        r"[a-z_][a-z0-9_]*\.[a-z0-9_]+", settings["stove_entity"]
+    ):
+        raise ValueError("Invalid stove entity")
+    if len(settings["stove_attribute"]) > 80:
+        raise ValueError("Invalid stove attribute")
+    values = []
+    for key in ("stove_on_states", "stove_off_states"):
+        states = list(
+            dict.fromkeys(v.strip() for v in settings[key].split(",") if v.strip())
+        )
+        if not 1 <= len(states) <= 20 or any(
+            len(v) > 80 or v in {"unknown", "unavailable"} for v in states
+        ):
+            raise ValueError(
+                "Renseignez des états de chauffe valides, séparés par des virgules."
+            )
+        settings[key] = ",".join(states)
+        values.append(set(states))
+    if values[0] & values[1]:
+        raise ValueError("Un même état ne peut pas signifier allumé et éteint.")
     budgets = settings["season_budgets"]
     if not isinstance(budgets, dict) or len(budgets) > 200:
         raise ValueError("Invalid season budgets")

@@ -1,5 +1,5 @@
 """Integration constants."""
 
 DOMAIN = "pellet_tracker"
-VERSION = "0.4.2b1"
+VERSION = "0.5.0b1"
 PLATFORMS = ["sensor", "binary_sensor", "button"]

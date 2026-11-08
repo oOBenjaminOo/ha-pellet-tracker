@@ -50,14 +50,56 @@ def mushroom_card(name, entities):
                     },
                 }
             )
-    cards.append(
-        {
+    status_entity = by_key.get("stove_status")
+    if status_entity:
+        elements.append(
+            {
+                "type": "state-label",
+                "entity": status_entity,
+                "prefix": "Poêle : ",
+                "style": {
+                    "left": "25%",
+                    "top": "84%",
+                    "color": "#ddd",
+                    "font-size": "12px",
+                },
+            }
+        )
+
+    def header(image):
+        return {
             "type": "picture-elements",
-            "image": "/pellet_tracker_static/pellet-stove.jpg",
+            "image": image,
             "aspect_ratio": "2:1",
             "elements": elements,
         }
-    )
+
+    off_image = "/pellet_tracker_static/pellet-stove-off.jpg"
+    if status_entity:
+        cards.extend(
+            [
+                {
+                    "type": "conditional",
+                    "conditions": [
+                        {"condition": "state", "entity": status_entity, "state": "on"}
+                    ],
+                    "card": header("/pellet_tracker_static/pellet-stove.jpg"),
+                },
+                {
+                    "type": "conditional",
+                    "conditions": [
+                        {
+                            "condition": "state",
+                            "entity": status_entity,
+                            "state": ["off", "unknown", "unavailable", "unconfigured"],
+                        }
+                    ],
+                    "card": header(off_image),
+                },
+            ]
+        )
+    else:
+        cards.append(header(off_image))
     number = "{{ states(entity) | replace('.', ',') if is_number(states(entity)) else 'Indisponible' }}"
     money = "{{ (('%.2f' | format(states(entity) | float)) | replace('.', ',')) + ' ' + (state_attr(entity, 'unit_of_measurement') or '') if is_number(states(entity)) else 'Non renseigné' }}"
     metrics = [
@@ -85,6 +127,17 @@ def mushroom_card(name, entities):
         }
     )
     chips = []
+    if status_entity:
+        chips.append(
+            {
+                "type": "template",
+                "entity": status_entity,
+                "icon": "mdi:fire",
+                "icon_color": "{{ 'orange' if is_state(entity, 'on') else 'grey' }}",
+                "content": "{{ 'Poêle allumé' if is_state(entity, 'on') else 'Poêle éteint' if is_state(entity, 'off') else 'État non renseigné' if is_state(entity, 'unconfigured') else 'État indisponible' }}",
+                "tap_action": {"action": "more-info"},
+            }
+        )
     for key, icon, ok, due in (
         ("low_stock", "mdi:package-variant", "Stock OK", "Stock faible"),
         ("cleaning_due", "mdi:broom", "Entretien OK", "À nettoyer"),
@@ -124,8 +177,13 @@ def mushroom_card(name, entities):
     )
     actions = []
     for key, title, subtitle, icon in (
-        ("add_bag", "Ajouter un sac", "Versé au poêle", "mdi:plus-circle-outline"),
-        ("clean", "Nettoyage", "Enregistrer", "mdi:broom"),
+        (
+            "add_bag",
+            "Ajouter un sac",
+            "Consommation du jour",
+            "mdi:plus-circle-outline",
+        ),
+        ("clean", "Nettoyage", "Aujourd’hui", "mdi:broom"),
     ):
         if key in by_key:
             actions.append(
@@ -140,7 +198,11 @@ def mushroom_card(name, entities):
                         "action": "perform-action",
                         "perform_action": "button.press",
                         "target": {"entity_id": by_key[key]},
-                        "confirmation": {"text": title + " dans le journal ?"},
+                        "confirmation": {
+                            "text": "Ajouter un sac à la consommation d’aujourd’hui ?"
+                            if key == "add_bag"
+                            else "Enregistrer un nettoyage pour aujourd’hui ?"
+                        },
                     },
                 }
             )

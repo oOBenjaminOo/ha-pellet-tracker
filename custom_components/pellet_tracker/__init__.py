@@ -9,10 +9,14 @@ from homeassistant.components import (
     websocket_api,
 )
 from homeassistant.components.http import StaticPathConfig
+from homeassistant.core import callback
 from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers import entity_registry as er
-from homeassistant.helpers.event import async_track_time_change
+from homeassistant.helpers.event import (
+    async_track_state_change_event,
+    async_track_time_change,
+)
 
 from .const import DOMAIN, PLATFORMS, VERSION
 from .dashboard import mushroom_card
@@ -20,6 +24,7 @@ from .ledger import Ledger
 from .notifications import Notifications
 from .services import async_register_services
 from .settings import notification_choices, validate_settings
+from .stove import stove_choices, stove_status
 
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
@@ -46,6 +51,7 @@ def ui_export(hass, ledger):
     return {
         **ledger.export(),
         "notification_choices": notification_choices(hass),
+        "stove_sources": stove_choices(hass),
         "entities": entities,
         "mushroom_card": mushroom_card(ledger.entry.title, entities),
     }
@@ -79,6 +85,24 @@ async def async_setup(hass, config):
     return True
 
 
+@callback
+def bind_stove(hass, ledger):
+    if getattr(ledger, "stove_unsub", None):
+        ledger.stove_unsub()
+    ledger.stove_unsub = None
+    source = ledger.settings.get("stove_entity")
+    if not source:
+        return
+
+    @callback
+    def changed(_event):
+        status = stove_status(hass, ledger.settings)
+        if status != ledger.data.get("stove_status"):
+            ledger.async_set_updated_data({**ledger.data, "stove_status": status})
+
+    ledger.stove_unsub = async_track_state_change_event(hass, source, changed)
+
+
 async def async_setup_entry(hass, entry):
     ledger = Ledger(hass, entry)
     try:
@@ -86,6 +110,8 @@ async def async_setup_entry(hass, entry):
     except (ValueError, KeyError, OSError) as err:
         raise ConfigEntryNotReady(f"Unable to load pellet journal: {err}") from err
     hass.data[DOMAIN][entry.entry_id] = ledger
+    bind_stove(hass, ledger)
+    entry.async_on_unload(lambda: ledger.stove_unsub() if ledger.stove_unsub else None)
     ledger.notifier = Notifications(hass, ledger)
     entry.async_on_unload(
         hass.bus.async_listen(
@@ -178,6 +204,7 @@ async def async_options_updated(hass, entry):
         title = entry.options.get("name", entry.title)
         if title != entry.title:
             hass.config_entries.async_update_entry(entry, title=title)
+        bind_stove(hass, ledger)
         ledger.async_set_updated_data(ledger.snapshot())
         await ledger.notifier.async_check()
 
@@ -204,6 +231,13 @@ async def ws_settings(hass, connection, msg):
             options = validate_settings(
                 msg["settings"], ledger.settings, notification_choices(hass)
             )
+            source = options["stove_entity"]
+            if (
+                source
+                and source != ledger.settings["stove_entity"]
+                and source not in stove_choices(hass)
+            ):
+                raise ValueError("Choisissez une entité de poêle disponible.")
             options["settings_revision"] = msg["revision"] + 1
             hass.config_entries.async_update_entry(
                 ledger.entry, options=options, title=options["name"]

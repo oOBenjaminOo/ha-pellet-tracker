@@ -108,6 +108,36 @@ class ReportTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.data([event("start", "2018-10-03"), event("end", "2018-10-02")])
 
+    def test_connected_mushroom_uses_distinct_images_and_today_confirmations(self):
+        card = dashboard.mushroom_card(
+            "Stove",
+            [
+                {"key": k, "entity_id": v, "available": True}
+                for k, v in {
+                    "stock": "sensor.stock",
+                    "stove_status": "sensor.heating",
+                    "add_bag": "button.add",
+                    "clean": "button.clean",
+                }.items()
+            ],
+        )
+        headers = [c for c in card["cards"] if c["type"] == "conditional"]
+        self.assertEqual(len(headers), 2)
+        self.assertEqual(headers[0]["conditions"][0]["state"], "on")
+        self.assertIn("unknown", headers[1]["conditions"][0]["state"])
+        self.assertNotIn("on", headers[1]["conditions"][0]["state"])
+        self.assertNotEqual(headers[0]["card"]["image"], headers[1]["card"]["image"])
+        confirmations = [
+            c["tap_action"]["confirmation"]["text"] for c in card["cards"][-1]["cards"]
+        ]
+        self.assertEqual(
+            confirmations,
+            [
+                "Ajouter un sac à la consommation d’aujourd’hui ?",
+                "Enregistrer un nettoyage pour aujourd’hui ?",
+            ],
+        )
+
     def test_mushroom_card_uses_registered_ids_and_never_calls_unknown_ok(self):
         card = dashboard.mushroom_card(
             "Stove",

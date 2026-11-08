@@ -6,6 +6,7 @@ from homeassistant.core import callback
 
 from .const import DOMAIN
 from .settings import RANGES, merged_settings, notification_choices, validate_settings
+from .stove import stove_choices
 
 
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
@@ -59,7 +60,20 @@ class OptionsFlow(config_entries.OptionsFlow):
                 return self.async_create_entry(title="", data=settings)
             except (ValueError, TypeError, OverflowError):
                 errors["base"] = "invalid_settings"
-        fields = {vol.Required("name", default=current["name"]): str}
+        sources = {"": "Pas de poêle connecté", **stove_choices(self.hass)}
+        if current["stove_entity"] not in sources:
+            sources[current["stove_entity"]] = (
+                current["stove_entity"] + " · indisponible"
+            )
+        fields = {
+            vol.Required("name", default=current["name"]): str,
+            vol.Optional("stove_entity", default=current["stove_entity"]): vol.In(
+                sources
+            ),
+            vol.Optional("stove_attribute", default=current["stove_attribute"]): str,
+            vol.Required("stove_on_states", default=current["stove_on_states"]): str,
+            vol.Required("stove_off_states", default=current["stove_off_states"]): str,
+        }
         for key, (minimum, maximum) in RANGES.items():
             fields[vol.Required(key, default=current[key])] = vol.All(
                 vol.Coerce(int), vol.Range(min=minimum, max=maximum)

@@ -40,7 +40,7 @@ class PelletTrackerPanel extends HTMLElement {
 
       [hidden]{display:none!important}.tabs{display:flex;gap:6px;overflow-x:auto;padding:8px 0 14px;border-bottom:1px solid var(--divider-color)}.tabs button{white-space:nowrap;background:transparent;border-color:transparent}.tabs button[aria-current],.subtabs button[aria-current]{background:var(--primary-color);color:var(--text-primary-color,#fff)}.page-heading{margin:24px 0 8px}.page-heading h2{font-size:26px;margin:0}.eyebrow{text-transform:uppercase;letter-spacing:.08em;font-size:11px;color:var(--secondary-text-color);margin:0 0 8px}.hero{display:flex;justify-content:space-between;align-items:center;gap:24px;padding:28px;background:linear-gradient(120deg,#ef9f1914,var(--card-background-color))}.stock{font-size:48px;font-weight:700;line-height:1.2}.stock small{display:block;font-size:16px;font-weight:400;margin-top:6px}.quick-actions{display:grid;gap:10px;min-width:220px}.value{font-size:23px}.activity,.entity{padding:16px 0;border-bottom:1px solid var(--divider-color)}.activity:last-child,.entity:last-child{border-bottom:0}.activity-icon{font-size:24px;background:#ef9f1920;padding:8px 14px;border-radius:12px}.two-columns,.season-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.section-title{margin-top:28px}.season-grid section{margin:0}.subtabs{margin:20px 0}.comparison-mode{max-width:450px}.pagination{margin-top:18px}.filters{align-items:end}.filters label{flex:1;min-width:160px}.filters .check{min-width:180px}.code{font-family:monospace;min-height:320px}.entity code{overflow-wrap:anywhere}.footer{margin-top:24px}.entity-list strong{font-weight:500}li{margin-bottom:10px}@media(max-width:700px){.hero{align-items:stretch;flex-direction:column;padding:20px}.two-columns,.season-grid{grid-template-columns:1fr}.entity{align-items:flex-start}.entity>div{width:100%}.tabs{margin:0 -12px;padding-left:12px}.stock{font-size:42px}.page-heading h2{font-size:23px}}
 dialog{color:var(--primary-text-color);background:var(--card-background-color);border:1px solid var(--divider-color);border-radius:18px;padding:24px;width:min(720px,calc(100vw - 32px));max-height:calc(100dvh - 32px);overflow:auto;box-shadow:0 20px 70px #0008}dialog::backdrop{background:#0009}dialog .dialog-heading{margin-bottom:16px}dialog h2{margin:0}dialog form{margin-top:16px}dialog .dialog-heading button{padding:8px 12px}dialog #dialogNotice:empty{display:none}@media(max-width:600px){dialog{padding:18px;width:calc(100vw - 20px);max-height:calc(100dvh - 20px)}dialog form{grid-template-columns:1fr}}
-      </style><header><ha-menu-button></ha-menu-button><span>🔥</span><h1>Suivi Granulés</h1><span class="badge">Bêta 0.4.2</span><span class="spacer"></span><select id="journal" aria-label="Poêle"></select></header><main><div id="notice" role="status"></div><div id="content">Chargement…</div></main>`;
+      </style><header><ha-menu-button></ha-menu-button><span>🔥</span><h1>Suivi Granulés</h1><span class="badge">Bêta 0.5</span><span class="spacer"></span><select id="journal" aria-label="Poêle"></select></header><main><div id="notice" role="status"></div><div id="content">Chargement…</div></main>`;
     this.shadowRoot
       .querySelector("ha-menu-button")
       .addEventListener("click", () =>
@@ -63,6 +63,7 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
   }
   set hass(value) {
     this._hass = value;
+    if (this.started && this.view === "settings") this.updateStovePreview();
     if (!this.started) {
       this.started = true;
       this.init();
@@ -263,6 +264,7 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
         delete backup.notification_error;
         delete backup.entities;
         delete backup.mushroom_card;
+        delete backup.stove_sources;
         const url = URL.createObjectURL(
           new Blob([JSON.stringify(backup, null, 2)], {
             type: "application/json",
@@ -1155,7 +1157,7 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
       .filter(([key]) => entity(key))
       .map(
         ([key, name, icon]) =>
-          `      - type: button\n        name: ${quote(name)}\n        icon: ${icon}\n        tap_action:\n          action: perform-action\n          perform_action: button.press\n          target:\n            entity_id: ${quote(entity(key))}\n          confirmation:\n            text: ${quote(name + " dans le journal ?")}`,
+          `      - type: button\n        name: ${quote(name)}\n        icon: ${icon}\n        tap_action:\n          action: perform-action\n          perform_action: button.press\n          target:\n            entity_id: ${quote(entity(key))}\n          confirmation:\n            text: ${quote(key === "add_bag" ? "Ajouter un sac à la consommation d’aujourd’hui ?" : "Enregistrer un nettoyage pour aujourd’hui ?")}`,
       )
       .join("\n");
     if (!tiles)
@@ -1338,6 +1340,12 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
   }
   settingsForm() {
     const cfg = this.data.settings;
+    const sources = {
+      "": "Pas de poêle connecté",
+      ...(this.data.stove_sources || {}),
+    };
+    if (cfg.stove_entity && !sources[cfg.stove_entity])
+      sources[cfg.stove_entity] = cfg.stove_entity + " · indisponible";
     const numbers = [
       ["low_stock", "Stock faible (sacs)", 0, 10000],
       ["low_autonomy_days", "Autonomie courte (jours, 0 = désactivé)", 0, 365],
@@ -1355,7 +1363,16 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
     if (!(cfg.notification_action in choices))
       choices[cfg.notification_action] =
         "Destination indisponible - en choisir une autre";
-    return `<section id="settingsSection"><h2>Paramètres et notifications</h2><p class="muted">Les alertes regroupées apparaissent dans Home Assistant. Une destination supplémentaire peut être choisie parmi tes services de notification et tes scripts existants. Les scripts reçoivent title, message, kind et entry_id. Devise : ${escapeHTML(this.data.currency)} · début de saison : 1er ${this.seasonDates().label}.</p>${this.data.notification_error ? `<p class="error">Dernier échec de notification : ${escapeHTML(this.data.notification_error)}</p>` : ""}<p class="muted">Stock faible : stock inférieur ou égal au seuil. Nettoyage : seuil de sacs OU seuil de jours atteint, avec au moins un sac utilisé depuis le nettoyage. Un réapprovisionnement ne déclenche pas le compteur de nettoyage. Un seuil de jours à 0 le désactive.</p><form id="settingsForm"><label>Nom du poêle<input name="name" value="${escapeHTML(cfg.name)}" maxlength="80" required></label>${numbers.map(([key, label, min, max]) => `<label>${label}<input type="number" name="${key}" min="${min}" max="${max}" step="1" value="${cfg[key]}" required></label>`).join("")}<label class="wide">Destination supplémentaire<select name="notification_action">${Object.entries(
+    return `<section id="settingsSection"><h2>Paramètres et notifications</h2><p class="muted">Les alertes regroupées apparaissent dans Home Assistant. Une destination supplémentaire peut être choisie parmi tes services de notification et tes scripts existants. Les scripts reçoivent title, message, kind et entry_id. Devise : ${escapeHTML(this.data.currency)} · début de saison : 1er ${this.seasonDates().label}.</p>${this.data.notification_error ? `<p class="error">Dernier échec de notification : ${escapeHTML(this.data.notification_error)}</p>` : ""}<p class="muted">Stock faible : stock inférieur ou égal au seuil. Nettoyage : seuil de sacs OU seuil de jours atteint, avec au moins un sac utilisé depuis le nettoyage. Un réapprovisionnement ne déclenche pas le compteur de nettoyage. Un seuil de jours à 0 le désactive.</p><form id="settingsForm"><label>Nom du poêle<input name="name" value="${escapeHTML(cfg.name)}" maxlength="80" required></label>${numbers.map(([key, label, min, max]) => `<label>${label}<input type="number" name="${key}" min="${min}" max="${max}" step="1" value="${cfg[key]}" required></label>`).join("")}<h2 class="wide">Poêle connecté · facultatif</h2><p class="wide muted">Choisissez une entité qui indique la chauffe réelle. Pour une entité climate, l’attribut hvac_action peut fournir heating/idle s’il est exposé ; le mode heat ne signifie pas forcément que le poêle chauffe. Sans association, l’image reste sans flamme et l’état est « non renseigné ». Les états absents ou non reconnus restent inconnus.</p><label class="wide">Entité d’état du poêle<select name="stove_entity">${Object.entries(
+      sources,
+    )
+      .map(
+        ([key, name]) =>
+          `<option value="${escapeHTML(key)}" ${key === (cfg.stove_entity || "") ? "selected" : ""}>${escapeHTML(name)}</option>`,
+      )
+      .join(
+        "",
+      )}</select></label><label>Attribut à lire (facultatif)<input name="stove_attribute" maxlength="80" placeholder="Ex. hvac_action ; vide = état de l’entité" value="${escapeHTML(cfg.stove_attribute || "")}"></label><label>États correspondant à allumé<input name="stove_on_states" value="${escapeHTML(cfg.stove_on_states || "on,heating")}" required></label><label>États correspondant à éteint<input name="stove_off_states" value="${escapeHTML(cfg.stove_off_states || "off,idle")}" required></label><p class="wide muted">Plusieurs valeurs possibles, séparées par des virgules. Les valeurs sont exactes et sensibles à la casse. La carte suit ensuite les changements automatiquement.</p><p class="wide muted" id="stoveObserved" role="status"></p><label class="wide">Destination supplémentaire<select name="notification_action">${Object.entries(
       choices,
     )
       .map(
@@ -1366,8 +1383,33 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
         "",
       )}</select></label><label class="check"><input name="notify_enabled" type="checkbox" ${cfg.notify_enabled ? "checked" : ""}>Notifications automatiques</label><label class="check"><input name="notify_recovery" type="checkbox" ${cfg.notify_recovery ? "checked" : ""}>Notifier aussi le retour à la normale</label><label class="check wide"><input name="notify_actions" type="checkbox" ${cfg.notify_actions !== false ? "checked" : ""}>Boutons sur les notifications Companion : nettoyage fait, +1 sac utilisé, rappel dans 24 h</label><div class="row wide"><button type="button" id="testNotification">Tester la notification enregistrée</button><span class="spacer"></span><button type="submit" class="primary">Enregistrer les paramètres</button></div></form><p class="muted">Nouvelle alerte après une saisie : immédiate. Rappels : à l’heure choisie, seulement après le délai configuré. Le choix d’une nouvelle destination s’applique après enregistrement des paramètres.</p></section>`;
   }
+  updateStovePreview() {
+    const form = this.shadowRoot.querySelector("#settingsForm"),
+      preview = this.shadowRoot.querySelector("#stoveObserved");
+    if (!form || !preview) return;
+    const source = form.elements.stove_entity.value,
+      attribute = form.elements.stove_attribute.value.trim();
+    if (!source) {
+      preview.textContent = "Aucune association : état du poêle non renseigné.";
+      return;
+    }
+    const state = this._hass.states[source];
+    if (!state || ["unknown", "unavailable"].includes(state.state)) {
+      preview.textContent =
+        "L’entité sélectionnée ne fournit pas d’état actuellement.";
+      return;
+    }
+    const value = attribute ? state.attributes?.[attribute] : state.state;
+    preview.textContent =
+      value == null
+        ? "L’attribut choisi n’est pas disponible sur cette entité."
+        : `Valeur actuellement lue : ${String(value)}. À comparer aux états allumé/éteint ci-dessus.`;
+  }
   bindSettings() {
     const form = this.shadowRoot.getElementById("settingsForm");
+    form.elements.stove_entity.onchange = () => this.updateStovePreview();
+    form.elements.stove_attribute.oninput = () => this.updateStovePreview();
+    this.updateStovePreview();
     form.onsubmit = async (e) => {
       e.preventDefault();
       if (this.busy || !form.reportValidity()) return;

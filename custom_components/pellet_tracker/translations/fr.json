@@ -73,6 +73,14 @@
       },
       "last_end": {
         "name": "Fin de chauffe de la saison"
+      },
+      "stove_status": {
+        "name": "État de chauffe du poêle",
+        "state": {
+          "on": "Allumé",
+          "off": "Éteint",
+          "unconfigured": "Non renseigné"
+        }
       }
     },
     "binary_sensor": {
@@ -112,7 +120,11 @@
           "repeat_days": "Rappeler après (jours, 0 = sans rappel)",
           "notify_hour": "Heure des rappels quotidiens",
           "notify_recovery": "Notifier le retour à la normale",
-          "notify_actions": "Boutons dans les notifications Companion"
+          "notify_actions": "Boutons dans les notifications Companion",
+          "stove_entity": "Entité d’état du poêle (facultatif)",
+          "stove_attribute": "Attribut à lire (vide = état)",
+          "stove_on_states": "États allumé, séparés par des virgules",
+          "stove_off_states": "États éteint, séparés par des virgules"
         }
       }
     },

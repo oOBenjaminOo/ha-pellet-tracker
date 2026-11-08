@@ -6,6 +6,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from .const import DOMAIN
 
 FIELDS = {
+    "stove_status": (None, "mdi:fire", False),
     "budget": ("money", "mdi:wallet", True),
     "budget_remaining": ("money", "mdi:wallet-outline", True),
     "budget_percent": ("%", "mdi:percent", True),
@@ -47,6 +48,9 @@ class PelletSensor(CoordinatorEntity, SensorEntity):
         self._attr_native_unit_of_measurement = (
             ledger.entry.data.get("currency", "EUR") if unit == "money" else unit
         )
+        if key == "stove_status":
+            self._attr_device_class = SensorDeviceClass.ENUM
+            self._attr_options = ["on", "off", "unconfigured"]
         if unit == "money":
             self._attr_device_class = SensorDeviceClass.MONETARY
             self._attr_suggested_display_precision = 2
@@ -64,6 +68,8 @@ class PelletSensor(CoordinatorEntity, SensorEntity):
         if FIELDS[self.key][2]:
             data = data["seasons"][data["season"]]
         value = data.get(self.key)
+        if self.key == "stove_status" and value == "unknown":
+            return None
         if self.key in {"last_clean", "exhaustion_date", "last_end"} and value:
             from datetime import date
 

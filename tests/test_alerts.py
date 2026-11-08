@@ -83,6 +83,27 @@ class AlertTests(unittest.TestCase):
             ),
         )
 
+    def test_connected_stove_mapping_rejects_ambiguous_and_reserved_values(self):
+        current = {**settings.DEFAULTS, "name": "Test"}
+        for payload in [
+            {"stove_on_states": "on,off"},
+            {"stove_on_states": "unknown"},
+            {"stove_off_states": ""},
+            {"stove_entity": "bad id"},
+            {"stove_attribute": True},
+        ]:
+            with self.assertRaises((ValueError, TypeError)):
+                settings.validate_settings(payload, current, {"": "Local"})
+        result = settings.validate_settings(
+            {
+                "stove_entity": "climate.stove",
+                "stove_on_states": "heating, startup,heating",
+            },
+            current,
+            {"": "Local"},
+        )
+        self.assertEqual(result["stove_on_states"], "heating,startup")
+
     def test_optional_budgets_validate_amounts_and_seasons(self):
         current = {**settings.DEFAULTS, "name": "Test"}
         self.assertEqual(
