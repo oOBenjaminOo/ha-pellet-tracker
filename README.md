@@ -3,13 +3,14 @@
 Local Home Assistant custom integration for pellet stock, seasonal usage,
 cleaning and purchase costs. Original project by Benjamin (@oOBenjaminOo).
 
-**0.2.0b1 is a feature-complete beta for real-world testing.** No HACS default-catalog submission has
+**0.3.0b1 is a feature-complete beta for real-world testing.** No HACS default-catalog submission has
 been made. No cloud account, stove connection or runtime Python dependency.
 
 ## Fonctionnement
 
-- Page **Suivi Granulés** : saisie datée, historique, modification, annulation,
-  comparaison des saisons et courbe de stock. Interface de gestion en français.
+- Interface française avec sept vues distinctes : **Accueil, Saisie, Statistiques,
+  Saisons, Historique, Dashboards et Réglages**. Seule la vue choisie est affichée.
+- Saisie contextuelle, brouillons conservés entre vues, historique filtrable et paginé.
 - Réapprovisionnement avec quantité, prix unitaire facultatif, fournisseur et marque.
 - Consommation, nettoyage, premier allumage, perte, note et correction de stock.
 - Valorisation FIFO : les sacs les plus anciens sont utilisés en premier.
@@ -64,6 +65,29 @@ et ne réinitialisent jamais le stock. La date du premier allumage est distincte
 Les sacs enregistrés comme utilisés représentent des sorties de stock vers le
 poêle, pas une mesure du combustible effectivement brûlé ni de chaleur produite.
 Les seuils d’entretien sont des rappels personnalisés, pas des prescriptions.
+
+## Saisons automatiques
+
+Aucune création manuelle n’est nécessaire. Par défaut, la saison 2026/2027 couvre
+le 1er juillet 2026 au 30 juin 2027. Le 1er juillet suivant, la nouvelle saison
+est prise en compte automatiquement et le stock restant est conservé. Les saisies
+rétroactives sont rattachées à la saison de leur date. Le premier mois est choisi
+à la configuration du journal ; il reste fixe pour préserver l’historique.
+
+La vue **Saisons** présente la période courante, la prochaine bascule, les saisons
+passées et la date du premier allumage. Celle-ci est un repère de début de chauffe,
+indépendant de la période comptable, et ne consomme aucun sac.
+
+## Intégration aux dashboards
+
+Chaque journal expose **15 capteurs, 3 alertes binaires et 2 boutons**, utilisables
+dans les dashboards et les automatisations habituels de Home Assistant.
+La vue **Dashboards** affiche leurs identifiants réels, même après renommage,
+et propose une carte YAML native prête à copier : modifier un dashboard, ajouter
+une carte **Manuelle**, puis coller le YAML. Aucune carte personnalisée requise.
+Les boutons de la carte demandent confirmation avant d’enregistrer un sac utilisé
+ou un nettoyage. Les boutons et services directs restent utilisables dans les
+automatisations sans confirmation interactive.
 
 ## Import et export
 

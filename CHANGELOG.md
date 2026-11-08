@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.3.0b1
+
+- Separate overview, entry, statistics, seasons, history, dashboards and settings views.
+- Explain automatic season rollover, stock carry-over and first ignition dates.
+- Contextual entry fields, preserved form drafts and filtered, paginated history.
+- Separate monthly, season-comparison and stock analyses.
+- Discover actual entity IDs from the registry, including user renames.
+- Generate a ready-to-copy native dashboard card with confirmed action buttons.
+- Regression checks for view isolation, pagination, season dates and dashboard YAML.
+
 ## 0.2.0b1
 
 - Classify the integration as a service so journals are selectable in native action pickers.

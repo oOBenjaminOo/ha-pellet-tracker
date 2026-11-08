@@ -11,6 +11,7 @@ from homeassistant.components import (
 from homeassistant.components.http import StaticPathConfig
 from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.event import async_track_time_change
 
 from .const import DOMAIN, PLATFORMS, VERSION
@@ -20,6 +21,31 @@ from .services import async_register_services
 from .settings import notification_choices, validate_settings
 
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
+
+
+def ui_export(hass, ledger):
+    """Include actual entity IDs, including user renames, for dashboard helpers."""
+    prefix = f"{ledger.entry.entry_id}_"
+    entities = []
+    for entity in er.async_entries_for_config_entry(
+        er.async_get(hass), ledger.entry.entry_id
+    ):
+        if entity.platform != DOMAIN or not entity.unique_id.startswith(prefix):
+            continue
+        state = hass.states.get(entity.entity_id)
+        entities.append(
+            {
+                "key": entity.unique_id[len(prefix) :],
+                "entity_id": entity.entity_id,
+                "name": state.name if state else entity.name or entity.entity_id,
+                "available": state is not None and state.state != "unavailable",
+            }
+        )
+    return {
+        **ledger.export(),
+        "notification_choices": notification_choices(hass),
+        "entities": entities,
+    }
 
 
 async def async_setup(hass, config):
@@ -101,7 +127,7 @@ async def ws_journal(hass, connection, msg):
         return
     connection.send_result(
         msg["id"],
-        {**ledger.export(), "notification_choices": notification_choices(hass)},
+        ui_export(hass, ledger),
     )
 
 
@@ -130,7 +156,7 @@ async def ws_mutate(hass, connection, msg):
         return
     connection.send_result(
         msg["id"],
-        {**ledger.export(), "notification_choices": notification_choices(hass)},
+        ui_export(hass, ledger),
     )
 
 
@@ -176,7 +202,7 @@ async def ws_settings(hass, connection, msg):
         return
     connection.send_result(
         msg["id"],
-        {**ledger.export(), "notification_choices": notification_choices(hass)},
+        ui_export(hass, ledger),
     )
 
 
