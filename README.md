@@ -4,7 +4,7 @@
 
 [Français](README.fr.md) · [Changelog](CHANGELOG.md) · [Report a bug](https://github.com/oOBenjaminOo/ha-pellet-tracker/issues)
 
-![Pellet Tracker dashboard — fictional example](docs/images/dashboard-en.png)
+![Pellet Tracker dashboard — fictional example](docs/images/dashboard-en.jpg)
 
 Pellet Tracker is an original custom integration by [@oOBenjaminOo](https://github.com/oOBenjaminOo).
 It works with any pellet stove, including an unconnected stove. No cloud account,
@@ -51,7 +51,8 @@ tracker, with no exchange-rate conversion.
 
 [![Open your Home Assistant instance and add this HACS repository](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=oOBenjaminOo&repository=ha-pellet-tracker&category=integration)
 
-1. In HACS, open **Custom repositories**.
+1. In HACS, open **Custom repositories**. On newer Marketplace screens, use
+   **Add using a link** and paste the repository URL.
 2. Add `https://github.com/oOBenjaminOo/ha-pellet-tracker`, category **Integration**.
 3. Download **Pellet Tracker**. During beta testing, select the default branch if
    no published release is available.

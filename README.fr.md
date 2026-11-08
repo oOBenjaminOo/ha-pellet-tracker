@@ -4,7 +4,7 @@
 
 [English](README.md) · [Nouveautés](CHANGELOG.md) · [Signaler un problème](https://github.com/oOBenjaminOo/ha-pellet-tracker/issues)
 
-![Carte du poêle — données fictives](docs/images/dashboard-fr.png)
+![Carte du poêle — données fictives](docs/images/dashboard-fr.jpg)
 
 Projet original de [@oOBenjaminOo](https://github.com/oOBenjaminOo), utilisable avec
 un poêle connecté ou non. Aucun compte cloud ni serveur MQTT n’est nécessaire au suivi.
@@ -39,7 +39,8 @@ Prérequis : **Home Assistant 2026.7.0 minimum** (essais sur 2026.7.1). Mushroom
 nécessaire uniquement pour la carte illustrée. Home Assistant installe ReportLab
 4.4.10 pour les PDF. Internet sert à l’installation et aux mises à jour ; le journal reste local.
 
-1. Dans HACS, ouvrir **Dépôts personnalisés**.
+1. Dans HACS, ouvrir **Dépôts personnalisés**. Sur la nouvelle interface Marketplace,
+   utiliser **Ajouter grâce à un lien** et coller l’adresse du dépôt.
 2. Ajouter `https://github.com/oOBenjaminOo/ha-pellet-tracker`, catégorie **Intégration**.
 3. Télécharger **Pellet Tracker**. Pendant la bêta, choisir la branche par défaut
    si aucune release n’est encore publiée.

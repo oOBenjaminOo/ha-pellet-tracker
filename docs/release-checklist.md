@@ -10,8 +10,8 @@
 - [x] Deleted tracker recovery archive; storage failure regression.
 - [x] Partial-cost warning and translation regressions.
 - [x] Existing journal unchanged: tests use independent fictional fixtures.
-- [ ] Live candidate deployment and recovery journey on disposable tracker.
-- [ ] Narrow viewport checks on dashboard and panel (Chromium simulation).
+- [x] Live candidate deployed on HA test; restore preview/replacement and pre-restore recovery verified on disposable tracker.
+- [x] Chromium 390×844: dashboard, confirmed bag/cleaning actions, panel action dialog and restore controls checked; no horizontal main-panel overflow.
 - [ ] HACS custom-repository download on the test instance.
 - [ ] CI: tests, formatting, hassfest, HACS validation, with no ignored checks.
 - [ ] User acceptance; then decide stable version and publish matching release.
