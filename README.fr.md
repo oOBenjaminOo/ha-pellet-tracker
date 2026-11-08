@@ -9,9 +9,9 @@
 Projet original de [@oOBenjaminOo](https://github.com/oOBenjaminOo), utilisable avec
 un poêle connecté ou non. Aucun compte cloud ni serveur MQTT n’est nécessaire au suivi.
 
-**Version 0.9.0b1 : bêta.** Installation possible comme dépôt personnalisé HACS.
-L’intégration n’est pas encore dans le catalogue par défaut. Une version stable et
-la demande d’inclusion suivront la validation des essais.
+**Version 1.0.0 : première version stable.** Installation possible comme dépôt
+personnalisé HACS. L’inclusion au catalogue par défaut reste soumise à une revue
+séparée de l’équipe HACS.
 
 ## Fonctions
 
@@ -42,8 +42,7 @@ nécessaire uniquement pour la carte illustrée. Home Assistant installe ReportL
 1. Dans HACS, ouvrir **Dépôts personnalisés**. Sur la nouvelle interface Marketplace,
    utiliser **Ajouter grâce à un lien** et coller l’adresse du dépôt.
 2. Ajouter `https://github.com/oOBenjaminOo/ha-pellet-tracker`, catégorie **Intégration**.
-3. Télécharger **Pellet Tracker**. Pendant la bêta, choisir la branche par défaut
-   si aucune release n’est encore publiée.
+3. Installer **Pellet Tracker** en choisissant la dernière version stable.
 4. Redémarrer Home Assistant.
 5. **Paramètres → Appareils et services → Ajouter une intégration → Pellet Tracker**.
 6. Choisir le nom, la langue, la devise, le premier mois de saison et les seuils.

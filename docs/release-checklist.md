@@ -1,6 +1,6 @@
 # Release checklist
 
-## Candidate 0.9.0b1
+## First stable release 1.0.0
 
 - [x] Single `custom_components/pellet_tracker` package; local runtime assets included.
 - [x] MIT license, issue tracker, code owner, config flow, versioned manifest.
@@ -14,8 +14,9 @@
 - [x] Chromium 390×844: dashboard, confirmed bag/cleaning actions, panel action dialog and restore controls checked; no horizontal main-panel overflow.
 - [x] Marketplace custom link added and installation from default branch completed on HA test.
 - [x] CI run 42503987100: tests/formatting, hassfest and HACS validation succeeded without ignored checks.
-- [ ] User acceptance; then decide stable version and publish matching release.
-- [ ] Submit catalog inclusion request only after acceptance.
+- [x] User acceptance received; stable version selected: 1.0.0.
+- [ ] Publish the matching GitHub release after validation of the stable commit.
+- [ ] Submit the catalog inclusion request with stable release and successful action links.
 
 Native Android/iOS keyboard and physical touch are not certified by desktop
 Chromium viewport tests. No real stove control is exercised during validation.

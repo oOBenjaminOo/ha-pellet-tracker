@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.0.0
+
+First stable release, following user acceptance of the tested beta.
+
+- Local pellet stock journal, automatic seasons and FIFO purchase/consumption costs.
+- Monthly graphs, season comparisons, supplier/brand analysis, optional budgets and PDF reports.
+- French/English panel, native entities and a dynamic ready-to-add Mushroom dashboard card.
+- Configurable maintenance/stock notifications and optional confirmed stove switch control.
+- Validated JSON restore, recovery archives, reversible entries and concurrency protection.
+- English/French documentation, fictional screenshots and successful HACS/hassfest validation.
+
 ## 0.9.0b1
 
 - Add server-validated JSON restore preview and explicit journal replacement confirmation.

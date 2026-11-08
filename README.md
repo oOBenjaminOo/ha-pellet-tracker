@@ -10,9 +10,9 @@ Pellet Tracker is an original custom integration by [@oOBenjaminOo](https://gith
 It works with any pellet stove, including an unconnected stove. No cloud account,
 MQTT broker or manufacturer integration is required to track bags.
 
-**Current version: 0.9.0b1 (beta).** Available as a HACS custom repository;
-not yet included in the default HACS catalog. A stable release and catalog request
-will follow user acceptance. This project is independent of Home Assistant and HACS.
+**Current version: 1.0.0 — first stable release.** Available as a HACS custom
+repository. Default-catalog inclusion is subject to a separate HACS review.
+This project is independent of Home Assistant and HACS.
 
 ## Features
 
@@ -54,8 +54,7 @@ tracker, with no exchange-rate conversion.
 1. In HACS, open **Custom repositories**. On newer Marketplace screens, use
    **Add using a link** and paste the repository URL.
 2. Add `https://github.com/oOBenjaminOo/ha-pellet-tracker`, category **Integration**.
-3. Download **Pellet Tracker**. During beta testing, select the default branch if
-   no published release is available.
+3. Install **Pellet Tracker**, selecting the latest stable release.
 4. Restart Home Assistant.
 5. Open **Settings → Devices & services → Add integration → Pellet Tracker**.
 6. Choose the tracker name, language, currency, season start month and alert thresholds.
@@ -184,7 +183,7 @@ screenshot in [an issue](https://github.com/oOBenjaminOo/ha-pellet-tracker/issue
 CI runs Python/Node regression tests, Ruff, Prettier, hassfest and HACS validation.
 See [the release checklist](docs/release-checklist.md) for executed checks and
 remaining acceptance gates. HACS catalog inclusion is a separate review; a passing
-validation does not imply approval. Do not open a catalog request before acceptance.
+validation does not imply approval. User acceptance was granted before the first stable publication.
 
 Licensed under [MIT](LICENSE). Included stove illustrations are illustrative assets;
 no manufacturer affiliation is implied.
