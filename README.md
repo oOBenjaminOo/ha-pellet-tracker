@@ -10,8 +10,8 @@ Pellet Tracker is an original custom integration by [@oOBenjaminOo](https://gith
 It works with any pellet stove, including an unconnected stove. No cloud account,
 MQTT broker or manufacturer integration is required to track bags.
 
-**Current version: 1.0.0 — first stable release.** Available as a HACS custom
-repository. Default-catalog inclusion is pending review in [hacs/default#13692](https://github.com/hacs/default/pull/13692).
+**Current version: 1.0.0 — first stable release.** Included in the default HACS
+catalog following the merge of [hacs/default#13692](https://github.com/hacs/default/pull/13692).
 This project is independent of Home Assistant and HACS.
 
 ## Features
@@ -49,16 +49,24 @@ tracker, with no exchange-rate conversion.
 
 ## Install with HACS
 
+1. Open HACS (or **Marketplace** on newer versions) and search for **Pellet Tracker**.
+2. Open **Pellet Tracker** and install the latest stable release.
+3. Restart Home Assistant.
+4. Open **Settings → Devices & services → Add integration → Pellet Tracker**.
+5. Choose the tracker name, language, currency, season start month and alert thresholds.
+6. Open **Pellet Tracker** in the sidebar.
+
+### Fallback: custom repository
+
+If Pellet Tracker does not appear yet, refresh the HACS catalog. If your local
+catalog has not picked up the addition, you can add the repository manually:
+
 [![Open your Home Assistant instance and add this HACS repository](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=oOBenjaminOo&repository=ha-pellet-tracker&category=integration)
 
-1. In HACS, open **Custom repositories**. On newer Marketplace screens, use
-   **Add using a link** and paste the repository URL.
-2. Add `https://github.com/oOBenjaminOo/ha-pellet-tracker`, category **Integration**.
-3. Install **Pellet Tracker**, selecting the latest stable release.
-4. Restart Home Assistant.
-5. Open **Settings → Devices & services → Add integration → Pellet Tracker**.
-6. Choose the tracker name, language, currency, season start month and alert thresholds.
-7. Open **Pellet Tracker** in the sidebar.
+In HACS, open **Custom repositories**, add
+`https://github.com/oOBenjaminOo/ha-pellet-tracker` with category **Integration**,
+then install Pellet Tracker and follow steps 3–6 above. On newer Marketplace
+screens, use **Add using a link** and paste the repository URL.
 
 Manual alternative: copy only `custom_components/pellet_tracker` into your
 Home Assistant `custom_components` directory, restart, then add the integration.

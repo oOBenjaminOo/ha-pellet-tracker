@@ -9,9 +9,8 @@
 Projet original de [@oOBenjaminOo](https://github.com/oOBenjaminOo), utilisable avec
 un poêle connecté ou non. Aucun compte cloud ni serveur MQTT n’est nécessaire au suivi.
 
-**Version 1.0.0 : première version stable.** Installation possible comme dépôt
-personnalisé HACS. La [demande d’inclusion au catalogue HACS #13692](https://github.com/hacs/default/pull/13692)
-est déposée et reste en attente de validation.
+**Version 1.0.0 : première version stable.** L’intégration est incluse dans le
+catalogue HACS à la suite de la fusion de la [demande #13692](https://github.com/hacs/default/pull/13692).
 
 ## Fonctions
 
@@ -33,20 +32,28 @@ est déposée et reste en attente de validation.
 
 ## Installation HACS
 
-[![Ajouter le dépôt dans HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=oOBenjaminOo&repository=ha-pellet-tracker&category=integration)
-
 Prérequis : **Home Assistant 2026.7.0 minimum** (essais sur 2026.7.1). Mushroom est
 nécessaire uniquement pour la carte illustrée. Home Assistant installe ReportLab
 4.4.10 pour les PDF. Internet sert à l’installation et aux mises à jour ; le journal reste local.
 
-1. Dans HACS, ouvrir **Dépôts personnalisés**. Sur la nouvelle interface Marketplace,
-   utiliser **Ajouter grâce à un lien** et coller l’adresse du dépôt.
-2. Ajouter `https://github.com/oOBenjaminOo/ha-pellet-tracker`, catégorie **Intégration**.
-3. Installer **Pellet Tracker** en choisissant la dernière version stable.
-4. Redémarrer Home Assistant.
-5. **Paramètres → Appareils et services → Ajouter une intégration → Pellet Tracker**.
-6. Choisir le nom, la langue, la devise, le premier mois de saison et les seuils.
-7. Ouvrir **Pellet Tracker** dans la barre latérale.
+1. Ouvrir HACS (ou **Marketplace** sur les versions récentes) et rechercher **Pellet Tracker**.
+2. Ouvrir **Pellet Tracker** et installer la dernière version stable.
+3. Redémarrer Home Assistant.
+4. **Paramètres → Appareils et services → Ajouter une intégration → Pellet Tracker**.
+5. Choisir le nom, la langue, la devise, le premier mois de saison et les seuils.
+6. Ouvrir **Pellet Tracker** dans la barre latérale.
+
+### Solution de secours : dépôt personnalisé
+
+Si Pellet Tracker n’apparaît pas encore, actualiser le catalogue HACS. Si votre
+catalogue local n’a pas encore récupéré cet ajout, le dépôt peut être ajouté manuellement :
+
+[![Ajouter le dépôt dans HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=oOBenjaminOo&repository=ha-pellet-tracker&category=integration)
+
+Dans HACS, ouvrir **Dépôts personnalisés**, ajouter
+`https://github.com/oOBenjaminOo/ha-pellet-tracker`, catégorie **Intégration**,
+puis installer Pellet Tracker et suivre les étapes 3 à 6 ci-dessus. Sur la nouvelle
+interface Marketplace, utiliser **Ajouter grâce à un lien** et coller l’adresse du dépôt.
 
 Installation manuelle : copier uniquement `custom_components/pellet_tracker` dans
 le dossier `custom_components` de HA, puis redémarrer et ajouter l’intégration.

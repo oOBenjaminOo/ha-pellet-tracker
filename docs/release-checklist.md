@@ -16,7 +16,7 @@
 - [x] Stable CI run 42505446552: tests/formatting, hassfest and HACS validation succeeded without ignored checks.
 - [x] User acceptance received; stable version selected: 1.0.0.
 - [x] Published [v1.0.0](https://github.com/oOBenjaminOo/ha-pellet-tracker/releases/tag/v1.0.0) after stable commit validation.
-- [x] Submitted [hacs/default#13692](https://github.com/hacs/default/pull/13692), open and ready for review, with maintainer edits enabled.
+- [x] Submitted [hacs/default#13692](https://github.com/hacs/default/pull/13692), merged by @frenck on 2026-11-09 after approval.
 
 Native Android/iOS keyboard and physical touch are not certified by desktop
 Chromium viewport tests. No real stove control is exercised during validation.
@@ -32,7 +32,8 @@ copies are removed after validation. No stove switch command is sent.
 
 Automated suite: 77 Python tests and 26 Node tests (103 total).
 
-The catalog request is pending HACS review; submission is not catalog acceptance.
+The catalog request was approved and merged by @frenck on 2026-11-09.
+The repository is present in the default integration list; local catalogs refresh separately.
 The latest submission preflight, release, owner, domain-conflict, HACS, hassfest,
 JSON schema and sorting checks all passed.
 
