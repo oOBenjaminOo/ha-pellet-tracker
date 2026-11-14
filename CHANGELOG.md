@@ -1,11 +1,10 @@
 # Changelog
 
-## Unreleased
+## 1.1.0
 
 - Remove trailing zeros from bag counts and round displayed autonomy down to whole days.
 - Offer a fully editable dashboard card and add direct links to the stove tracker.
 - Add an integration option for the sidebar shortcut.
-
 - Explain the autonomy calculation and show the observed days, recorded consumption and daily average.
 - Explain how to edit the full dashboard card in YAML and link to the sidebar options from tracker settings.
 - Filter stock history by heating season, defaulting to the current season and extending it through today.
