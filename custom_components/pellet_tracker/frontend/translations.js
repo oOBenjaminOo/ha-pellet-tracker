@@ -516,8 +516,8 @@ export const ENGLISH = {
   "Aucune copie de récupération disponible.": "No recovery copies available.",
   "Poêle supprimé": "Deleted stove",
   "Avant restauration": "Before restore",
-  "Coût partiel — certains achats ou sacs consommés n’ont pas de prix. Les montants manquants ne sont pas comptés comme zéro.":
-    "Partial cost — some purchases or consumed bags have no price. Missing amounts are not counted as zero.",
+  "Coût partiel - certains achats ou sacs consommés n’ont pas de prix. Les montants manquants ne sont pas comptés comme zéro.":
+    "Partial cost - some purchases or consumed bags have no price. Missing amounts are not counted as zero.",
   "Format de sauvegarde non reconnu.": "Invalid backup format",
   "La devise de la sauvegarde est différente de celle du suivi.":
     "Backup currency differs from this tracker",
