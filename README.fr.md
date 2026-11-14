@@ -4,7 +4,7 @@
 
 [English](README.md) · [Nouveautés](CHANGELOG.md) · [Signaler un problème](https://github.com/oOBenjaminOo/ha-pellet-tracker/issues)
 
-![Carte du poêle — données fictives](docs/images/dashboard-fr.jpg)
+![Carte du poêle - données fictives](docs/images/dashboard-fr.jpg)
 
 Projet original de [@oOBenjaminOo](https://github.com/oOBenjaminOo), utilisable avec
 un poêle connecté ou non. Aucun compte cloud ni serveur MQTT n’est nécessaire au suivi.
