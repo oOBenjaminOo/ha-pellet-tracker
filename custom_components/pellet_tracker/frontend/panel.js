@@ -1056,7 +1056,7 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
     return `<section class="hero"><div><p class="eyebrow">${this.t("Votre réserve")}</p><div class="stock">${this.number(s.stock)} <small>${this.t("sacs disponibles")}</small></div><p>${s.stock <= this.data.settings.low_stock ? this.t("Le stock est bas. Pensez au prochain réapprovisionnement.") : this.t("Votre stock est à jour avec les dernières saisies.")}</p></div><div class="quick-actions"><button class="primary" data-kind="use">＋ ${this.t("Ajouter une action")}</button></div></section>
       <div class="grid">${metrics.map(([label, value]) => `<div class="card"><div class="muted">${label}</div><div class="value">${escapeHTML(value)}</div></div>`).join("")}</div>
       <p class="muted">${s.autonomy_days == null ? this.t("L’autonomie apparaîtra après au moins 7 jours de recul et 3 dates de consommation récentes.") : `${this.t("Estimation basée sur ")}${s.estimate_sample_days}${this.t(" dates de saisie, sur ")}${s.estimate_window}${this.t(" jours. ")}${s.estimate_status === "limited" ? this.t("Recul encore limité.") : ""}${this.t(" Elle ne prévoit pas la météo.")}`}</p>
-      <details><summary>${this.language === "fr" ? "Comment est calculée l’autonomie ?" : "How is the estimate calculated?"}</summary><p>${this.language === "fr" ? "Le stock restant est divisé par la consommation moyenne par jour. Cette moyenne est calculée sur les consommations saisies cette saison dans la fenêtre configurée (30 jours par défaut), en comptant aussi les jours observés sans saisie. Peu de sacs enregistrés sur cette période peuvent donc donner une autonomie élevée. Si vous chauffez davantage, la réserve durera moins longtemps." : "Remaining stock is divided by average daily consumption. The average uses this season’s recorded consumption within your configured window (30 days by default), including observed days with no entries. A small number of bags recorded during that period can produce a high estimate. If you heat more, your stock will run out sooner."}</p>${s.daily_rate > 0 ? `<p>${this.language === "fr" ? "Sacs consommés · jours observés · sacs par jour" : "Bags consumed · days observed · bags per day"} — ${Math.round(s.daily_rate * s.estimate_observation_days * 10000) / 10000} · ${s.estimate_observation_days} · ${new Intl.NumberFormat(this.locale, {maximumFractionDigits: 4}).format(s.daily_rate)}</p>` : s.autonomy_days == null ? `<p>${this.language === "fr" ? "Jours observés · dates de consommation" : "Days observed · consumption dates"} — ${s.estimate_observation_days}/7 · ${s.estimate_sample_days}/3. ${s.estimate_observation_days >= 7 && s.estimate_sample_days >= 3 ? (this.language === "fr" ? "La dernière consommation est trop ancienne." : "The last recorded use is too old.") : ""}</p>` : ""}</details>
+      <details><summary>${this.language === "fr" ? "Comment est calculée l’autonomie ?" : "How is the estimate calculated?"}</summary><p>${this.language === "fr" ? "Le stock restant est divisé par la consommation moyenne par jour. Cette moyenne est calculée sur les consommations saisies cette saison dans la fenêtre configurée (30 jours par défaut), en comptant aussi les jours observés sans saisie. Peu de sacs enregistrés sur cette période peuvent donc donner une autonomie élevée. Si vous chauffez davantage, la réserve durera moins longtemps." : "Remaining stock is divided by average daily consumption. The average uses this season’s recorded consumption within your configured window (30 days by default), including observed days with no entries. A small number of bags recorded during that period can produce a high estimate. If you heat more, your stock will run out sooner."}</p>${s.daily_rate > 0 ? `<p>${this.language === "fr" ? "Sacs consommés · jours observés · sacs par jour" : "Bags consumed · days observed · bags per day"} - ${Math.round(s.daily_rate * s.estimate_observation_days * 10000) / 10000} · ${s.estimate_observation_days} · ${new Intl.NumberFormat(this.locale, {maximumFractionDigits: 4}).format(s.daily_rate)}</p>` : s.autonomy_days == null ? `<p>${this.language === "fr" ? "Jours observés · dates de consommation" : "Days observed · consumption dates"} - ${s.estimate_observation_days}/7 · ${s.estimate_sample_days}/3. ${s.estimate_observation_days >= 7 && s.estimate_sample_days >= 3 ? (this.language === "fr" ? "La dernière consommation est trop ancienne." : "The last recorded use is too old.") : ""}</p>` : ""}</details>
       <section><div class="row"><h2>${this.t("Mes seuils d’alerte")}</h2><span class="spacer"></span><button id="editThresholds">${this.t("Modifier mes seuils")}</button></div><p>${this.t("Stock faible à ")}<strong>${this.number(this.data.settings.low_stock)}${this.t(" sacs ou moins")}</strong>.</p><p>${this.t("Entretien : ")}${this.cleaningRule()}.</p><p class="muted">${this.t("Vous choisissez vos seuils. Les badges et les notifications suivent automatiquement vos réglages.")}</p></section>
       <section><div class="row"><h2>${this.t("Dernières opérations")}</h2><span class="spacer"></span><button data-view="journal">${this.t("Tout l’historique →")}</button></div>${
         this.recentEvents()
@@ -1072,7 +1072,7 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
       }</section>`;
   }
   formatDate(day) {
-    return day ? day.split("-").reverse().join("/") : "—";
+    return day ? day.split("-").reverse().join("/") : "-";
   }
   recentEvents() {
     return [...this.data.events]
@@ -1139,7 +1139,7 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
                     .reverse()
                     .map(
                       ([season, x]) =>
-                        `<tr><td>${escapeHTML(season)}</td><td>${escapeHTML(x.first_start || "—")}</td><td>${this.number(x.used)}</td><td>${this.number(x.purchased)}</td><td>${x.cleanings}</td><td>${this.money(x.spend)}${x.purchase_unpriced ? `<br><span class="muted">${this.number(x.purchase_unpriced)}${this.t(" sacs sans prix")}</span>` : ""}</td><td>${this.money(x.cost)}${x.use_unpriced ? `<br><span class="muted">${this.number(x.use_unpriced)}${this.t(" sacs sans prix")}</span>` : ""}</td><td>${this.money(x.average_price)}</td><td>${this.money(x.min_price)} / ${this.money(x.max_price)}</td></tr>`,
+                        `<tr><td>${escapeHTML(season)}</td><td>${escapeHTML(x.first_start || "-")}</td><td>${this.number(x.used)}</td><td>${this.number(x.purchased)}</td><td>${x.cleanings}</td><td>${this.money(x.spend)}${x.purchase_unpriced ? `<br><span class="muted">${this.number(x.purchase_unpriced)}${this.t(" sacs sans prix")}</span>` : ""}</td><td>${this.money(x.cost)}${x.use_unpriced ? `<br><span class="muted">${this.number(x.use_unpriced)}${this.t(" sacs sans prix")}</span>` : ""}</td><td>${this.money(x.average_price)}</td><td>${this.money(x.min_price)} / ${this.money(x.max_price)}</td></tr>`,
                     )
                     .join("")}</tbody></table></div></section>`
                 : this.sameDateStats()
@@ -1165,7 +1165,9 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
       if (points.at(-1).date < today)
         points.push({ date: today, stock: points.at(-1).stock });
     }
-    return `<div class="row" style="flex-wrap:wrap"><h2>${this.t("Évolution du stock")}</h2><span class="spacer"></span><label>${this.t("Saison")} <select id="stockSeason">${seasons.map((key) => `<option value="${escapeHTML(key)}" ${key === season ? "selected" : ""}>${escapeHTML(key)}</option>`).join("")}</select></label></div><p class="muted">${this.t("Historique disponible depuis le premier inventaire enregistré. Les passages entre saisons conservent le stock.")}</p>${this.chart(points)}`;
+    // Daily resolution: keep the closing balance when several operations share a date.
+    const dailyPoints = [...new Map(points.map((point) => [point.date, point])).values()];
+    return `<div class="row" style="flex-wrap:wrap"><h2>${this.t("Évolution du stock")}</h2><span class="spacer"></span><label>${this.t("Saison")} <select id="stockSeason">${seasons.map((key) => `<option value="${escapeHTML(key)}" ${key === season ? "selected" : ""}>${escapeHTML(key)}</option>`).join("")}</select></label></div><p class="muted">${this.t("Historique disponible depuis le premier inventaire enregistré. Les passages entre saisons conservent le stock.")}</p>${this.chart(dailyPoints)}`;
   }
   bindStatisticsView() {
     const root = this.shadowRoot;
@@ -1189,7 +1191,11 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
     }
     const chart = root.querySelector("#stockChart");
     if (chart) {
-      const points = [...chart.querySelectorAll("[data-stock-label]")];
+      const points = [...chart.querySelectorAll("[data-stock-label]")].map((point) => ({
+        x: Number(point.getAttribute("cx")),
+        y: Number(point.getAttribute("cy")),
+        label: point.dataset.stockLabel,
+      }));
       const cursor = chart.querySelector("[data-stock-cursor]");
       const line = cursor.querySelector("line");
       const dot = cursor.querySelector("circle");
@@ -1202,14 +1208,17 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
           return;
         }
         const plotX = Math.min(position.x, 980);
-        const point = points.findLast((point) => Number(point.getAttribute("cx")) <= plotX + 2) || points[0];
-        const level = point.getAttribute("cy");
+        const index = Math.max(0, points.findLastIndex((point) => point.x <= plotX));
+        const point = points[index];
+        const next = points[index + 1];
+        const progress = next ? Math.max(0, (plotX - point.x) / (next.x - point.x)) : 0;
+        const level = next ? point.y + (next.y - point.y) * progress ** 2 * (3 - 2 * progress) : point.y;
         line.setAttribute("x1", plotX);
         line.setAttribute("x2", plotX);
         dot.setAttribute("cx", plotX);
         dot.setAttribute("cy", level);
         cursor.removeAttribute("visibility");
-        tooltip.textContent = point.dataset.stockLabel;
+        tooltip.textContent = point.label;
         tooltip.hidden = false;
         const bounds = chart.parentElement.getBoundingClientRect();
         const x = event.clientX - bounds.left;
@@ -1279,7 +1288,7 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
           .slice(this.journalPage * 25, (this.journalPage + 1) * 25)
           .map(
             (x) =>
-              `<tr class="${x.voided ? "voided" : ""}"><td>${this.formatDate(x.date)}</td><td>${escapeHTML(this.labels[x.kind])}</td><td>${["use", "purchase", "adjust", "loss"].includes(x.kind) ? this.number(Number(x.quantity)) : "—"}</td><td>${x.unit_price == null ? "—" : this.money(Number(x.unit_price))}</td><td class="comment">${escapeHTML(x.comment)}</td><td>${x.voided ? `<button data-restore="${escapeHTML(x.id)}">${this.t("Rétablir")}</button>` : `<button data-edit="${escapeHTML(x.id)}">${this.t("Modifier")}</button> <button data-void="${escapeHTML(x.id)}">${this.t("Annuler")}</button>`}</td></tr>`,
+              `<tr class="${x.voided ? "voided" : ""}"><td>${this.formatDate(x.date)}</td><td>${escapeHTML(this.labels[x.kind])}</td><td>${["use", "purchase", "adjust", "loss"].includes(x.kind) ? this.number(Number(x.quantity)) : "-"}</td><td>${x.unit_price == null ? "-" : this.money(Number(x.unit_price))}</td><td class="comment">${escapeHTML(x.comment)}</td><td>${x.voided ? `<button data-restore="${escapeHTML(x.id)}">${this.t("Rétablir")}</button>` : `<button data-edit="${escapeHTML(x.id)}">${this.t("Modifier")}</button> <button data-void="${escapeHTML(x.id)}">${this.t("Annuler")}</button>`}</td></tr>`,
           )
           .join("") ||
         this.t(
@@ -1736,7 +1745,7 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
         control = document.createElement("p");
       observed.textContent =
         this.t("Observation : ") +
-        (sources[form.elements.stove_entity.value] || "—") +
+        (sources[form.elements.stove_entity.value] || "-") +
         (form.elements.stove_attribute.value
           ? " · " + form.elements.stove_attribute.value
           : "");
@@ -1904,8 +1913,11 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
       const x1 = x(point.date), x2 = next ? x(next.date) : x1;
       const level = y(point.stock);
       const label = `${this.formatDate(point.date)} · ${this.number(point.stock)} ${unit}`;
-      const path = `M ${x1} ${level} H ${x2}${next ? ` V ${y(next.stock)}` : ""}`;
-      return `<g><path d="${path}" fill="none" stroke="var(--primary-color,#03a9f4)" stroke-width="3"/><circle data-stock-label="${escapeHTML(label)}" cx="${x1}" cy="${level}" r="${next ? 3 : 4}" fill="var(--primary-color,#03a9f4)"/></g>`;
+      const span = (x2 - x1) / 3;
+      const path = next
+        ? `M ${x1} ${level} C ${x1 + span} ${level}, ${x2 - span} ${y(next.stock)}, ${x2} ${y(next.stock)}`
+        : points.length === 1 ? `M ${x1} ${level} h 1` : "";
+      return `<g><path d="${path}" fill="none" stroke="var(--primary-color,#03a9f4)" stroke-width="3"/><circle data-stock-label="${escapeHTML(label)}" cx="${x1}" cy="${level}" r="0" fill="var(--primary-color,#03a9f4)"/></g>`;
     }).join("");
     const firstDate = escapeHTML(points[0].date);
     const lastDate = escapeHTML(points.at(-1).date);
@@ -2044,7 +2056,7 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
   }
   costWarning(season) {
     if (!season || (season.spend != null && season.cost != null)) return "";
-    return `<p class="warning" role="note">${this.t("Coût partiel — certains achats ou sacs consommés n’ont pas de prix. Les montants manquants ne sont pas comptés comme zéro.")}</p>`;
+    return `<p class="warning" role="note">${this.t("Coût partiel - certains achats ou sacs consommés n’ont pas de prix. Les montants manquants ne sont pas comptés comme zéro.")}</p>`;
   }
   async mutate(operation, payload, revision = this.data.revision) {
     if (this.busy) return;
