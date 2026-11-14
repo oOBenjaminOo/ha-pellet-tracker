@@ -203,8 +203,8 @@ class PelletTrackerValue extends HTMLElement {
     const unit = days
       ? french
         ? amount === 1
-          ? "jour de réserve"
-          : "jours de réserve"
+          ? "Jour de réserve"
+          : "Jours de réserve"
         : amount === 1
           ? "day in reserve"
           : "days in reserve"
