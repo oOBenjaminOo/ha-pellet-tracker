@@ -47,6 +47,7 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
       .querySelector("#journal")
       .addEventListener("change", (e) => {
         this.entry = e.target.value;
+        this.stockSeason = null;
         this.editing = null;
         this.settingsDraft = null;
         this.journalSeason = null;
@@ -1143,8 +1144,23 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
                     .join("")}</tbody></table></div></section>`
                 : this.sameDateStats()
             }`
-          : `<section><h2>${this.t("Évolution du stock")}</h2><p class="muted">${this.t("Historique disponible depuis le premier inventaire enregistré. Les passages entre saisons conservent le stock.")}</p>${this.chart(this.data.summary.stock_history)}</section>`
+          : `<section><h2>${this.t("Évolution du stock")}</h2><p class="muted">${this.t("Historique disponible depuis le premier inventaire enregistré. Les passages entre saisons conservent le stock.")}</p>${this.stockHistoryBySeason(s)}</section>`
     }`;
+  }
+  stockHistoryBySeason(summary) {
+    const seasons = Object.keys(summary.seasons).sort().reverse();
+    const season = seasons.includes(this.stockSeason) ? this.stockSeason : summary.season;
+    const month = String(this.data.season_month).padStart(2, "0");
+    const [firstYear, nextYear] = season.split("/");
+    const start = `${firstYear}-${month}-01`;
+    const end = `${nextYear}-${month}-01`;
+    const history = summary.stock_history;
+    const points = history.filter(({ date }) => date >= start && date < end);
+    const opening = history.findLast(({ date }) => date < start);
+    if (opening && points[0]?.date !== start) {
+      points.unshift({ date: start, stock: opening.stock });
+    }
+    return `<label class="comparison-mode">${this.t("Saison")}<select id="stockSeason">${seasons.map((key) => `<option value="${escapeHTML(key)}" ${key === season ? "selected" : ""}>${escapeHTML(key)}</option>`).join("")}</select></label>${this.chart(points)}`;
   }
   bindStatisticsView() {
     const root = this.shadowRoot;
@@ -1166,6 +1182,11 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
         this.render();
       };
     }
+    if (root.querySelector("#stockSeason"))
+      root.querySelector("#stockSeason").onchange = (e) => {
+        this.stockSeason = e.target.value;
+        this.render();
+      };
     if (root.querySelector("#compareMode"))
       root.querySelector("#compareMode").onchange = (e) => {
         this.compareMode = e.target.value;
