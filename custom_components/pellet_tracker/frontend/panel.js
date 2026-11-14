@@ -1160,6 +1160,11 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
     if (opening && points[0]?.date !== start) {
       points.unshift({ date: start, stock: opening.stock });
     }
+    if (season === summary.season && points.length) {
+      const today = this.localDate();
+      if (points.at(-1).date < today)
+        points.push({ date: today, stock: points.at(-1).stock });
+    }
     return `<div class="row" style="flex-wrap:wrap"><h2>${this.t("Évolution du stock")}</h2><span class="spacer"></span><label>${this.t("Saison")} <select id="stockSeason">${seasons.map((key) => `<option value="${escapeHTML(key)}" ${key === season ? "selected" : ""}>${escapeHTML(key)}</option>`).join("")}</select></label></div><p class="muted">${this.t("Historique disponible depuis le premier inventaire enregistré. Les passages entre saisons conservent le stock.")}</p>${this.chart(points)}`;
   }
   bindStatisticsView() {
@@ -1192,15 +1197,16 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
       chart.onpointermove = (event) => {
         const position = new DOMPoint(event.clientX, event.clientY)
           .matrixTransform(chart.getScreenCTM().inverse());
-        if (position.x < 64 || position.x > 980 || position.y < 24 || position.y > 150) {
+        if (position.x < 64 || position.x > 1000 || position.y < 24 || position.y > 150) {
           chart.onpointerleave();
           return;
         }
-        const point = points.findLast((point) => Number(point.getAttribute("cx")) <= position.x) || points[0];
+        const plotX = Math.min(position.x, 980);
+        const point = points.findLast((point) => Number(point.getAttribute("cx")) <= plotX + 2) || points[0];
         const level = point.getAttribute("cy");
-        line.setAttribute("x1", position.x);
-        line.setAttribute("x2", position.x);
-        dot.setAttribute("cx", position.x);
+        line.setAttribute("x1", plotX);
+        line.setAttribute("x2", plotX);
+        dot.setAttribute("cx", plotX);
         dot.setAttribute("cy", level);
         cursor.removeAttribute("visibility");
         tooltip.textContent = point.dataset.stockLabel;
@@ -1882,12 +1888,15 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
     const duration = Math.max(86400000, Date.parse(points.at(-1).date) - start);
     const left = 64, right = 980, top = 24, bottom = 150;
     const max = Math.max(1, ...points.map(({ stock }) => stock));
-    const step = Math.ceil(max / 4);
+    const min = Math.min(0, ...points.map(({ stock }) => stock));
+    const step = Math.ceil((max - min) / 4);
+    const floor = Math.floor(min / step) * step;
+    const ceiling = Math.ceil(max / step) * step;
     const x = (date) => left + ((Date.parse(date) - start) / duration) * (right - left);
-    const y = (stock) => bottom - (stock / (4 * step)) * (bottom - top);
+    const y = (stock) => bottom - ((stock - floor) / (ceiling - floor)) * (bottom - top);
     const unit = this.language === "fr" ? "sacs" : "bags";
-    const ticks = Array.from({ length: 5 }, (_, i) => {
-      const value = i * step;
+    const ticks = Array.from({ length: (ceiling - floor) / step + 1 }, (_, i) => {
+      const value = floor + i * step;
       return `<line x1="${left}" x2="${right}" y1="${y(value)}" y2="${y(value)}" stroke="currentColor" opacity=".18"/><text x="${left - 8}" y="${y(value) + 5}" text-anchor="end">${this.number(value)}</text>`;
     }).join("");
     const segments = points.map((point, i) => {
@@ -1900,7 +1909,7 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
     }).join("");
     const firstDate = escapeHTML(points[0].date);
     const lastDate = escapeHTML(points.at(-1).date);
-    return `<div style="position:relative"><svg id="stockChart" viewBox="0 0 1000 176" role="img" aria-label="${this.t("Évolution du stock")}" fill="currentColor" font-size="15"><text x="${left - 8}" y="15" text-anchor="end">${unit}</text><rect x="${left}" y="${top}" width="${right-left}" height="${bottom-top}" fill="transparent"/>${ticks}${segments}<g data-stock-cursor visibility="hidden" pointer-events="none"><line y1="${top}" y2="${bottom}" stroke="currentColor" stroke-dasharray="4 4"/><circle r="5" fill="var(--primary-color,#03a9f4)" stroke="currentColor"/></g><text x="${left}" y="172">${firstDate}</text>${firstDate === lastDate ? "" : `<text x="${right}" y="172" text-anchor="end">${lastDate}</text>`}</svg><div id="stockTooltip" hidden style="position:absolute;pointer-events:none;background:var(--card-background-color);color:var(--primary-text-color);border:1px solid var(--divider-color);border-radius:8px;padding:6px 10px;white-space:nowrap;font-size:13px"></div></div>`;
+    return `<div style="position:relative"><svg id="stockChart" viewBox="0 0 1000 176" role="img" aria-label="${this.t("Évolution du stock")}" fill="currentColor" font-size="15"><text x="${left - 8}" y="15" text-anchor="end">${unit}</text><rect x="${left}" y="${top}" width="${1000 - left}" height="${bottom-top}" fill="transparent"/>${ticks}${segments}<g data-stock-cursor visibility="hidden" pointer-events="none"><line y1="${top}" y2="${bottom}" stroke="currentColor" stroke-dasharray="4 4"/><circle r="5" fill="var(--primary-color,#03a9f4)" stroke="currentColor"/></g><text x="${left}" y="172">${firstDate}</text>${firstDate === lastDate ? "" : `<text x="${right}" y="172" text-anchor="end">${lastDate}</text>`}</svg><div id="stockTooltip" hidden style="position:absolute;pointer-events:none;background:var(--card-background-color);color:var(--primary-text-color);border:1px solid var(--divider-color);border-radius:8px;padding:6px 10px;white-space:nowrap;font-size:13px"></div></div>`;
   }
   downloadBackup() {
     const {
