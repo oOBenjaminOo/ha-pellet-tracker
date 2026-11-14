@@ -6,6 +6,11 @@
 - Offer a fully editable dashboard card and add direct links to the stove tracker.
 - Add an integration option for the sidebar shortcut.
 
+- Explain the autonomy calculation and show the observed days, recorded consumption and daily average.
+- Explain how to edit the full dashboard card in YAML and link to the sidebar options from tracker settings.
+- Filter stock history by heating season, defaulting to the current season and extending it through today.
+- Show a smoother stock chart with a labeled axis, daily closing balances and an instant date and quantity tooltip.
+
 ## 1.0.0
 
 First stable release, following user acceptance of the tested beta.
