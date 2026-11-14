@@ -1144,7 +1144,7 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
                     .join("")}</tbody></table></div></section>`
                 : this.sameDateStats()
             }`
-          : `<section><h2>${this.t("Évolution du stock")}</h2><p class="muted">${this.t("Historique disponible depuis le premier inventaire enregistré. Les passages entre saisons conservent le stock.")}</p>${this.stockHistoryBySeason(s)}</section>`
+          : `<section>${this.stockHistoryBySeason(s)}</section>`
     }`;
   }
   stockHistoryBySeason(summary) {
@@ -1160,7 +1160,7 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
     if (opening && points[0]?.date !== start) {
       points.unshift({ date: start, stock: opening.stock });
     }
-    return `<label class="comparison-mode">${this.t("Saison")}<select id="stockSeason">${seasons.map((key) => `<option value="${escapeHTML(key)}" ${key === season ? "selected" : ""}>${escapeHTML(key)}</option>`).join("")}</select></label>${this.chart(points)}`;
+    return `<div class="row" style="flex-wrap:wrap"><h2>${this.t("Évolution du stock")}</h2><span class="spacer"></span><label>${this.t("Saison")} <select id="stockSeason">${seasons.map((key) => `<option value="${escapeHTML(key)}" ${key === season ? "selected" : ""}>${escapeHTML(key)}</option>`).join("")}</select></label></div><p class="muted">${this.t("Historique disponible depuis le premier inventaire enregistré. Les passages entre saisons conservent le stock.")}</p>${this.chart(points)}`;
   }
   bindStatisticsView() {
     const root = this.shadowRoot;
@@ -1842,22 +1842,29 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
   chart(points) {
     if (!points.length)
       return this.t('<p class="muted">Aucun mouvement enregistré.</p>');
-    const start = Date.parse(points[0].date),
-      end = Date.parse(points.at(-1).date),
-      max = Math.max(1, ...points.map((p) => p.stock));
-    const xy = points
-      .flatMap((p, i) => {
-        const x =
-          20 +
-          ((Date.parse(p.date) - start) / Math.max(86400000, end - start)) *
-            960;
-        return [
-          ...(i ? [`${x},${130 - (points[i - 1].stock / max) * 110}`] : []),
-          `${x},${130 - (p.stock / max) * 110}`,
-        ];
-      })
-      .join(" ");
-    return `<svg viewBox="0 0 1000 150" role="img" aria-label="${this.t("Stock de ")}${escapeHTML(points[0].date)}${this.t(" à ")}${escapeHTML(points.at(-1).date)}"><line x1="20" y1="130" x2="980" y2="130" stroke="currentColor" opacity=".2"/><polyline points="${xy}" fill="none" stroke="var(--primary-color,#03a9f4)" stroke-width="3"/><text x="20" y="148" fill="currentColor" font-size="12">${escapeHTML(points[0].date)}</text><text x="980" y="148" text-anchor="end" fill="currentColor" font-size="12">${escapeHTML(points.at(-1).date)}</text><text x="20" y="15" fill="currentColor" font-size="12">${max}${this.t(" sacs (max.)")}</text></svg>`;
+    const start = Date.parse(points[0].date);
+    const duration = Math.max(86400000, Date.parse(points.at(-1).date) - start);
+    const left = 64, right = 980, top = 24, bottom = 150;
+    const max = Math.max(1, ...points.map(({ stock }) => stock));
+    const step = Math.ceil(max / 4);
+    const x = (date) => left + ((Date.parse(date) - start) / duration) * (right - left);
+    const y = (stock) => bottom - (stock / (4 * step)) * (bottom - top);
+    const unit = this.language === "fr" ? "sacs" : "bags";
+    const ticks = Array.from({ length: 5 }, (_, i) => {
+      const value = i * step;
+      return `<line x1="${left}" x2="${right}" y1="${y(value)}" y2="${y(value)}" stroke="currentColor" opacity=".18"/><text x="${left - 8}" y="${y(value) + 5}" text-anchor="end">${this.number(value)}</text>`;
+    }).join("");
+    const segments = points.map((point, i) => {
+      const next = points[i + 1];
+      const x1 = x(point.date), x2 = next ? x(next.date) : x1;
+      const level = y(point.stock);
+      const label = `${this.formatDate(point.date)} · ${this.number(point.stock)} ${unit}`;
+      const path = `M ${x1} ${level} H ${x2}${next ? ` V ${y(next.stock)}` : ""}`;
+      return `<g><title>${escapeHTML(label)}</title><path d="${path}" fill="none" stroke="var(--primary-color,#03a9f4)" stroke-width="3"/><path d="M ${x1} ${level} H ${x2}" fill="none" stroke="transparent" stroke-width="16"/><circle cx="${x1}" cy="${level}" r="${next ? 3 : 4}" fill="var(--primary-color,#03a9f4)"/></g>`;
+    }).join("");
+    const firstDate = escapeHTML(points[0].date);
+    const lastDate = escapeHTML(points.at(-1).date);
+    return `<svg viewBox="0 0 1000 176" role="img" aria-label="${this.t("Évolution du stock")}" fill="currentColor" font-size="15"><text x="${left - 8}" y="15" text-anchor="end">${unit}</text>${ticks}${segments}<text x="${left}" y="172">${firstDate}</text>${firstDate === lastDate ? "" : `<text x="${right}" y="172" text-anchor="end">${lastDate}</text>`}</svg>`;
   }
   downloadBackup() {
     const {
