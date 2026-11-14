@@ -55,5 +55,5 @@ test('card values drop trailing zeros, preserve fractional bags and round autono
   }
   element.setConfig({entity:'sensor.example', metric:'autonomy_days', language:'fr'});
   element.hass={states:{'sensor.example':{state:'149.5'}}};
-  assert.equal(element.shadowRoot.textContent,'≈ 149 jours de réserve');
+  assert.equal(element.shadowRoot.textContent,'≈ 149 Jours de réserve');
 });
