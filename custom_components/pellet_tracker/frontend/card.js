@@ -148,7 +148,7 @@ class PelletTrackerCardEditor extends HTMLElement {
     label.style.cssText = "display:block;padding:16px";
     const empty = document.createElement("option");
     empty.value = "";
-    empty.textContent = "—";
+    empty.textContent = "-";
     select.append(empty);
     for (const entry of this.entries || []) {
       const option = document.createElement("option");
