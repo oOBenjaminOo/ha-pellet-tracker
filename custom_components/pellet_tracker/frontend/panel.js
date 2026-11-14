@@ -1056,7 +1056,7 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
     return `<section class="hero"><div><p class="eyebrow">${this.t("Votre réserve")}</p><div class="stock">${this.number(s.stock)} <small>${this.t("sacs disponibles")}</small></div><p>${s.stock <= this.data.settings.low_stock ? this.t("Le stock est bas. Pensez au prochain réapprovisionnement.") : this.t("Votre stock est à jour avec les dernières saisies.")}</p></div><div class="quick-actions"><button class="primary" data-kind="use">＋ ${this.t("Ajouter une action")}</button></div></section>
       <div class="grid">${metrics.map(([label, value]) => `<div class="card"><div class="muted">${label}</div><div class="value">${escapeHTML(value)}</div></div>`).join("")}</div>
       <p class="muted">${s.autonomy_days == null ? this.t("L’autonomie apparaîtra après au moins 7 jours de recul et 3 dates de consommation récentes.") : `${this.t("Estimation basée sur ")}${s.estimate_sample_days}${this.t(" dates de saisie, sur ")}${s.estimate_window}${this.t(" jours. ")}${s.estimate_status === "limited" ? this.t("Recul encore limité.") : ""}${this.t(" Elle ne prévoit pas la météo.")}`}</p>
-      <details><summary>${this.language === "fr" ? "Comment est calculée l’autonomie ?" : "How is the estimate calculated?"}</summary><p>${this.language === "fr" ? "Le stock restant est divisé par la consommation moyenne par jour. Cette moyenne est calculée sur les consommations saisies cette saison dans la fenêtre configurée (30 jours par défaut), en comptant aussi les jours observés sans saisie. Peu de sacs enregistrés sur cette période peuvent donc donner une autonomie élevée. Si vous chauffez davantage, la réserve durera moins longtemps." : "Remaining stock is divided by average daily consumption. The average uses this season’s recorded consumption within your configured window (30 days by default), including observed days with no entries. A small number of bags recorded during that period can produce a high estimate. If you heat more, your stock will run out sooner."}</p>${s.daily_rate > 0 ? `<p>${this.language === "fr" ? "Sacs consommés · jours observés · sacs par jour" : "Bags consumed · days observed · bags per day"} - ${Math.round(s.daily_rate * s.estimate_observation_days * 10000) / 10000} · ${s.estimate_observation_days} · ${new Intl.NumberFormat(this.locale, {maximumFractionDigits: 4}).format(s.daily_rate)}</p>` : s.autonomy_days == null ? `<p>${this.language === "fr" ? "Jours observés · dates de consommation" : "Days observed · consumption dates"} - ${s.estimate_observation_days}/7 · ${s.estimate_sample_days}/3. ${s.estimate_observation_days >= 7 && s.estimate_sample_days >= 3 ? (this.language === "fr" ? "La dernière consommation est trop ancienne." : "The last recorded use is too old.") : ""}</p>` : ""}</details>
+      <details><summary>${this.language === "fr" ? "Comment est calculée l’autonomie ?" : "How is the estimate calculated?"}</summary><p>${this.language === "fr" ? "Le stock restant est divisé par la consommation moyenne par jour. Cette moyenne est calculée sur les consommations saisies cette saison dans la fenêtre configurée (30 jours par défaut), en comptant aussi les jours observés sans saisie. Peu de sacs enregistrés sur cette période peuvent donc donner une autonomie élevée. Si vous chauffez davantage, la réserve durera moins longtemps." : "Remaining stock is divided by average daily consumption. The average uses this season’s recorded consumption within your configured window (30 days by default), including observed days with no entries. A small number of bags recorded during that period can produce a high estimate. If you heat more, your stock will run out sooner."}</p>${s.daily_rate > 0 ? `<p>${this.language === "fr" ? "Sacs consommés · jours observés · sacs par jour" : "Bags consumed · days observed · bags per day"} - ${Math.round(s.daily_rate * s.estimate_observation_days * 10000) / 10000} · ${s.estimate_observation_days} · ${new Intl.NumberFormat(this.locale, { maximumFractionDigits: 4 }).format(s.daily_rate)}</p>` : s.autonomy_days == null ? `<p>${this.language === "fr" ? "Jours observés · dates de consommation" : "Days observed · consumption dates"} - ${s.estimate_observation_days}/7 · ${s.estimate_sample_days}/3. ${s.estimate_observation_days >= 7 && s.estimate_sample_days >= 3 ? (this.language === "fr" ? "La dernière consommation est trop ancienne." : "The last recorded use is too old.") : ""}</p>` : ""}</details>
       <section><div class="row"><h2>${this.t("Mes seuils d’alerte")}</h2><span class="spacer"></span><button id="editThresholds">${this.t("Modifier mes seuils")}</button></div><p>${this.t("Stock faible à ")}<strong>${this.number(this.data.settings.low_stock)}${this.t(" sacs ou moins")}</strong>.</p><p>${this.t("Entretien : ")}${this.cleaningRule()}.</p><p class="muted">${this.t("Vous choisissez vos seuils. Les badges et les notifications suivent automatiquement vos réglages.")}</p></section>
       <section><div class="row"><h2>${this.t("Dernières opérations")}</h2><span class="spacer"></span><button data-view="journal">${this.t("Tout l’historique →")}</button></div>${
         this.recentEvents()
@@ -1149,7 +1149,9 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
   }
   stockHistoryBySeason(summary) {
     const seasons = Object.keys(summary.seasons).sort().reverse();
-    const season = seasons.includes(this.stockSeason) ? this.stockSeason : summary.season;
+    const season = seasons.includes(this.stockSeason)
+      ? this.stockSeason
+      : summary.season;
     const month = String(this.data.season_month).padStart(2, "0");
     const [firstYear, nextYear] = season.split("/");
     const start = `${firstYear}-${month}-01`;
@@ -1166,7 +1168,9 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
         points.push({ date: today, stock: points.at(-1).stock });
     }
     // Daily resolution: keep the closing balance when several operations share a date.
-    const dailyPoints = [...new Map(points.map((point) => [point.date, point])).values()];
+    const dailyPoints = [
+      ...new Map(points.map((point) => [point.date, point])).values(),
+    ];
     return `<div class="row" style="flex-wrap:wrap"><h2>${this.t("Évolution du stock")}</h2><span class="spacer"></span><label>${this.t("Saison")} <select id="stockSeason">${seasons.map((key) => `<option value="${escapeHTML(key)}" ${key === season ? "selected" : ""}>${escapeHTML(key)}</option>`).join("")}</select></label></div><p class="muted">${this.t("Historique disponible depuis le premier inventaire enregistré. Les passages entre saisons conservent le stock.")}</p>${this.chart(dailyPoints)}`;
   }
   bindStatisticsView() {
@@ -1191,28 +1195,44 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
     }
     const chart = root.querySelector("#stockChart");
     if (chart) {
-      const points = [...chart.querySelectorAll("[data-stock-label]")].map((point) => ({
-        x: Number(point.getAttribute("cx")),
-        y: Number(point.getAttribute("cy")),
-        label: point.dataset.stockLabel,
-      }));
+      const points = [...chart.querySelectorAll("[data-stock-label]")].map(
+        (point) => ({
+          x: Number(point.getAttribute("cx")),
+          y: Number(point.getAttribute("cy")),
+          label: point.dataset.stockLabel,
+        }),
+      );
       const cursor = chart.querySelector("[data-stock-cursor]");
       const line = cursor.querySelector("line");
       const dot = cursor.querySelector("circle");
       const tooltip = root.querySelector("#stockTooltip");
       chart.onpointermove = (event) => {
-        const position = new DOMPoint(event.clientX, event.clientY)
-          .matrixTransform(chart.getScreenCTM().inverse());
-        if (position.x < 64 || position.x > 1000 || position.y < 24 || position.y > 150) {
+        const position = new DOMPoint(
+          event.clientX,
+          event.clientY,
+        ).matrixTransform(chart.getScreenCTM().inverse());
+        if (
+          position.x < 64 ||
+          position.x > 1000 ||
+          position.y < 24 ||
+          position.y > 150
+        ) {
           chart.onpointerleave();
           return;
         }
         const plotX = Math.min(position.x, 980);
-        const index = Math.max(0, points.findLastIndex((point) => point.x <= plotX));
+        const index = Math.max(
+          0,
+          points.findLastIndex((point) => point.x <= plotX),
+        );
         const point = points[index];
         const next = points[index + 1];
-        const progress = next ? Math.max(0, (plotX - point.x) / (next.x - point.x)) : 0;
-        const level = next ? point.y + (next.y - point.y) * progress ** 2 * (3 - 2 * progress) : point.y;
+        const progress = next
+          ? Math.max(0, (plotX - point.x) / (next.x - point.x))
+          : 0;
+        const level = next
+          ? point.y + (next.y - point.y) * progress ** 2 * (3 - 2 * progress)
+          : point.y;
         line.setAttribute("x1", plotX);
         line.setAttribute("x2", plotX);
         dot.setAttribute("cx", plotX);
@@ -1222,11 +1242,14 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
         tooltip.hidden = false;
         const bounds = chart.parentElement.getBoundingClientRect();
         const x = event.clientX - bounds.left;
-        const offset = x + tooltip.offsetWidth + 16 <= bounds.width
-          ? x + 12
-          : Math.max(0, x - tooltip.offsetWidth - 12);
+        const offset =
+          x + tooltip.offsetWidth + 16 <= bounds.width
+            ? x + 12
+            : Math.max(0, x - tooltip.offsetWidth - 12);
         tooltip.style.left = offset + "px";
-        tooltip.style.top = Math.max(0, event.clientY - bounds.top - tooltip.offsetHeight - 8) + "px";
+        tooltip.style.top =
+          Math.max(0, event.clientY - bounds.top - tooltip.offsetHeight - 8) +
+          "px";
       };
       chart.onpointerleave = () => {
         cursor.setAttribute("visibility", "hidden");
@@ -1895,33 +1918,46 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
       return this.t('<p class="muted">Aucun mouvement enregistré.</p>');
     const start = Date.parse(points[0].date);
     const duration = Math.max(86400000, Date.parse(points.at(-1).date) - start);
-    const left = 64, right = 980, top = 24, bottom = 150;
+    const left = 64,
+      right = 980,
+      top = 24,
+      bottom = 150;
     const max = Math.max(1, ...points.map(({ stock }) => stock));
     const min = Math.min(0, ...points.map(({ stock }) => stock));
     const step = Math.ceil((max - min) / 4);
     const floor = Math.floor(min / step) * step;
     const ceiling = Math.ceil(max / step) * step;
-    const x = (date) => left + ((Date.parse(date) - start) / duration) * (right - left);
-    const y = (stock) => bottom - ((stock - floor) / (ceiling - floor)) * (bottom - top);
+    const x = (date) =>
+      left + ((Date.parse(date) - start) / duration) * (right - left);
+    const y = (stock) =>
+      bottom - ((stock - floor) / (ceiling - floor)) * (bottom - top);
     const unit = this.language === "fr" ? "sacs" : "bags";
-    const ticks = Array.from({ length: (ceiling - floor) / step + 1 }, (_, i) => {
-      const value = floor + i * step;
-      return `<line x1="${left}" x2="${right}" y1="${y(value)}" y2="${y(value)}" stroke="currentColor" opacity=".18"/><text x="${left - 8}" y="${y(value) + 5}" text-anchor="end">${this.number(value)}</text>`;
-    }).join("");
-    const segments = points.map((point, i) => {
-      const next = points[i + 1];
-      const x1 = x(point.date), x2 = next ? x(next.date) : x1;
-      const level = y(point.stock);
-      const label = `${this.formatDate(point.date)} · ${this.number(point.stock)} ${unit}`;
-      const span = (x2 - x1) / 3;
-      const path = next
-        ? `M ${x1} ${level} C ${x1 + span} ${level}, ${x2 - span} ${y(next.stock)}, ${x2} ${y(next.stock)}`
-        : points.length === 1 ? `M ${x1} ${level} h 1` : "";
-      return `<g><path d="${path}" fill="none" stroke="var(--primary-color,#03a9f4)" stroke-width="3"/><circle data-stock-label="${escapeHTML(label)}" cx="${x1}" cy="${level}" r="0" fill="var(--primary-color,#03a9f4)"/></g>`;
-    }).join("");
+    const ticks = Array.from(
+      { length: (ceiling - floor) / step + 1 },
+      (_, i) => {
+        const value = floor + i * step;
+        return `<line x1="${left}" x2="${right}" y1="${y(value)}" y2="${y(value)}" stroke="currentColor" opacity=".18"/><text x="${left - 8}" y="${y(value) + 5}" text-anchor="end">${this.number(value)}</text>`;
+      },
+    ).join("");
+    const segments = points
+      .map((point, i) => {
+        const next = points[i + 1];
+        const x1 = x(point.date),
+          x2 = next ? x(next.date) : x1;
+        const level = y(point.stock);
+        const label = `${this.formatDate(point.date)} · ${this.number(point.stock)} ${unit}`;
+        const span = (x2 - x1) / 3;
+        const path = next
+          ? `M ${x1} ${level} C ${x1 + span} ${level}, ${x2 - span} ${y(next.stock)}, ${x2} ${y(next.stock)}`
+          : points.length === 1
+            ? `M ${x1} ${level} h 1`
+            : "";
+        return `<g><path d="${path}" fill="none" stroke="var(--primary-color,#03a9f4)" stroke-width="3"/><circle data-stock-label="${escapeHTML(label)}" cx="${x1}" cy="${level}" r="0" fill="var(--primary-color,#03a9f4)"/></g>`;
+      })
+      .join("");
     const firstDate = escapeHTML(points[0].date);
     const lastDate = escapeHTML(points.at(-1).date);
-    return `<div style="position:relative"><svg id="stockChart" viewBox="0 0 1000 176" role="img" aria-label="${this.t("Évolution du stock")}" fill="currentColor" font-size="15"><text x="${left - 8}" y="15" text-anchor="end">${unit}</text><rect x="${left}" y="${top}" width="${1000 - left}" height="${bottom-top}" fill="transparent"/>${ticks}${segments}<g data-stock-cursor visibility="hidden" pointer-events="none"><line y1="${top}" y2="${bottom}" stroke="currentColor" stroke-dasharray="4 4"/><circle r="5" fill="var(--primary-color,#03a9f4)" stroke="currentColor"/></g><text x="${left}" y="172">${firstDate}</text>${firstDate === lastDate ? "" : `<text x="${right}" y="172" text-anchor="end">${lastDate}</text>`}</svg><div id="stockTooltip" hidden style="position:absolute;pointer-events:none;background:var(--card-background-color);color:var(--primary-text-color);border:1px solid var(--divider-color);border-radius:8px;padding:6px 10px;white-space:nowrap;font-size:13px"></div></div>`;
+    return `<div style="position:relative"><svg id="stockChart" viewBox="0 0 1000 176" role="img" aria-label="${this.t("Évolution du stock")}" fill="currentColor" font-size="15"><text x="${left - 8}" y="15" text-anchor="end">${unit}</text><rect x="${left}" y="${top}" width="${1000 - left}" height="${bottom - top}" fill="transparent"/>${ticks}${segments}<g data-stock-cursor visibility="hidden" pointer-events="none"><line y1="${top}" y2="${bottom}" stroke="currentColor" stroke-dasharray="4 4"/><circle r="5" fill="var(--primary-color,#03a9f4)" stroke="currentColor"/></g><text x="${left}" y="172">${firstDate}</text>${firstDate === lastDate ? "" : `<text x="${right}" y="172" text-anchor="end">${lastDate}</text>`}</svg><div id="stockTooltip" hidden style="position:absolute;pointer-events:none;background:var(--card-background-color);color:var(--primary-text-color);border:1px solid var(--divider-color);border-radius:8px;padding:6px 10px;white-space:nowrap;font-size:13px"></div></div>`;
   }
   downloadBackup() {
     const {
