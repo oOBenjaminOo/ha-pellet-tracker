@@ -1182,6 +1182,42 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
         this.render();
       };
     }
+    const chart = root.querySelector("#stockChart");
+    if (chart) {
+      const points = [...chart.querySelectorAll("[data-stock-label]")];
+      const cursor = chart.querySelector("[data-stock-cursor]");
+      const line = cursor.querySelector("line");
+      const dot = cursor.querySelector("circle");
+      const tooltip = root.querySelector("#stockTooltip");
+      chart.onpointermove = (event) => {
+        const position = new DOMPoint(event.clientX, event.clientY)
+          .matrixTransform(chart.getScreenCTM().inverse());
+        if (position.x < 64 || position.x > 980 || position.y < 24 || position.y > 150) {
+          chart.onpointerleave();
+          return;
+        }
+        const point = points.findLast((point) => Number(point.getAttribute("cx")) <= position.x) || points[0];
+        const level = point.getAttribute("cy");
+        line.setAttribute("x1", position.x);
+        line.setAttribute("x2", position.x);
+        dot.setAttribute("cx", position.x);
+        dot.setAttribute("cy", level);
+        cursor.removeAttribute("visibility");
+        tooltip.textContent = point.dataset.stockLabel;
+        tooltip.hidden = false;
+        const bounds = chart.parentElement.getBoundingClientRect();
+        const x = event.clientX - bounds.left;
+        const offset = x + tooltip.offsetWidth + 16 <= bounds.width
+          ? x + 12
+          : Math.max(0, x - tooltip.offsetWidth - 12);
+        tooltip.style.left = offset + "px";
+        tooltip.style.top = Math.max(0, event.clientY - bounds.top - tooltip.offsetHeight - 8) + "px";
+      };
+      chart.onpointerleave = () => {
+        cursor.setAttribute("visibility", "hidden");
+        tooltip.hidden = true;
+      };
+    }
     if (root.querySelector("#stockSeason"))
       root.querySelector("#stockSeason").onchange = (e) => {
         this.stockSeason = e.target.value;
@@ -1860,11 +1896,11 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
       const level = y(point.stock);
       const label = `${this.formatDate(point.date)} · ${this.number(point.stock)} ${unit}`;
       const path = `M ${x1} ${level} H ${x2}${next ? ` V ${y(next.stock)}` : ""}`;
-      return `<g><title>${escapeHTML(label)}</title><path d="${path}" fill="none" stroke="var(--primary-color,#03a9f4)" stroke-width="3"/><path d="M ${x1} ${level} H ${x2}" fill="none" stroke="transparent" stroke-width="16"/><circle cx="${x1}" cy="${level}" r="${next ? 3 : 4}" fill="var(--primary-color,#03a9f4)"/></g>`;
+      return `<g><path d="${path}" fill="none" stroke="var(--primary-color,#03a9f4)" stroke-width="3"/><circle data-stock-label="${escapeHTML(label)}" cx="${x1}" cy="${level}" r="${next ? 3 : 4}" fill="var(--primary-color,#03a9f4)"/></g>`;
     }).join("");
     const firstDate = escapeHTML(points[0].date);
     const lastDate = escapeHTML(points.at(-1).date);
-    return `<svg viewBox="0 0 1000 176" role="img" aria-label="${this.t("Évolution du stock")}" fill="currentColor" font-size="15"><text x="${left - 8}" y="15" text-anchor="end">${unit}</text>${ticks}${segments}<text x="${left}" y="172">${firstDate}</text>${firstDate === lastDate ? "" : `<text x="${right}" y="172" text-anchor="end">${lastDate}</text>`}</svg>`;
+    return `<div style="position:relative"><svg id="stockChart" viewBox="0 0 1000 176" role="img" aria-label="${this.t("Évolution du stock")}" fill="currentColor" font-size="15"><text x="${left - 8}" y="15" text-anchor="end">${unit}</text>${ticks}${segments}<g data-stock-cursor visibility="hidden" pointer-events="none"><line y1="${top}" y2="${bottom}" stroke="currentColor" stroke-dasharray="4 4"/><circle r="5" fill="var(--primary-color,#03a9f4)" stroke="currentColor"/></g><text x="${left}" y="172">${firstDate}</text>${firstDate === lastDate ? "" : `<text x="${right}" y="172" text-anchor="end">${lastDate}</text>`}</svg><div id="stockTooltip" hidden style="position:absolute;pointer-events:none;background:var(--card-background-color);color:var(--primary-text-color);border:1px solid var(--divider-color);border-radius:8px;padding:6px 10px;white-space:nowrap;font-size:13px"></div></div>`;
   }
   downloadBackup() {
     const {
