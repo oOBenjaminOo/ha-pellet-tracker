@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Remove trailing zeros from bag counts and round displayed autonomy down to whole days.
+- Offer a fully editable dashboard card and add direct links to the stove tracker.
+- Add an integration option for the sidebar shortcut.
+
 ## 1.0.0
 
 First stable release, following user acceptance of the tested beta.

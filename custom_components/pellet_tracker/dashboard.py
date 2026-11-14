@@ -1,5 +1,7 @@
 """Portable Mushroom card configuration, using registered IDs rather than guessed names."""
 
+from urllib.parse import urlencode
+
 from .i18n import text
 
 
@@ -31,6 +33,9 @@ def mushroom_card(
             "tap_action": {"action": "more-info"},
         }
 
+    home = "/pellet-tracker" + (
+        "?" + urlencode({"entry_id": entry_id}) if entry_id else ""
+    )
     cards = [
         {
             "type": "custom:mushroom-title-card",
@@ -47,10 +52,10 @@ def mushroom_card(
         if key in by_key:
             elements.append(
                 {
-                    "type": "state-label",
+                    "type": "custom:pellet-tracker-value",
                     "entity": by_key[key],
-                    "prefix": "≈ " if key == "autonomy_days" else "",
-                    "suffix": tr(" de réserve") if key == "autonomy_days" else "",
+                    "metric": key,
+                    "language": language,
                     "style": {
                         "left": "25%",
                         "top": top,
@@ -162,7 +167,7 @@ def mushroom_card(
                 "padding": "7px",
                 "--mdc-icon-size": "20px",
             },
-            "tap_action": {"action": "navigate", "navigation_path": "/pellet-tracker"},
+            "tap_action": {"action": "navigate", "navigation_path": home},
             "hold_action": {"action": "none"},
             "double_tap_action": {"action": "none"},
         }
@@ -287,8 +292,16 @@ def mushroom_card(
                 if conditions
                 else picture
             )
-    number = tr(
-        "{{ states(entity) | replace('.', ',') if is_number(states(entity)) else 'Indisponible' }}"
+    quantity = (
+        "{% set value = states(entity) %}"
+        "{% if is_number(value) %}"
+        "{{ value | int if value | float == value | int else value"
+        + (" | replace('.', ',')" if language == "fr" else "")
+        + " }} "
+        + tr("sacs cette saison")
+        + "{% else %}"
+        + tr("Indisponible")
+        + "{% endif %}"
     )
     money = tr(
         "{{ (('%.2f' | format(states(entity) | float)) | replace('.', ',')) + ' ' + (state_attr(entity, 'unit_of_measurement') or '') if is_number(states(entity)) else 'Non renseigné' }}"
@@ -297,7 +310,7 @@ def mushroom_card(
         template(
             "used",
             tr("Consommation"),
-            number + tr(" sacs cette saison"),
+            quantity,
             "mdi:fire",
             "orange",
         ),

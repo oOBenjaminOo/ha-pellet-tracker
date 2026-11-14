@@ -1,5 +1,7 @@
 /* Authored interface messages only. Never translate journal or entity data. */
 export const ENGLISH = {
+  "Carte entièrement modifiable": "Fully editable card",
+  "Ouvrir le suivi": "Open tracker",
   "Assistant de configuration": "Setup assistant",
   "1. Observer la chauffe": "1. Observe heating",
   "2. Commander le poêle (facultatif)": "2. Control the stove (optional)",

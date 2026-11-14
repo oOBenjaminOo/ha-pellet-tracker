@@ -56,12 +56,12 @@ class RemovalRecoveryTests(unittest.IsolatedAsyncioTestCase):
         original = deepcopy(values["pellet_tracker.example"])
         fail = True
         with self.assertRaises(OSError):
-            await namespace["async_remove_entry"](None, entry)
+            await namespace["async_remove_entry"](types.SimpleNamespace(data={}), entry)
         self.assertEqual(values["pellet_tracker.example"], original)
         self.assertFalse(any(action == "remove" for action, key in calls))
         fail = False
         calls.clear()
-        await namespace["async_remove_entry"](None, entry)
+        await namespace["async_remove_entry"](types.SimpleNamespace(data={}), entry)
         self.assertEqual(calls[0], ("save", "pellet_tracker_recovery.example"))
         self.assertNotIn("pellet_tracker.example", values)
         archive = values["pellet_tracker_recovery.example"]

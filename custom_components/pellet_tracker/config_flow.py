@@ -91,6 +91,7 @@ class OptionsFlow(config_entries.OptionsFlow):
                 current["stove_control_entity"] + " · indisponible",
             )
         fields = {
+            vol.Required("show_sidebar", default=current["show_sidebar"]): bool,
             vol.Required("name", default=current["name"]): str,
             vol.Required("language", default=current["language"]): vol.In(
                 {"fr": "Français", "en": "English"}

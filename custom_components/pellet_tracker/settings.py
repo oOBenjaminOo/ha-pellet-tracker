@@ -7,6 +7,7 @@ from decimal import Decimal, InvalidOperation
 
 DEFAULTS = {
     "language": "fr",
+    "show_sidebar": True,
     "stove_control_enabled": False,
     "stove_control_entity": "",
     "stove_entity": "",
@@ -71,6 +72,7 @@ def validate_settings(raw: dict, current: dict, choices: dict) -> dict:
         "notify_enabled",
         "notify_recovery",
         "notify_actions",
+        "show_sidebar",
         "stove_control_enabled",
     ):
         if not isinstance(settings[key], bool):

@@ -7,8 +7,8 @@ function environment(){
   let helpers;
   class Element {constructor(){this.isConnected=true;this.style={setProperty(){throw new Error("Custom element constructor must not add attributes");}};}attachShadow(){this.shadowRoot={children:[],replaceChildren:(...children)=>this.shadowRoot.children=children};}}
   const context={HTMLElement:Element,window:{loadCardHelpers:()=>helpers || Promise.resolve({createCardElement:config=>({config})})},customElements:{whenDefined:()=>new Promise(()=>{}),get:()=>null},document:{createElement:()=>({style:{},append(){}})},CustomEvent:class{}};
-  const Card=vm.runInNewContext(readFileSync('custom_components/pellet_tracker/frontend/card.js','utf8')+'\nPelletTrackerCard;',context);
-  return {Card,setHelpers:value=>helpers=value};
+  const {Card, Value}=vm.runInNewContext(readFileSync('custom_components/pellet_tracker/frontend/card.js','utf8')+'\n({Card: PelletTrackerCard, Value: PelletTrackerValue});',context);
+  return {Card,Value,setHelpers:value=>helpers=value};
 }
 const tick=()=>new Promise(r=>setImmediate(r));
 
@@ -44,4 +44,16 @@ test('disconnect cleans subscriptions including late subscription acknowledgemen
   card.setConfig({entry_id:'A'});card.hass={connection:{subscribeMessage:()=>ack.promise}};
   card.isConnected=false;card.disconnectedCallback();ack.resolve(()=>removed++);await tick();
   assert.equal(removed,1);assert.equal(card.child,undefined);
+});
+
+test('card values drop trailing zeros, preserve fractional bags and round autonomy down',()=>{
+  const {Value}=environment(),element=new Value();
+  element.setConfig({entity:'sensor.example', metric:'stock', language:'fr'});
+  for(const [state,label] of [['26.0','26 Sacs'],['1.0','1 Sac'],['2.5','2,5 Sacs'],['unavailable','Indisponible']]){
+    element.hass={states:{'sensor.example':{state}}};
+    assert.equal(element.shadowRoot.textContent,label);
+  }
+  element.setConfig({entity:'sensor.example', metric:'autonomy_days', language:'fr'});
+  element.hass={states:{'sensor.example':{state:'149.5'}}};
+  assert.equal(element.shadowRoot.textContent,'≈ 149 jours de réserve');
 });

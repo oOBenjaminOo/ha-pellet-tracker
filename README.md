@@ -106,6 +106,15 @@ Existing old static Mushroom cards can be replaced once with the live card.
 Native sensors also work in your own cards and automations. YAML dashboards,
 strategy-generated views and occupied panel views require manual placement.
 
+The dashboard setup wizard offers a **Fully editable card** made of individual
+cards. Clear that option to keep the automatic wrapper, which follows tracker
+settings. Use the editable option to replace an existing automatic card if you
+want to customise its layout.
+
+The stove's device page includes a link to its tracker. In the stove's
+integration options, **Show Pellet Tracker in the sidebar** controls the shared
+shortcut. With multiple stoves, the shortcut appears if any stove enables it.
+
 ## Connected stove (optional)
 
 **Settings → Connected stove → Setup assistant** guides observation, optional

@@ -79,7 +79,10 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
         );
         return;
       }
-      this.entry = entries[0].id;
+      const requested = new URLSearchParams(location.search).get("entry_id");
+      this.entry =
+        entries.find((entry) => entry.id === requested)?.id || entries[0].id;
+      this.shadowRoot.querySelector("#journal").value = this.entry;
       await this.load();
     } catch (e) {
       this.notice(e.message || String(e), true);
@@ -468,7 +471,7 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
       root.querySelector("#addMushroom").onclick = () =>
         this.openAddDashboard();
       root.querySelector("#copyMushroom").onclick = () =>
-        this.copyText(JSON.stringify(d.mushroom_card, null, 2));
+        this.copyText(JSON.stringify(d.editable_card, null, 2));
       root.querySelector("#copyCard").onclick = () =>
         this.copyText(this.dashboardYaml());
       root
@@ -547,10 +550,16 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
     const card = JSON.parse(JSON.stringify(this.data.mushroom_card));
     const dialog = this.showEditor(
       this.t("Ajouter la carte Mushroom"),
-      `<p>${this.t("Ajoutez la carte complète du poêle, avec son image et ses capteurs, dans le tableau de bord de votre choix.")}</p><form id="dashboardForm"><label class="wide">${this.t("Tableau de bord")}<select id="targetDashboard" required disabled><option>${this.t("Chargement…")}</option></select></label><label class="wide">${this.t("Vue")}<select id="targetView" required disabled></select></label><label class="wide" id="targetSectionLabel" hidden>Section<select id="targetSection"></select></label><p class="muted wide" id="destinationHelp" role="status"></p><div class="wide row"><button type="button" id="cancelDashboard">${this.t("Annuler")}</button><span class="spacer"></span><button class="primary" type="submit" id="installDashboard" disabled>${this.t("Ajouter la carte")}</button></div></form>`,
+      `<p>${this.t("Ajoutez la carte complète du poêle, avec son image et ses capteurs, dans le tableau de bord de votre choix.")}</p><form id="dashboardForm"><label class="wide">${this.t("Tableau de bord")}<select id="targetDashboard" required disabled><option>${this.t("Chargement…")}</option></select></label><label class="wide">${this.t("Vue")}<select id="targetView" required disabled></select></label><label class="wide" id="targetSectionLabel" hidden>Section<select id="targetSection"></select></label><label class="wide check"><input type="checkbox" id="editableDashboard" checked>${this.t("Carte entièrement modifiable")}</label><p class="muted wide" id="destinationHelp" role="status"></p><div class="wide row"><button type="button" id="cancelDashboard">${this.t("Annuler")}</button><span class="spacer"></span><button class="primary" type="submit" id="installDashboard" disabled>${this.t("Ajouter la carte")}</button></div></form>`,
     );
     if (!dialog) return;
+    const editable = this.data.editable_card;
     const flow = { dialog, card, config: null, generation: 0 };
+    const mode = dialog.querySelector("#editableDashboard");
+    mode.onchange = () => {
+      flow.card = mode.checked ? editable : card;
+    };
+    mode.onchange();
     dialog.querySelector("#cancelDashboard").onclick = () => this.closeEditor();
     dialog.querySelector("#targetDashboard").onchange = () =>
       this.loadDashboardTarget(flow);
@@ -1295,11 +1304,12 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
           `      - type: button\n        name: ${quote(name)}\n        icon: ${icon}\n        tap_action:\n          action: perform-action\n          perform_action: button.press\n          target:\n            entity_id: ${quote(entity(key))}\n          confirmation:\n            text: ${quote(key === "add_bag" ? this.t("Ajouter un sac à la consommation d’aujourd’hui ?") : this.t("Enregistrer un nettoyage pour aujourd’hui ?"))}`,
       )
       .join("\n");
+    const shortcut = `      - type: button\n        name: ${quote(this.t("Ouvrir le suivi"))}\n        icon: mdi:home-outline\n        tap_action:\n          action: navigate\n          navigation_path: ${quote("/pellet-tracker?entry_id=" + encodeURIComponent(this.entry || ""))}`;
     if (!tiles)
       return this.t(
         "# Aucun capteur disponible. Vérifiez que l’intégration est chargée.",
       );
-    return `type: vertical-stack\ncards:\n  - type: markdown\n    content: ${quote("## 🔥 " + this.data.name)}\n  - type: grid\n    columns: 2\n    square: false\n    cards:\n${tiles}${actions ? `\n  - type: grid\n    columns: 2\n    square: false\n    cards:\n${actions}` : ""}\n`;
+    return `type: vertical-stack\ncards:\n  - type: markdown\n    content: ${quote("## 🔥 " + this.data.name)}\n  - type: grid\n    columns: 2\n    square: false\n    cards:\n${tiles}\n  - type: grid\n    columns: 2\n    square: false\n    cards:\n${[actions, shortcut].filter(Boolean).join("\n")}\n`;
   }
   cleaningRule() {
     const cfg = this.data.settings,
@@ -1316,7 +1326,7 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
   }
   dashboardsView() {
     const entities = this.data.entities || [];
-    return `<section><h2>${this.t("Carte Mushroom")}</h2><p>${this.t("Le visuel de poêle fourni avec l’intégration, le stock, l’autonomie, les dépenses, le nettoyage et les actions avec confirmation. Nécessite Mushroom installé depuis HACS.")}</p><div class="row"><button id="addMushroom" class="primary">${this.t("Ajouter à un dashboard")}</button><button id="copyMushroom">${this.t("Copier la carte Mushroom")}</button>${this.dashboardAddedUrl ? `<a href="${escapeHTML(this.dashboardAddedUrl)}">${this.t("Ouvrir le dashboard →")}</a>` : ""}</div><p class="muted">${this.t("Collez ce contenu dans une carte Manuelle. Le format JSON fourni est également du YAML valide. Stock OK : plus de ")}${this.data.settings.low_stock}${this.t(" sacs")}. ${this.t("Entretien : ")}${this.cleaningRule()}${this.t(". Les seuils se règlent dans Réglages.")}</p><details><summary>${this.t("Afficher la configuration Mushroom")}</summary><textarea class="code" readonly aria-label="${this.t("Carte Mushroom YAML")}">${escapeHTML(JSON.stringify(this.data.mushroom_card, null, 2))}</textarea></details></section><section><h2>${this.t("Votre suivi dans vos tableaux de bord")}</h2><p>${this.t("Les données sont disponibles sous forme d’entités Home Assistant : capteurs, alertes et boutons. Vous pouvez les utiliser dans vos cartes et automatisations, indépendamment de cette interface.")}</p><div class="row"><span class="badge">${entities.length}${this.t(" entités pour ce poêle")}</span><span class="badge">${this.t("Cartes natives · aucune carte supplémentaire à installer")}</span></div></section>
+    return `<section><h2>${this.t("Carte Mushroom")}</h2><p>${this.t("Le visuel de poêle fourni avec l’intégration, le stock, l’autonomie, les dépenses, le nettoyage et les actions avec confirmation. Nécessite Mushroom installé depuis HACS.")}</p><div class="row"><button id="addMushroom" class="primary">${this.t("Ajouter à un dashboard")}</button><button id="copyMushroom">${this.t("Copier la carte Mushroom")}</button>${this.dashboardAddedUrl ? `<a href="${escapeHTML(this.dashboardAddedUrl)}">${this.t("Ouvrir le dashboard →")}</a>` : ""}</div><p class="muted">${this.t("Collez ce contenu dans une carte Manuelle. Le format JSON fourni est également du YAML valide. Stock OK : plus de ")}${this.data.settings.low_stock}${this.t(" sacs")}. ${this.t("Entretien : ")}${this.cleaningRule()}${this.t(". Les seuils se règlent dans Réglages.")}</p><details><summary>${this.t("Afficher la configuration Mushroom")}</summary><textarea class="code" readonly aria-label="${this.t("Carte Mushroom YAML")}">${escapeHTML(JSON.stringify(this.data.editable_card, null, 2))}</textarea></details></section><section><h2>${this.t("Votre suivi dans vos tableaux de bord")}</h2><a href="/pellet-tracker?entry_id=${encodeURIComponent(this.entry || "")}">${this.t("Ouvrir le suivi")}</a><p>${this.t("Les données sont disponibles sous forme d’entités Home Assistant : capteurs, alertes et boutons. Vous pouvez les utiliser dans vos cartes et automatisations, indépendamment de cette interface.")}</p><div class="row"><span class="badge">${entities.length}${this.t(" entités pour ce poêle")}</span><span class="badge">${this.t("Cartes natives · aucune carte supplémentaire à installer")}</span></div></section>
       <section><div class="row"><h2>${this.t("Carte prête à ajouter")}</h2><span class="spacer"></span><button id="copyCard" class="primary">${this.t("Copier la carte YAML")}</button></div><ol><li>${this.t("Ouvrez votre dashboard et choisissez « Modifier le tableau de bord ».")}</li><li>${this.t("Ajoutez une carte « Manuelle ».")}</li><li>${this.t("Collez ce YAML et enregistrez.")}</li></ol><p class="muted">${this.t("La carte inclut le stock, la consommation, les dépenses, l’autonomie, le nettoyage et le prix moyen. Les boutons demandent confirmation avant d’enregistrer une opération.")}</p><details><summary>${this.t("Afficher le YAML")}</summary><textarea class="code" readonly aria-label="${this.t("Carte dashboard YAML")}">${escapeHTML(this.dashboardYaml())}</textarea></details></section>
       ${[
         ["sensor", this.t("Capteurs")],

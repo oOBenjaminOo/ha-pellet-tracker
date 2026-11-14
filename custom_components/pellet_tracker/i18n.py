@@ -23,6 +23,7 @@ ENGLISH = {
     "Ajouter un sac": "Add a bag",
     "Consommation du jour": "Today’s consumption",
     "Aujourd’hui": "Today",
+    "sacs cette saison": "bags this season",
     " sacs cette saison": " bags this season",
     " cette saison": " this season",
     "{{ 'Rappel désactivé' if state_attr(entity, 'enabled') == false else ": "{{ 'Reminder disabled' if state_attr(entity, 'enabled') == false else ",
