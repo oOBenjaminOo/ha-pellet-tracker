@@ -82,7 +82,7 @@ class OptionsFlow(config_entries.OptionsFlow):
                 current["stove_entity"] + " · indisponible"
             )
         switches = {
-            "": "—",
+            "": "-",
             **{k: v for k, v in sources.items() if k.startswith("switch.")},
         }
         if current["stove_control_entity"]:
