@@ -116,7 +116,7 @@ class OptionsFlow(config_entries.OptionsFlow):
         for key in ("notify_enabled", "notify_recovery", "notify_actions"):
             fields[vol.Required(key, default=current[key])] = bool
         fields[
-            vol.Required("notification_action", default=current["notification_action"])
+            vol.Optional("notification_action", default=current["notification_action"])
         ] = vol.In(choices)
         return self.async_show_form(
             step_id="init", data_schema=vol.Schema(fields), errors=errors
