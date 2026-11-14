@@ -32,7 +32,7 @@ class PelletTrackerPanel extends HTMLElement {
 
       [hidden]{display:none!important}.tabs{display:flex;gap:6px;overflow-x:auto;padding:8px 0 14px;border-bottom:1px solid var(--divider-color)}.tabs button{white-space:nowrap;background:transparent;border-color:transparent}.tabs button[aria-current],.subtabs button[aria-current]{background:var(--primary-color);color:var(--text-primary-color,#fff)}.page-heading{margin:24px 0 8px}.page-heading h2{font-size:26px;margin:0}.eyebrow{text-transform:uppercase;letter-spacing:.08em;font-size:11px;color:var(--secondary-text-color);margin:0 0 8px}.hero{display:flex;justify-content:space-between;align-items:center;gap:24px;padding:28px;background:linear-gradient(120deg,#ef9f1914,var(--card-background-color))}.stock{font-size:48px;font-weight:700;line-height:1.2}.stock small{display:block;font-size:16px;font-weight:400;margin-top:6px}.quick-actions{display:grid;gap:10px;min-width:220px}.value{font-size:23px}.activity,.entity{padding:16px 0;border-bottom:1px solid var(--divider-color)}.activity:last-child,.entity:last-child{border-bottom:0}.activity-icon{font-size:24px;background:#ef9f1920;padding:8px 14px;border-radius:12px}.two-columns,.season-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.section-title{margin-top:28px}.season-grid section{margin:0}.subtabs{margin:20px 0}.comparison-mode{max-width:450px}.pagination{margin-top:18px}.filters{align-items:end}.filters label{flex:1;min-width:160px}.filters .check{min-width:180px}.code{font-family:monospace;min-height:320px}.entity code{overflow-wrap:anywhere}.footer{margin-top:24px}.entity-list strong{font-weight:500}li{margin-bottom:10px}@media(max-width:700px){.hero{align-items:stretch;flex-direction:column;padding:20px}.two-columns,.season-grid{grid-template-columns:1fr}.entity{align-items:flex-start}.entity>div{width:100%}.tabs{margin:0 -12px;padding-left:12px}.stock{font-size:42px}.page-heading h2{font-size:23px}}
 dialog{color:var(--primary-text-color);background:var(--card-background-color);border:1px solid var(--divider-color);border-radius:18px;padding:24px;width:min(720px,calc(100vw - 32px));max-height:calc(100dvh - 32px);overflow:auto;box-shadow:0 20px 70px #0008}dialog::backdrop{background:#0009}dialog .dialog-heading{margin-bottom:16px}dialog h2{margin:0}dialog form{margin-top:16px}dialog .dialog-heading button{padding:8px 12px}dialog #dialogNotice:empty{display:none}@media(max-width:600px){dialog{padding:18px;width:calc(100vw - 20px);max-height:calc(100dvh - 20px)}dialog form{grid-template-columns:1fr}}
-      </style><header><ha-menu-button></ha-menu-button><span>🔥</span><h1>${this.t("Suivi Granulés")}</h1><span class="badge">${this.t("Version 1.0.0")}</span><span class="spacer"></span><select id="journal" aria-label="${this.t("Poêle")}"></select></header><main><div id="notice" role="status"></div><div id="content">${this.t("Chargement…")}</div></main>`;
+      </style><header><ha-menu-button></ha-menu-button><span>🔥</span><h1>${this.t("Suivi Granulés")}</h1><span class="badge">${this.t("Version 1.1.0")}</span><span class="spacer"></span><select id="journal" aria-label="${this.t("Poêle")}"></select></header><main><div id="notice" role="status"></div><div id="content">${this.t("Chargement…")}</div></main>`;
     this.shadowRoot
       .querySelector("ha-menu-button")
       .addEventListener("click", () =>
@@ -47,6 +47,7 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
       .querySelector("#journal")
       .addEventListener("change", (e) => {
         this.entry = e.target.value;
+        this.stockSeason = null;
         this.editing = null;
         this.settingsDraft = null;
         this.journalSeason = null;
@@ -79,7 +80,10 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
         );
         return;
       }
-      this.entry = entries[0].id;
+      const requested = new URLSearchParams(location.search).get("entry_id");
+      this.entry =
+        entries.find((entry) => entry.id === requested)?.id || entries[0].id;
+      this.shadowRoot.querySelector("#journal").value = this.entry;
       await this.load();
     } catch (e) {
       this.notice(e.message || String(e), true);
@@ -269,7 +273,7 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
     this.view = views[this.view] ? this.view : "overview";
     const root = this.shadowRoot;
     root.querySelector("h1").textContent = this.t("Suivi Granulés");
-    root.querySelector("header .badge").textContent = this.t("Version 1.0.0");
+    root.querySelector("header .badge").textContent = this.t("Version 1.1.0");
     root.querySelector("#journal").setAttribute("aria-label", this.t("Poêle"));
     root.host?.setAttribute("lang", this.language);
     let content;
@@ -468,7 +472,7 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
       root.querySelector("#addMushroom").onclick = () =>
         this.openAddDashboard();
       root.querySelector("#copyMushroom").onclick = () =>
-        this.copyText(JSON.stringify(d.mushroom_card, null, 2));
+        this.copyText(JSON.stringify(d.editable_card, null, 2));
       root.querySelector("#copyCard").onclick = () =>
         this.copyText(this.dashboardYaml());
       root
@@ -547,10 +551,16 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
     const card = JSON.parse(JSON.stringify(this.data.mushroom_card));
     const dialog = this.showEditor(
       this.t("Ajouter la carte Mushroom"),
-      `<p>${this.t("Ajoutez la carte complète du poêle, avec son image et ses capteurs, dans le tableau de bord de votre choix.")}</p><form id="dashboardForm"><label class="wide">${this.t("Tableau de bord")}<select id="targetDashboard" required disabled><option>${this.t("Chargement…")}</option></select></label><label class="wide">${this.t("Vue")}<select id="targetView" required disabled></select></label><label class="wide" id="targetSectionLabel" hidden>Section<select id="targetSection"></select></label><p class="muted wide" id="destinationHelp" role="status"></p><div class="wide row"><button type="button" id="cancelDashboard">${this.t("Annuler")}</button><span class="spacer"></span><button class="primary" type="submit" id="installDashboard" disabled>${this.t("Ajouter la carte")}</button></div></form>`,
+      `<p>${this.t("Ajoutez la carte complète du poêle, avec son image et ses capteurs, dans le tableau de bord de votre choix.")}</p><form id="dashboardForm"><label class="wide">${this.t("Tableau de bord")}<select id="targetDashboard" required disabled><option>${this.t("Chargement…")}</option></select></label><label class="wide">${this.t("Vue")}<select id="targetView" required disabled></select></label><label class="wide" id="targetSectionLabel" hidden>Section<select id="targetSection"></select></label><label class="wide check"><input type="checkbox" id="editableDashboard" checked>${this.t("Carte entièrement modifiable")}</label><p class="muted wide">${this.language === "fr" ? "Case cochée : modifiez la mise en page dans le YAML. Case décochée : Pellet Tracker gère la mise en page." : "Checked: edit the layout in YAML. Unchecked: Pellet Tracker manages the layout."}</p><p class="muted wide" id="destinationHelp" role="status"></p><div class="wide row"><button type="button" id="cancelDashboard">${this.t("Annuler")}</button><span class="spacer"></span><button class="primary" type="submit" id="installDashboard" disabled>${this.t("Ajouter la carte")}</button></div></form>`,
     );
     if (!dialog) return;
+    const editable = this.data.editable_card;
     const flow = { dialog, card, config: null, generation: 0 };
+    const mode = dialog.querySelector("#editableDashboard");
+    mode.onchange = () => {
+      flow.card = mode.checked ? editable : card;
+    };
+    mode.onchange();
     dialog.querySelector("#cancelDashboard").onclick = () => this.closeEditor();
     dialog.querySelector("#targetDashboard").onchange = () =>
       this.loadDashboardTarget(flow);
@@ -1046,6 +1056,7 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
     return `<section class="hero"><div><p class="eyebrow">${this.t("Votre réserve")}</p><div class="stock">${this.number(s.stock)} <small>${this.t("sacs disponibles")}</small></div><p>${s.stock <= this.data.settings.low_stock ? this.t("Le stock est bas. Pensez au prochain réapprovisionnement.") : this.t("Votre stock est à jour avec les dernières saisies.")}</p></div><div class="quick-actions"><button class="primary" data-kind="use">＋ ${this.t("Ajouter une action")}</button></div></section>
       <div class="grid">${metrics.map(([label, value]) => `<div class="card"><div class="muted">${label}</div><div class="value">${escapeHTML(value)}</div></div>`).join("")}</div>
       <p class="muted">${s.autonomy_days == null ? this.t("L’autonomie apparaîtra après au moins 7 jours de recul et 3 dates de consommation récentes.") : `${this.t("Estimation basée sur ")}${s.estimate_sample_days}${this.t(" dates de saisie, sur ")}${s.estimate_window}${this.t(" jours. ")}${s.estimate_status === "limited" ? this.t("Recul encore limité.") : ""}${this.t(" Elle ne prévoit pas la météo.")}`}</p>
+      <details><summary>${this.language === "fr" ? "Comment est calculée l’autonomie ?" : "How is the estimate calculated?"}</summary><p>${this.language === "fr" ? "Le stock restant est divisé par la consommation moyenne par jour. Cette moyenne est calculée sur les consommations saisies cette saison dans la fenêtre configurée (30 jours par défaut), en comptant aussi les jours observés sans saisie. Peu de sacs enregistrés sur cette période peuvent donc donner une autonomie élevée. Si vous chauffez davantage, la réserve durera moins longtemps." : "Remaining stock is divided by average daily consumption. The average uses this season’s recorded consumption within your configured window (30 days by default), including observed days with no entries. A small number of bags recorded during that period can produce a high estimate. If you heat more, your stock will run out sooner."}</p>${s.daily_rate > 0 ? `<p>${this.language === "fr" ? "Sacs consommés · jours observés · sacs par jour" : "Bags consumed · days observed · bags per day"} - ${Math.round(s.daily_rate * s.estimate_observation_days * 10000) / 10000} · ${s.estimate_observation_days} · ${new Intl.NumberFormat(this.locale, {maximumFractionDigits: 4}).format(s.daily_rate)}</p>` : s.autonomy_days == null ? `<p>${this.language === "fr" ? "Jours observés · dates de consommation" : "Days observed · consumption dates"} - ${s.estimate_observation_days}/7 · ${s.estimate_sample_days}/3. ${s.estimate_observation_days >= 7 && s.estimate_sample_days >= 3 ? (this.language === "fr" ? "La dernière consommation est trop ancienne." : "The last recorded use is too old.") : ""}</p>` : ""}</details>
       <section><div class="row"><h2>${this.t("Mes seuils d’alerte")}</h2><span class="spacer"></span><button id="editThresholds">${this.t("Modifier mes seuils")}</button></div><p>${this.t("Stock faible à ")}<strong>${this.number(this.data.settings.low_stock)}${this.t(" sacs ou moins")}</strong>.</p><p>${this.t("Entretien : ")}${this.cleaningRule()}.</p><p class="muted">${this.t("Vous choisissez vos seuils. Les badges et les notifications suivent automatiquement vos réglages.")}</p></section>
       <section><div class="row"><h2>${this.t("Dernières opérations")}</h2><span class="spacer"></span><button data-view="journal">${this.t("Tout l’historique →")}</button></div>${
         this.recentEvents()
@@ -1061,7 +1072,7 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
       }</section>`;
   }
   formatDate(day) {
-    return day ? day.split("-").reverse().join("/") : "—";
+    return day ? day.split("-").reverse().join("/") : "-";
   }
   recentEvents() {
     return [...this.data.events]
@@ -1128,13 +1139,35 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
                     .reverse()
                     .map(
                       ([season, x]) =>
-                        `<tr><td>${escapeHTML(season)}</td><td>${escapeHTML(x.first_start || "—")}</td><td>${this.number(x.used)}</td><td>${this.number(x.purchased)}</td><td>${x.cleanings}</td><td>${this.money(x.spend)}${x.purchase_unpriced ? `<br><span class="muted">${this.number(x.purchase_unpriced)}${this.t(" sacs sans prix")}</span>` : ""}</td><td>${this.money(x.cost)}${x.use_unpriced ? `<br><span class="muted">${this.number(x.use_unpriced)}${this.t(" sacs sans prix")}</span>` : ""}</td><td>${this.money(x.average_price)}</td><td>${this.money(x.min_price)} / ${this.money(x.max_price)}</td></tr>`,
+                        `<tr><td>${escapeHTML(season)}</td><td>${escapeHTML(x.first_start || "-")}</td><td>${this.number(x.used)}</td><td>${this.number(x.purchased)}</td><td>${x.cleanings}</td><td>${this.money(x.spend)}${x.purchase_unpriced ? `<br><span class="muted">${this.number(x.purchase_unpriced)}${this.t(" sacs sans prix")}</span>` : ""}</td><td>${this.money(x.cost)}${x.use_unpriced ? `<br><span class="muted">${this.number(x.use_unpriced)}${this.t(" sacs sans prix")}</span>` : ""}</td><td>${this.money(x.average_price)}</td><td>${this.money(x.min_price)} / ${this.money(x.max_price)}</td></tr>`,
                     )
                     .join("")}</tbody></table></div></section>`
                 : this.sameDateStats()
             }`
-          : `<section><h2>${this.t("Évolution du stock")}</h2><p class="muted">${this.t("Historique disponible depuis le premier inventaire enregistré. Les passages entre saisons conservent le stock.")}</p>${this.chart(this.data.summary.stock_history)}</section>`
+          : `<section>${this.stockHistoryBySeason(s)}</section>`
     }`;
+  }
+  stockHistoryBySeason(summary) {
+    const seasons = Object.keys(summary.seasons).sort().reverse();
+    const season = seasons.includes(this.stockSeason) ? this.stockSeason : summary.season;
+    const month = String(this.data.season_month).padStart(2, "0");
+    const [firstYear, nextYear] = season.split("/");
+    const start = `${firstYear}-${month}-01`;
+    const end = `${nextYear}-${month}-01`;
+    const history = summary.stock_history;
+    const points = history.filter(({ date }) => date >= start && date < end);
+    const opening = history.findLast(({ date }) => date < start);
+    if (opening && points[0]?.date !== start) {
+      points.unshift({ date: start, stock: opening.stock });
+    }
+    if (season === summary.season && points.length) {
+      const today = this.localDate();
+      if (points.at(-1).date < today)
+        points.push({ date: today, stock: points.at(-1).stock });
+    }
+    // Daily resolution: keep the closing balance when several operations share a date.
+    const dailyPoints = [...new Map(points.map((point) => [point.date, point])).values()];
+    return `<div class="row" style="flex-wrap:wrap"><h2>${this.t("Évolution du stock")}</h2><span class="spacer"></span><label>${this.t("Saison")} <select id="stockSeason">${seasons.map((key) => `<option value="${escapeHTML(key)}" ${key === season ? "selected" : ""}>${escapeHTML(key)}</option>`).join("")}</select></label></div><p class="muted">${this.t("Historique disponible depuis le premier inventaire enregistré. Les passages entre saisons conservent le stock.")}</p>${this.chart(dailyPoints)}`;
   }
   bindStatisticsView() {
     const root = this.shadowRoot;
@@ -1156,6 +1189,55 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
         this.render();
       };
     }
+    const chart = root.querySelector("#stockChart");
+    if (chart) {
+      const points = [...chart.querySelectorAll("[data-stock-label]")].map((point) => ({
+        x: Number(point.getAttribute("cx")),
+        y: Number(point.getAttribute("cy")),
+        label: point.dataset.stockLabel,
+      }));
+      const cursor = chart.querySelector("[data-stock-cursor]");
+      const line = cursor.querySelector("line");
+      const dot = cursor.querySelector("circle");
+      const tooltip = root.querySelector("#stockTooltip");
+      chart.onpointermove = (event) => {
+        const position = new DOMPoint(event.clientX, event.clientY)
+          .matrixTransform(chart.getScreenCTM().inverse());
+        if (position.x < 64 || position.x > 1000 || position.y < 24 || position.y > 150) {
+          chart.onpointerleave();
+          return;
+        }
+        const plotX = Math.min(position.x, 980);
+        const index = Math.max(0, points.findLastIndex((point) => point.x <= plotX));
+        const point = points[index];
+        const next = points[index + 1];
+        const progress = next ? Math.max(0, (plotX - point.x) / (next.x - point.x)) : 0;
+        const level = next ? point.y + (next.y - point.y) * progress ** 2 * (3 - 2 * progress) : point.y;
+        line.setAttribute("x1", plotX);
+        line.setAttribute("x2", plotX);
+        dot.setAttribute("cx", plotX);
+        dot.setAttribute("cy", level);
+        cursor.removeAttribute("visibility");
+        tooltip.textContent = point.label;
+        tooltip.hidden = false;
+        const bounds = chart.parentElement.getBoundingClientRect();
+        const x = event.clientX - bounds.left;
+        const offset = x + tooltip.offsetWidth + 16 <= bounds.width
+          ? x + 12
+          : Math.max(0, x - tooltip.offsetWidth - 12);
+        tooltip.style.left = offset + "px";
+        tooltip.style.top = Math.max(0, event.clientY - bounds.top - tooltip.offsetHeight - 8) + "px";
+      };
+      chart.onpointerleave = () => {
+        cursor.setAttribute("visibility", "hidden");
+        tooltip.hidden = true;
+      };
+    }
+    if (root.querySelector("#stockSeason"))
+      root.querySelector("#stockSeason").onchange = (e) => {
+        this.stockSeason = e.target.value;
+        this.render();
+      };
     if (root.querySelector("#compareMode"))
       root.querySelector("#compareMode").onchange = (e) => {
         this.compareMode = e.target.value;
@@ -1206,7 +1288,7 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
           .slice(this.journalPage * 25, (this.journalPage + 1) * 25)
           .map(
             (x) =>
-              `<tr class="${x.voided ? "voided" : ""}"><td>${this.formatDate(x.date)}</td><td>${escapeHTML(this.labels[x.kind])}</td><td>${["use", "purchase", "adjust", "loss"].includes(x.kind) ? this.number(Number(x.quantity)) : "—"}</td><td>${x.unit_price == null ? "—" : this.money(Number(x.unit_price))}</td><td class="comment">${escapeHTML(x.comment)}</td><td>${x.voided ? `<button data-restore="${escapeHTML(x.id)}">${this.t("Rétablir")}</button>` : `<button data-edit="${escapeHTML(x.id)}">${this.t("Modifier")}</button> <button data-void="${escapeHTML(x.id)}">${this.t("Annuler")}</button>`}</td></tr>`,
+              `<tr class="${x.voided ? "voided" : ""}"><td>${this.formatDate(x.date)}</td><td>${escapeHTML(this.labels[x.kind])}</td><td>${["use", "purchase", "adjust", "loss"].includes(x.kind) ? this.number(Number(x.quantity)) : "-"}</td><td>${x.unit_price == null ? "-" : this.money(Number(x.unit_price))}</td><td class="comment">${escapeHTML(x.comment)}</td><td>${x.voided ? `<button data-restore="${escapeHTML(x.id)}">${this.t("Rétablir")}</button>` : `<button data-edit="${escapeHTML(x.id)}">${this.t("Modifier")}</button> <button data-void="${escapeHTML(x.id)}">${this.t("Annuler")}</button>`}</td></tr>`,
           )
           .join("") ||
         this.t(
@@ -1295,11 +1377,12 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
           `      - type: button\n        name: ${quote(name)}\n        icon: ${icon}\n        tap_action:\n          action: perform-action\n          perform_action: button.press\n          target:\n            entity_id: ${quote(entity(key))}\n          confirmation:\n            text: ${quote(key === "add_bag" ? this.t("Ajouter un sac à la consommation d’aujourd’hui ?") : this.t("Enregistrer un nettoyage pour aujourd’hui ?"))}`,
       )
       .join("\n");
+    const shortcut = `      - type: button\n        name: ${quote(this.t("Ouvrir le suivi"))}\n        icon: mdi:home-outline\n        tap_action:\n          action: navigate\n          navigation_path: ${quote("/pellet-tracker?entry_id=" + encodeURIComponent(this.entry || ""))}`;
     if (!tiles)
       return this.t(
         "# Aucun capteur disponible. Vérifiez que l’intégration est chargée.",
       );
-    return `type: vertical-stack\ncards:\n  - type: markdown\n    content: ${quote("## 🔥 " + this.data.name)}\n  - type: grid\n    columns: 2\n    square: false\n    cards:\n${tiles}${actions ? `\n  - type: grid\n    columns: 2\n    square: false\n    cards:\n${actions}` : ""}\n`;
+    return `type: vertical-stack\ncards:\n  - type: markdown\n    content: ${quote("## 🔥 " + this.data.name)}\n  - type: grid\n    columns: 2\n    square: false\n    cards:\n${tiles}\n  - type: grid\n    columns: 2\n    square: false\n    cards:\n${[actions, shortcut].filter(Boolean).join("\n")}\n`;
   }
   cleaningRule() {
     const cfg = this.data.settings,
@@ -1316,7 +1399,7 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
   }
   dashboardsView() {
     const entities = this.data.entities || [];
-    return `<section><h2>${this.t("Carte Mushroom")}</h2><p>${this.t("Le visuel de poêle fourni avec l’intégration, le stock, l’autonomie, les dépenses, le nettoyage et les actions avec confirmation. Nécessite Mushroom installé depuis HACS.")}</p><div class="row"><button id="addMushroom" class="primary">${this.t("Ajouter à un dashboard")}</button><button id="copyMushroom">${this.t("Copier la carte Mushroom")}</button>${this.dashboardAddedUrl ? `<a href="${escapeHTML(this.dashboardAddedUrl)}">${this.t("Ouvrir le dashboard →")}</a>` : ""}</div><p class="muted">${this.t("Collez ce contenu dans une carte Manuelle. Le format JSON fourni est également du YAML valide. Stock OK : plus de ")}${this.data.settings.low_stock}${this.t(" sacs")}. ${this.t("Entretien : ")}${this.cleaningRule()}${this.t(". Les seuils se règlent dans Réglages.")}</p><details><summary>${this.t("Afficher la configuration Mushroom")}</summary><textarea class="code" readonly aria-label="${this.t("Carte Mushroom YAML")}">${escapeHTML(JSON.stringify(this.data.mushroom_card, null, 2))}</textarea></details></section><section><h2>${this.t("Votre suivi dans vos tableaux de bord")}</h2><p>${this.t("Les données sont disponibles sous forme d’entités Home Assistant : capteurs, alertes et boutons. Vous pouvez les utiliser dans vos cartes et automatisations, indépendamment de cette interface.")}</p><div class="row"><span class="badge">${entities.length}${this.t(" entités pour ce poêle")}</span><span class="badge">${this.t("Cartes natives · aucune carte supplémentaire à installer")}</span></div></section>
+    return `<section><h2>${this.t("Carte Mushroom")}</h2><p>${this.t("Le visuel de poêle fourni avec l’intégration, le stock, l’autonomie, les dépenses, le nettoyage et les actions avec confirmation. Nécessite Mushroom installé depuis HACS.")}</p><div class="row"><button id="addMushroom" class="primary">${this.t("Ajouter à un dashboard")}</button><button id="copyMushroom">${this.t("Copier la carte Mushroom")}</button>${this.dashboardAddedUrl ? `<a href="${escapeHTML(this.dashboardAddedUrl)}">${this.t("Ouvrir le dashboard →")}</a>` : ""}</div><p class="muted">${this.t("Collez ce contenu dans une carte Manuelle. Le format JSON fourni est également du YAML valide. Stock OK : plus de ")}${this.data.settings.low_stock}${this.t(" sacs")}. ${this.t("Entretien : ")}${this.cleaningRule()}${this.t(". Les seuils se règlent dans Réglages.")}</p><p>${this.language === "fr" ? "Pour personnaliser une carte déjà installée, copiez la configuration Mushroom ci-dessous et remplacez le contenu de son éditeur YAML." : "To customize an existing card, copy the Mushroom configuration below and replace the contents of its YAML editor."}</p><details><summary>${this.t("Afficher la configuration Mushroom")}</summary><textarea class="code" readonly aria-label="${this.t("Carte Mushroom YAML")}">${escapeHTML(JSON.stringify(this.data.editable_card, null, 2))}</textarea></details></section><section><h2>${this.t("Votre suivi dans vos tableaux de bord")}</h2><a href="/pellet-tracker?entry_id=${encodeURIComponent(this.entry || "")}">${this.t("Ouvrir le suivi")}</a><p>${this.t("Les données sont disponibles sous forme d’entités Home Assistant : capteurs, alertes et boutons. Vous pouvez les utiliser dans vos cartes et automatisations, indépendamment de cette interface.")}</p><div class="row"><span class="badge">${entities.length}${this.t(" entités pour ce poêle")}</span><span class="badge">${this.t("Cartes natives · aucune carte supplémentaire à installer")}</span></div></section>
       <section><div class="row"><h2>${this.t("Carte prête à ajouter")}</h2><span class="spacer"></span><button id="copyCard" class="primary">${this.t("Copier la carte YAML")}</button></div><ol><li>${this.t("Ouvrez votre dashboard et choisissez « Modifier le tableau de bord ».")}</li><li>${this.t("Ajoutez une carte « Manuelle ».")}</li><li>${this.t("Collez ce YAML et enregistrez.")}</li></ol><p class="muted">${this.t("La carte inclut le stock, la consommation, les dépenses, l’autonomie, le nettoyage et le prix moyen. Les boutons demandent confirmation avant d’enregistrer une opération.")}</p><details><summary>${this.t("Afficher le YAML")}</summary><textarea class="code" readonly aria-label="${this.t("Carte dashboard YAML")}">${escapeHTML(this.dashboardYaml())}</textarea></details></section>
       ${[
         ["sensor", this.t("Capteurs")],
@@ -1535,7 +1618,7 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
       choices[cfg.notification_action] = this.t(
         "Destination indisponible - en choisir une autre",
       );
-    return `<section id="settingsSection"><h2>${this.t("Paramètres et notifications")}</h2><p class="muted">${this.t("Les alertes regroupées apparaissent dans Home Assistant. Une destination supplémentaire peut être choisie parmi tes services de notification et tes scripts existants. Les scripts reçoivent title, message, kind et entry_id. Devise : ")}${escapeHTML(this.data.currency)}${this.t(" · début de saison : 1er ")}${this.seasonDates().label}.</p>${this.data.notification_error ? `<p class="error">${this.t("Dernier échec de notification : ")}${escapeHTML(this.data.notification_error)}</p>` : ""}<p class="muted">${this.t("Stock faible : stock inférieur ou égal au seuil. Nettoyage : seuil de sacs OU seuil de jours atteint, avec au moins un sac utilisé depuis le nettoyage. Un réapprovisionnement ne déclenche pas le compteur de nettoyage. Un seuil de jours à 0 le désactive.")}</p><form id="settingsForm"><label>${this.t("Langue du suivi")}<select name="language"><option value="fr" ${cfg.language !== "en" ? "selected" : ""}>Français</option><option value="en" ${cfg.language === "en" ? "selected" : ""}>English</option></select></label><p class="wide muted">${this.t("La langue s’applique après enregistrement. La carte Pellet Tracker se met à jour automatiquement.")}</p><label>${this.t("Nom du poêle")}<input name="name" value="${escapeHTML(cfg.name)}" maxlength="80" required></label>${numbers.map(([key, label, min, max]) => `<label>${label}<input type="number" name="${key}" min="${min}" max="${max}" step="1" value="${cfg[key]}" required></label>`).join("")}<div class="row wide"><h2>${this.t("Poêle connecté · facultatif")}</h2><button type="button" id="openStoveWizard">${this.t("Assistant de configuration")}</button></div><p class="wide muted">${this.t("Choisissez une entité qui indique la chauffe réelle. Pour une entité climate, l’attribut hvac_action peut fournir heating/idle s’il est exposé ; le mode heat ne signifie pas forcément que le poêle chauffe. Sans association, l’image reste sans flamme et l’état est « non renseigné ». Les états absents ou non reconnus restent inconnus.")}</p><label class="wide">${this.t("Entité d’état du poêle")}<select name="stove_entity">${Object.entries(
+    return `<section><h2>${this.language === "fr" ? "Affichage dans la barre latérale" : "Sidebar visibility"}</h2><p>${this.language === "fr" ? "Cliquez sur Configurer à côté du poêle pour modifier son affichage." : "Select Configure next to the stove to change sidebar visibility."}</p><a href="/config/integrations/integration/pellet_tracker">${this.language === "fr" ? "Ouvrir les options de Pellet Tracker" : "Open Pellet Tracker options"}</a></section><section id="settingsSection"><h2>${this.t("Paramètres et notifications")}</h2><p class="muted">${this.t("Les alertes regroupées apparaissent dans Home Assistant. Une destination supplémentaire peut être choisie parmi tes services de notification et tes scripts existants. Les scripts reçoivent title, message, kind et entry_id. Devise : ")}${escapeHTML(this.data.currency)}${this.t(" · début de saison : 1er ")}${this.seasonDates().label}.</p>${this.data.notification_error ? `<p class="error">${this.t("Dernier échec de notification : ")}${escapeHTML(this.data.notification_error)}</p>` : ""}<p class="muted">${this.t("Stock faible : stock inférieur ou égal au seuil. Nettoyage : seuil de sacs OU seuil de jours atteint, avec au moins un sac utilisé depuis le nettoyage. Un réapprovisionnement ne déclenche pas le compteur de nettoyage. Un seuil de jours à 0 le désactive.")}</p><form id="settingsForm"><label>${this.t("Langue du suivi")}<select name="language"><option value="fr" ${cfg.language !== "en" ? "selected" : ""}>Français</option><option value="en" ${cfg.language === "en" ? "selected" : ""}>English</option></select></label><p class="wide muted">${this.t("La langue s’applique après enregistrement. La carte Pellet Tracker se met à jour automatiquement.")}</p><label>${this.t("Nom du poêle")}<input name="name" value="${escapeHTML(cfg.name)}" maxlength="80" required></label>${numbers.map(([key, label, min, max]) => `<label>${label}<input type="number" name="${key}" min="${min}" max="${max}" step="1" value="${cfg[key]}" required></label>`).join("")}<div class="row wide"><h2>${this.t("Poêle connecté · facultatif")}</h2><button type="button" id="openStoveWizard">${this.t("Assistant de configuration")}</button></div><p class="wide muted">${this.t("Choisissez une entité qui indique la chauffe réelle. Pour une entité climate, l’attribut hvac_action peut fournir heating/idle s’il est exposé ; le mode heat ne signifie pas forcément que le poêle chauffe. Sans association, l’image reste sans flamme et l’état est « non renseigné ». Les états absents ou non reconnus restent inconnus.")}</p><label class="wide">${this.t("Entité d’état du poêle")}<select name="stove_entity">${Object.entries(
       sources,
     )
       .map(
@@ -1662,7 +1745,7 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
         control = document.createElement("p");
       observed.textContent =
         this.t("Observation : ") +
-        (sources[form.elements.stove_entity.value] || "—") +
+        (sources[form.elements.stove_entity.value] || "-") +
         (form.elements.stove_attribute.value
           ? " · " + form.elements.stove_attribute.value
           : "");
@@ -1810,22 +1893,35 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
   chart(points) {
     if (!points.length)
       return this.t('<p class="muted">Aucun mouvement enregistré.</p>');
-    const start = Date.parse(points[0].date),
-      end = Date.parse(points.at(-1).date),
-      max = Math.max(1, ...points.map((p) => p.stock));
-    const xy = points
-      .flatMap((p, i) => {
-        const x =
-          20 +
-          ((Date.parse(p.date) - start) / Math.max(86400000, end - start)) *
-            960;
-        return [
-          ...(i ? [`${x},${130 - (points[i - 1].stock / max) * 110}`] : []),
-          `${x},${130 - (p.stock / max) * 110}`,
-        ];
-      })
-      .join(" ");
-    return `<svg viewBox="0 0 1000 150" role="img" aria-label="${this.t("Stock de ")}${escapeHTML(points[0].date)}${this.t(" à ")}${escapeHTML(points.at(-1).date)}"><line x1="20" y1="130" x2="980" y2="130" stroke="currentColor" opacity=".2"/><polyline points="${xy}" fill="none" stroke="var(--primary-color,#03a9f4)" stroke-width="3"/><text x="20" y="148" fill="currentColor" font-size="12">${escapeHTML(points[0].date)}</text><text x="980" y="148" text-anchor="end" fill="currentColor" font-size="12">${escapeHTML(points.at(-1).date)}</text><text x="20" y="15" fill="currentColor" font-size="12">${max}${this.t(" sacs (max.)")}</text></svg>`;
+    const start = Date.parse(points[0].date);
+    const duration = Math.max(86400000, Date.parse(points.at(-1).date) - start);
+    const left = 64, right = 980, top = 24, bottom = 150;
+    const max = Math.max(1, ...points.map(({ stock }) => stock));
+    const min = Math.min(0, ...points.map(({ stock }) => stock));
+    const step = Math.ceil((max - min) / 4);
+    const floor = Math.floor(min / step) * step;
+    const ceiling = Math.ceil(max / step) * step;
+    const x = (date) => left + ((Date.parse(date) - start) / duration) * (right - left);
+    const y = (stock) => bottom - ((stock - floor) / (ceiling - floor)) * (bottom - top);
+    const unit = this.language === "fr" ? "sacs" : "bags";
+    const ticks = Array.from({ length: (ceiling - floor) / step + 1 }, (_, i) => {
+      const value = floor + i * step;
+      return `<line x1="${left}" x2="${right}" y1="${y(value)}" y2="${y(value)}" stroke="currentColor" opacity=".18"/><text x="${left - 8}" y="${y(value) + 5}" text-anchor="end">${this.number(value)}</text>`;
+    }).join("");
+    const segments = points.map((point, i) => {
+      const next = points[i + 1];
+      const x1 = x(point.date), x2 = next ? x(next.date) : x1;
+      const level = y(point.stock);
+      const label = `${this.formatDate(point.date)} · ${this.number(point.stock)} ${unit}`;
+      const span = (x2 - x1) / 3;
+      const path = next
+        ? `M ${x1} ${level} C ${x1 + span} ${level}, ${x2 - span} ${y(next.stock)}, ${x2} ${y(next.stock)}`
+        : points.length === 1 ? `M ${x1} ${level} h 1` : "";
+      return `<g><path d="${path}" fill="none" stroke="var(--primary-color,#03a9f4)" stroke-width="3"/><circle data-stock-label="${escapeHTML(label)}" cx="${x1}" cy="${level}" r="0" fill="var(--primary-color,#03a9f4)"/></g>`;
+    }).join("");
+    const firstDate = escapeHTML(points[0].date);
+    const lastDate = escapeHTML(points.at(-1).date);
+    return `<div style="position:relative"><svg id="stockChart" viewBox="0 0 1000 176" role="img" aria-label="${this.t("Évolution du stock")}" fill="currentColor" font-size="15"><text x="${left - 8}" y="15" text-anchor="end">${unit}</text><rect x="${left}" y="${top}" width="${1000 - left}" height="${bottom-top}" fill="transparent"/>${ticks}${segments}<g data-stock-cursor visibility="hidden" pointer-events="none"><line y1="${top}" y2="${bottom}" stroke="currentColor" stroke-dasharray="4 4"/><circle r="5" fill="var(--primary-color,#03a9f4)" stroke="currentColor"/></g><text x="${left}" y="172">${firstDate}</text>${firstDate === lastDate ? "" : `<text x="${right}" y="172" text-anchor="end">${lastDate}</text>`}</svg><div id="stockTooltip" hidden style="position:absolute;pointer-events:none;background:var(--card-background-color);color:var(--primary-text-color);border:1px solid var(--divider-color);border-radius:8px;padding:6px 10px;white-space:nowrap;font-size:13px"></div></div>`;
   }
   downloadBackup() {
     const {
@@ -1960,7 +2056,7 @@ dialog{color:var(--primary-text-color);background:var(--card-background-color);b
   }
   costWarning(season) {
     if (!season || (season.spend != null && season.cost != null)) return "";
-    return `<p class="warning" role="note">${this.t("Coût partiel — certains achats ou sacs consommés n’ont pas de prix. Les montants manquants ne sont pas comptés comme zéro.")}</p>`;
+    return `<p class="warning" role="note">${this.t("Coût partiel - certains achats ou sacs consommés n’ont pas de prix. Les montants manquants ne sont pas comptés comme zéro.")}</p>`;
   }
   async mutate(operation, payload, revision = this.data.revision) {
     if (this.busy) return;

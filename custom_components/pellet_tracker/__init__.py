@@ -29,7 +29,7 @@ from .dashboard import mushroom_card
 from .ledger import Ledger
 from .notifications import Notifications
 from .services import async_register_services
-from .settings import notification_choices, validate_settings
+from .settings import merged_settings, notification_choices, validate_settings
 from .stove import stove_choices, stove_status
 
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
@@ -97,6 +97,13 @@ def ui_export(hass, ledger):
             "type": "custom:pellet-tracker-card",
             "entry_id": ledger.entry.entry_id,
         },
+        "editable_card": mushroom_card(
+            ledger.entry.title,
+            entities,
+            ledger.settings["language"],
+            ledger.settings,
+            ledger.entry.entry_id,
+        ),
         "card_language": ledger.settings["language"],
     }
 
@@ -122,16 +129,32 @@ async def async_setup(hass, config):
         ]
     )
     frontend.add_extra_js_url(hass, f"/pellet_tracker_static/card.js?v={VERSION}")
+    await register_panel(hass)
+    return True
+
+
+async def register_panel(hass, *, replace=False):
+    """Keep the page accessible even if its sidebar shortcut is hidden."""
+    visible = any(
+        merged_settings(entry)["show_sidebar"]
+        for entry in hass.config_entries.async_entries(DOMAIN)
+        if entry.disabled_by is None
+    )
+    visibility_key = f"{DOMAIN}_sidebar_visible"
+    if replace and hass.data.get(visibility_key) == visible:
+        return
+    if replace:
+        frontend.async_remove_panel(hass, "pellet-tracker")
     await panel_custom.async_register_panel(
         hass,
         webcomponent_name="pellet-tracker-panel",
         frontend_url_path="pellet-tracker",
-        sidebar_title="Pellet Tracker",
+        sidebar_title="Pellet Tracker" if visible else None,
         sidebar_icon="mdi:fire",
         module_url=f"/pellet_tracker_static/panel.js?v={VERSION}",
         require_admin=True,
     )
-    return True
+    hass.data[visibility_key] = visible
 
 
 @callback
@@ -173,6 +196,7 @@ async def async_setup_entry(hass, entry):
         async_track_time_change(hass, ledger.async_refresh_date, minute=0, second=1)
     )
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    await register_panel(hass, replace=True)
     hass.async_create_task(ledger.notifier.async_check())
     return True
 
@@ -186,6 +210,7 @@ async def async_unload_entry(hass, entry):
                 ledger.notifier.cancel_snooze()
             persistent_notification.async_dismiss(hass, ledger.notifier.notification_id)
         hass.data[DOMAIN].pop(entry.entry_id, None)
+        await register_panel(hass, replace=True)
         return True
     return False
 
@@ -248,6 +273,7 @@ async def ws_mutate(hass, connection, msg):
 
 
 async def async_options_updated(hass, entry):
+    await register_panel(hass, replace=True)
     ledger = hass.data[DOMAIN].get(entry.entry_id)
     if ledger:
         title = entry.options.get("name", entry.title)
@@ -424,6 +450,8 @@ async def async_remove_entry(hass, entry):
             }
         )
     await source.async_remove()
+    if f"{DOMAIN}_sidebar_visible" in hass.data:
+        await register_panel(hass, replace=True)
     await Store(hass, 1, f"{DOMAIN}_notifications.{entry.entry_id}").async_remove()
 
 

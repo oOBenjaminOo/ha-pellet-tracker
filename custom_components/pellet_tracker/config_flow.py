@@ -82,7 +82,7 @@ class OptionsFlow(config_entries.OptionsFlow):
                 current["stove_entity"] + " · indisponible"
             )
         switches = {
-            "": "—",
+            "": "-",
             **{k: v for k, v in sources.items() if k.startswith("switch.")},
         }
         if current["stove_control_entity"]:
@@ -91,6 +91,7 @@ class OptionsFlow(config_entries.OptionsFlow):
                 current["stove_control_entity"] + " · indisponible",
             )
         fields = {
+            vol.Required("show_sidebar", default=current["show_sidebar"]): bool,
             vol.Required("name", default=current["name"]): str,
             vol.Required("language", default=current["language"]): vol.In(
                 {"fr": "Français", "en": "English"}
@@ -115,7 +116,7 @@ class OptionsFlow(config_entries.OptionsFlow):
         for key in ("notify_enabled", "notify_recovery", "notify_actions"):
             fields[vol.Required(key, default=current[key])] = bool
         fields[
-            vol.Required("notification_action", default=current["notification_action"])
+            vol.Optional("notification_action", default=current["notification_action"])
         ] = vol.In(choices)
         return self.async_show_form(
             step_id="init", data_schema=vol.Schema(fields), errors=errors

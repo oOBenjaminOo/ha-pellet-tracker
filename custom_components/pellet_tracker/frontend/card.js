@@ -148,7 +148,7 @@ class PelletTrackerCardEditor extends HTMLElement {
     label.style.cssText = "display:block;padding:16px";
     const empty = document.createElement("option");
     empty.value = "";
-    empty.textContent = "—";
+    empty.textContent = "-";
     select.append(empty);
     for (const entry of this.entries || []) {
       const option = document.createElement("option");
@@ -171,8 +171,58 @@ class PelletTrackerCardEditor extends HTMLElement {
     this.shadowRoot.replaceChildren(label);
   }
 }
+// Display formatting belongs to the card, so automation sensor values stay numeric.
+class PelletTrackerValue extends HTMLElement {
+  constructor() {
+    super();
+    this.attachShadow({ mode: "open" });
+  }
+  setConfig(config) {
+    this.config = config;
+    this.render();
+  }
+  set hass(hass) {
+    this._hass = hass;
+    this.render();
+  }
+  render() {
+    if (!this.config || !this._hass) return;
+    const { entity, metric, language } = this.config;
+    const raw = this._hass.states[entity]?.state;
+    const value = raw == null || raw.trim() === "" ? NaN : Number(raw);
+    const french = language === "fr";
+    if (!Number.isFinite(value)) {
+      this.shadowRoot.textContent = french ? "Indisponible" : "Unavailable";
+      return;
+    }
+    const days = metric === "autonomy_days";
+    const amount = days ? Math.floor(value) : value;
+    const formatted = new Intl.NumberFormat(language, {
+      maximumFractionDigits: 4,
+    }).format(amount);
+    const unit = days
+      ? french
+        ? amount === 1
+          ? "Jour de réserve"
+          : "Jours de réserve"
+        : amount === 1
+          ? "day in reserve"
+          : "days in reserve"
+      : french
+        ? amount === 1
+          ? "Sac"
+          : "Sacs"
+        : amount === 1
+          ? "Bag"
+          : "Bags";
+    this.shadowRoot.textContent = (days ? "≈ " : "") + formatted + " " + unit;
+  }
+}
+
 // Wait for the HA root before registering in installations using scoped registries.
 customElements.whenDefined("home-assistant").then(() => {
+  if (!customElements.get("pellet-tracker-value"))
+    customElements.define("pellet-tracker-value", PelletTrackerValue);
   if (!customElements.get("pellet-tracker-card"))
     customElements.define("pellet-tracker-card", PelletTrackerCard);
   if (!customElements.get("pellet-tracker-card-editor"))

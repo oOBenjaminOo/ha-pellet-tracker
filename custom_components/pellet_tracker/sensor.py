@@ -60,6 +60,7 @@ class PelletSensor(CoordinatorEntity, SensorEntity):
             "identifiers": {(DOMAIN, ledger.entry.entry_id)},
             "name": ledger.entry.title,
             "manufacturer": "Pellet Tracker",
+            "configuration_url": f"homeassistant://pellet-tracker?entry_id={ledger.entry.entry_id}",
         }
 
     @property

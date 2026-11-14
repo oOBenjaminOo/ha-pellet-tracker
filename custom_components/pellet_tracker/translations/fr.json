@@ -127,6 +127,7 @@
           "stove_on_states": "États allumé, séparés par des virgules",
           "stove_off_states": "États éteint, séparés par des virgules",
           "language": "Langue du suivi",
+          "show_sidebar": "Afficher Pellet Tracker dans la barre latérale",
           "stove_control_enabled": "Autoriser la commande depuis la carte",
           "stove_control_entity": "Switch de commande du poêle"
         }

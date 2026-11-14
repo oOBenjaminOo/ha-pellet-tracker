@@ -4,7 +4,7 @@
 
 [English](README.md) · [Nouveautés](CHANGELOG.md) · [Signaler un problème](https://github.com/oOBenjaminOo/ha-pellet-tracker/issues)
 
-![Carte du poêle — données fictives](docs/images/dashboard-fr.jpg)
+![Carte du poêle - données fictives](docs/images/dashboard-fr.jpg)
 
 Projet original de [@oOBenjaminOo](https://github.com/oOBenjaminOo), utilisable avec
 un poêle connecté ou non. Aucun compte cloud ni serveur MQTT n’est nécessaire au suivi.
@@ -78,8 +78,11 @@ jours nécessite une consommation depuis le dernier nettoyage.
 ## Ajouter la carte au dashboard
 
 Installer **Mushroom** dans HACS, puis **Dashboards → Ajouter à un dashboard**.
-Choisir le tableau, la vue et la section, puis confirmer. La carte suit ensuite
-la langue et les réglages du poêle automatiquement.
+Choisir le tableau, la vue et la section, puis confirmer. L’option **Carte
+entièrement modifiable** ajoute une pile de cartes que vous pouvez personnaliser
+dans l’éditeur du dashboard. Décochez-la pour utiliser la carte automatique,
+qui suit la langue et les réglages du poêle. Pour personnaliser une ancienne
+carte automatique, ajoutez sa variante modifiable depuis cet assistant.
 
 Pour une carte manuelle, remplacer l’identifiant d’exemple :
 
@@ -92,6 +95,11 @@ Aucune ressource JavaScript supplémentaire à déclarer. Les anciennes cartes
 Mushroom statiques peuvent être remplacées une fois par la carte automatique.
 Les 20 capteurs, 3 capteurs binaires et 2 boutons restent utilisables séparément.
 Les dashboards YAML, vues générées et vues Panneau déjà occupées demandent un ajout manuel.
+
+La fiche du poêle dans **Paramètres → Appareils et services → Pellet Tracker**
+propose aussi un lien vers son suivi. Le réglage **Afficher Pellet Tracker dans
+la barre latérale** se trouve dans les options du poêle. Si vous avez plusieurs
+poêles, le raccourci commun reste visible tant qu’au moins un poêle l’autorise.
 
 ## Poêle connecté, en option
 
