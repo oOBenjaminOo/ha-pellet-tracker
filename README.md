@@ -1,16 +1,16 @@
 # Pellet Tracker
 
-**Pellet stock, heating seasons, costs and maintenance — entirely in Home Assistant.**
+**Pellet stock, heating seasons, costs and maintenance - entirely in Home Assistant.**
 
 [Français](README.fr.md) · [Changelog](CHANGELOG.md) · [Report a bug](https://github.com/oOBenjaminOo/ha-pellet-tracker/issues)
 
-![Pellet Tracker dashboard — fictional example](docs/images/dashboard-en.jpg)
+![Pellet Tracker dashboard - fictional example](docs/images/dashboard-en.jpg)
 
 Pellet Tracker is an original custom integration by [@oOBenjaminOo](https://github.com/oOBenjaminOo).
 It works with any pellet stove, including an unconnected stove. No cloud account,
 MQTT broker or manufacturer integration is required to track bags.
 
-**Current version: 1.0.0 — first stable release.** Included in the default HACS
+**Current version: 1.0.0 - first stable release.** Included in the default HACS
 catalog following the merge of [hacs/default#13692](https://github.com/hacs/default/pull/13692).
 This project is independent of Home Assistant and HACS.
 
